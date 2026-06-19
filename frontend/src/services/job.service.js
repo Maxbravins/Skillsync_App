@@ -31,3 +31,4 @@ export const deleteJob = async (id) => {
   const response = await api.delete(`/jobs/${id}`);
   return response.data;
 };
+

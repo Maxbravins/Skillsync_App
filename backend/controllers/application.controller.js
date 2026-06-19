@@ -1,6 +1,8 @@
 import Application from "../models/application.model.js";
 import Job from "../models/Job.model.js";
+import Notification from "../models/Notification.model.js";
 
+// Apply for a job
 export const applyForJob = async (req, res) => {
   try {
     const { coverLetter } = req.body;
@@ -30,10 +32,23 @@ export const applyForJob = async (req, res) => {
       });
     }
 
+    // Create application
     const application = await Application.create({
       developer: req.user.id,
       job: jobId,
       coverLetter,
+    });
+
+    // Populate developer username
+    await application.populate(
+      "developer",
+      "username"
+    );
+
+    // Create notification for client
+    await Notification.create({
+      user: job.client,
+      message: `${application.developer.username} applied for your job "${job.title}".`,
     });
 
     res.status(201).json({
@@ -41,8 +56,8 @@ export const applyForJob = async (req, res) => {
       message: "Application submitted successfully",
       application,
     });
-  } 
-  catch (error) {
+
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
@@ -50,8 +65,7 @@ export const applyForJob = async (req, res) => {
   }
 };
 
-//Get applications 
-
+// Get applications for a specific job
 export const getJobApplications = async (req, res) => {
   try {
     const applications = await Application.find({
@@ -96,7 +110,6 @@ export const getMyApplications = async (req, res) => {
 };
 
 // Update application status
-
 export const updateApplicationStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -120,6 +133,7 @@ export const updateApplicationStatus = async (req, res) => {
       message: "Application status updated",
       application,
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,

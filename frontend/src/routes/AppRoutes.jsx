@@ -12,6 +12,8 @@ import MyApplications from "../pages/applications/MyApplications";
 import JobApplicants from "../pages/applications/JobApplicants";
 import MyJobs from "../pages/jobs/MyJobs";
 import Profile from "../pages/profile/Profile";
+import EditJob from "../pages/jobs/EditJob";
+import CreateJob from "../pages/jobs/CreateJob";
 
 const AppRoutes = () => {
   return (
@@ -82,6 +84,16 @@ const AppRoutes = () => {
     </ProtectedRoute>
   }
 />
+
+<Route
+  path="/create-job"
+  element={
+    <ProtectedRoute role="client">
+      <CreateJob />
+    </ProtectedRoute>
+  }
+/>
+
 <Route
   path="/my-jobs"
   element={
@@ -90,6 +102,18 @@ const AppRoutes = () => {
     </ProtectedRoute>
   }
 />
+
+<Route
+  path="/edit-job/:id"
+  element={
+    <ProtectedRoute
+      role="client"
+    >
+      <EditJob />
+    </ProtectedRoute>
+  }
+/>
+
 <Route
   path="/job-applicants/:jobId"
   element={
