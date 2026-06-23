@@ -14,6 +14,7 @@ import MyJobs from "../pages/jobs/MyJobs";
 import Profile from "../pages/profile/Profile";
 import EditJob from "../pages/jobs/EditJob";
 import CreateJob from "../pages/jobs/CreateJob";
+import Notifications from "../pages/notifications/Notifications";
 
 const AppRoutes = () => {
   return (
@@ -115,7 +116,7 @@ const AppRoutes = () => {
 />
 
 <Route
-  path="/job-applicants/:jobId"
+  path="/job-applicants/:status"
   element={
     <ProtectedRoute role="client">
       <JobApplicants />
@@ -123,6 +124,14 @@ const AppRoutes = () => {
   }
 />
 
+<Route
+  path="/notifications"
+  element={
+    <ProtectedRoute>
+      <Notifications />
+    </ProtectedRoute>
+  }
+/>
       </Routes>
     </BrowserRouter>
   );

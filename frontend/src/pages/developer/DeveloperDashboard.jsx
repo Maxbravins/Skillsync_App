@@ -97,6 +97,15 @@ const DeveloperDashboard = () => {
               <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors">My Profile</h3>
               <p className="text-slate-400 text-xs mt-2 leading-relaxed">Keep your professional bio, experience, and tech stack skills up to date.</p>
             </Link>
+
+             <Link 
+            to="/notifications"
+             className="group bg-slate-900/30 hover:bg-slate-900/50 backdrop-blur border border-slate-800/60 hover:border-cyan-500/40 p-6 rounded-xl transition-all"
+             >
+             <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors">Notifications</h3> 
+              <p className="text-slate-400 text-sm mt-2">Stay updated on new applications, accepted jobs, and account activity.</p>
+            </Link>
+
           </div>
         </section>
       </main>

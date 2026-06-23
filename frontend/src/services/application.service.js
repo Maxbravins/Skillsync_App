@@ -36,3 +36,13 @@ export const updateApplicationStatus = async (
 
   return response.data;
 };
+
+export const getClientApplications =
+  async () => {
+    const response =
+      await api.get(
+        "/applications/client"
+      );
+
+    return response.data;
+  };

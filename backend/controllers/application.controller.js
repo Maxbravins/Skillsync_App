@@ -109,6 +109,50 @@ export const getMyApplications = async (req, res) => {
   }
 };
 
+// Get all applications for all jobs posted by a client
+export const getClientApplications =
+  async (req, res) => {
+    try {
+      // Find jobs created by this client
+      const jobs = await Job.find({
+        client: req.user.id,
+      });
+
+      const jobIds = jobs.map(
+        (job) => job._id
+      );
+
+      // Find applications for those jobs
+      const applications =
+        await Application.find({
+          job: {
+            $in: jobIds,
+          },
+        })
+          .populate(
+            "developer",
+            "username email"
+          )
+          .populate(
+            "job",
+            "title"
+          );
+
+      res.status(200).json({
+        success: true,
+        count:
+          applications.length,
+        applications,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message:
+          error.message,
+      });
+    }
+  };
+
 // Update application status
 export const updateApplicationStatus = async (req, res) => {
   try {

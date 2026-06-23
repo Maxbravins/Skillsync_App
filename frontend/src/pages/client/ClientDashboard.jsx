@@ -42,35 +42,76 @@ const ClientDashboard = () => {
             <h2 className="text-lg font-semibold text-slate-300 mb-5">Dashboard Statistics</h2>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+
               {/* Total Jobs */}
-              <div className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Total Jobs</span>
-                <span className="text-3xl font-extrabold text-white mt-2">{stats.totalJobs}</span>
-              </div>
+          <Link
+            to="/my-jobs"
+            className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px] hover:border-indigo-500 hover:scale-105 transition-all cursor-pointer"
+          >
+            <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
+              Total Jobs
+            </span>
+
+            <span className="text-3xl font-extrabold text-white mt-2">
+              {stats.totalJobs}
+            </span>
+          </Link>
 
               {/* Total Applications */}
-              <div className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400">Applications</span>
-                <span className="text-3xl font-extrabold text-white mt-2">{stats.totalApplications}</span>
-              </div>
+         <Link
+            to="/job-applicants/all"
+            className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px] hover:border-cyan-500 hover:scale-105 transition-all cursor-pointer"
+          >
+            <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400">
+              Applications
+            </span>
+
+            <span className="text-3xl font-extrabold text-white mt-2">
+              {stats.totalApplications}
+            </span>
+        </Link>
 
               {/* Pending */}
-              <div className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">Pending Review</span>
-                <span className="text-3xl font-extrabold text-white mt-2">{stats.pendingApplications}</span>
-              </div>
+        <Link
+                to="/job-applicants/pending"
+                className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px] hover:border-amber-500 hover:scale-105 transition-all cursor-pointer"
+              >
+                <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+                  Pending Review
+                </span>
+
+                <span className="text-3xl font-extrabold text-white mt-2">
+                  {stats.pendingApplications}
+                </span>
+        </Link>
 
               {/* Accepted */}
-              <div className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Accepted</span>
-                <span className="text-3xl font-extrabold text-white mt-2">{stats.acceptedApplications}</span>
-              </div>
+        <Link
+                to="/job-applicants/accepted"
+                className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px] hover:border-green-500 hover:scale-105 transition-all cursor-pointer"
+              >
+                <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                  Accepted
+                </span>
+
+                <span className="text-3xl font-extrabold text-white mt-2">
+                  {stats.acceptedApplications}
+                </span>
+        </Link>
 
               {/* Rejected */}
-              <div className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-rose-400">Rejected</span>
-                <span className="text-3xl font-extrabold text-white mt-2">{stats.rejectedApplications}</span>
-              </div>
+        <Link
+                to="/job-applicants/rejected"
+                className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px] hover:border-red-500 hover:scale-105 transition-all cursor-pointer"
+              >
+                <span className="text-xs font-semibold uppercase tracking-wider text-rose-400">
+                  Rejected
+                </span>
+
+                <span className="text-3xl font-extrabold text-white mt-2">
+                  {stats.rejectedApplications}
+                </span>
+        </Link>
             </div>
           </section>
         )}
@@ -103,6 +144,15 @@ const ClientDashboard = () => {
               <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors">My Profile</h3>
               <p className="text-slate-400 text-xs mt-2 leading-relaxed">View and edit your company information, logo, and contact details.</p>
             </Link>
+            
+            <Link 
+            to="/notifications"
+             className="group bg-slate-900/30 hover:bg-slate-900/50 backdrop-blur border border-slate-800/60 hover:border-cyan-500/40 p-6 rounded-xl transition-all"
+             >
+             <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors">Notifications</h3> 
+              <p className="text-slate-400 text-sm mt-2">Stay updated on new applications, accepted jobs, and account activity.</p>
+            </Link>
+          
           </div>
         </section>
       </main>
