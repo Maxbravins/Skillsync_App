@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import {
+  Briefcase,
+  DollarSign,
+  User,
+  Calendar,
+} from "lucide-react";
+
+import Navbar from "../../components/Navbar";
 import { getJobById } from "../../services/job.service";
 import { applyForJob } from "../../services/application.service";
 import useAuth from "../../hooks/useAuth";
@@ -28,30 +36,22 @@ const JobDetails = () => {
 
   const handleApply = async () => {
     if (!coverLetter.trim()) {
-      return alert(
-        "Please write a cover letter."
-      );
+      return alert("Please write your cover letter.");
     }
 
     try {
       setApplying(true);
 
-      const data =
-        await applyForJob(
-          job._id,
-          coverLetter
-        );
+      const data = await applyForJob(
+        job._id,
+        coverLetter
+      );
 
       alert(data.message);
 
-      navigate(
-        "/my-applications"
-      );
+      navigate("/my-applications");
     } catch (error) {
-      alert(
-        error.response?.data
-          ?.message
-      );
+      alert(error.response?.data?.message);
     } finally {
       setApplying(false);
     }
@@ -59,126 +59,171 @@ const JobDetails = () => {
 
   if (!job) {
     return (
-      <div className="flex justify-center items-center h-screen text-white bg-slate-950">
-        Loading...
-      </div>
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-slate-950 flex justify-center items-center text-white text-xl">
+          Loading Job...
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6">
+    <>
+      <Navbar />
 
-      <div className="max-w-4xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-lg">
+      <div className="min-h-screen bg-slate-950 text-white">
 
-        <button
-          onClick={() =>
-            navigate("/jobs")
-          }
-          className="mb-6 text-cyan-400 hover:text-cyan-300"
-        >
-          ← Back to Jobs
-        </button>
+        <div className="max-w-5xl mx-auto px-6 py-10">
 
-        <h1 className="text-3xl font-bold mb-4">
-          {job.title}
-        </h1>
+          <button
+            onClick={() => navigate("/jobs")}
+            className="text-cyan-400 hover:text-cyan-300 mb-8"
+          >
+            ← Back to Jobs
+          </button>
 
-        <p className="text-slate-400 mb-6">
-          {job.description}
-        </p>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
 
-        <div className="space-y-3 mb-8">
+            <div className="flex items-center gap-3 mb-6">
 
-          <p>
-            <span className="font-semibold">
-              Budget:
-            </span>{" "}
-            KES{" "}
-            {job.budget?.toLocaleString()}
-          </p>
+              <Briefcase
+                className="text-cyan-400"
+                size={34}
+              />
 
-          <p>
-            <span className="font-semibold">
-              Skills:
-            </span>{" "}
-            {job.skills?.join(", ")}
-          </p>
+              <h1 className="text-4xl font-bold">
+                {job.title}
+              </h1>
 
-          <p>
-            <span className="font-semibold">
-              Posted By:
-            </span>{" "}
-            {job.client?.username}
-          </p>
+            </div>
 
-          <p>
-            <span className="font-semibold">
-              Posted On:
-            </span>{" "}
-            {new Date(
-              job.createdAt
-            ).toLocaleDateString()}
-          </p>
+            <p className="text-slate-300 leading-8 mb-8">
+              {job.description}
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-10">
+
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-5">
+
+                <div className="flex items-center gap-2 mb-3">
+
+                  <DollarSign
+                    className="text-green-400"
+                    size={20}
+                  />
+
+                  <h3 className="font-semibold">
+                    Budget
+                  </h3>
+
+                </div>
+
+                <p className="text-3xl font-bold text-cyan-400">
+                  KES {job.budget?.toLocaleString()}
+                </p>
+
+              </div>
+
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-5">
+
+                <div className="flex items-center gap-2 mb-3">
+
+                  <User
+                    className="text-indigo-400"
+                    size={20}
+                  />
+
+                  <h3 className="font-semibold">
+                    Client
+                  </h3>
+
+                </div>
+
+                <p>{job.client?.username}</p>
+
+              </div>
+
+            </div>
+
+            <div className="mb-8">
+
+              <div className="flex items-center gap-2 mb-4">
+
+                <Calendar
+                  className="text-cyan-400"
+                  size={18}
+                />
+
+                <span>
+                  Posted:
+                </span>
+
+                <strong>
+                  {new Date(job.createdAt).toLocaleDateString()}
+                </strong>
+
+              </div>
+
+              <h3 className="font-semibold mb-3">
+                Required Skills
+              </h3>
+
+              <div className="flex flex-wrap gap-3">
+
+                {job.skills.map((skill, index) => (
+
+                  <span
+                    key={index}
+                    className="bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-full"
+                  >
+                    {skill}
+                  </span>
+
+                ))}
+
+              </div>
+
+            </div>
+
+            {user?.role === "developer" && (
+
+              <div className="border-t border-slate-800 pt-8">
+
+                <h2 className="text-2xl font-bold mb-4">
+                  Apply for this Job
+                </h2>
+
+                <textarea
+                  rows={7}
+                  value={coverLetter}
+                  onChange={(e) =>
+                    setCoverLetter(e.target.value)
+                  }
+                  placeholder="Explain why you're the right developer for this project..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 outline-none focus:border-cyan-500 mb-5"
+                />
+
+                <button
+                  onClick={handleApply}
+                  disabled={applying}
+                  className="bg-cyan-500 hover:bg-cyan-600 px-8 py-3 rounded-xl font-bold disabled:bg-slate-700"
+                >
+                  {applying
+                    ? "Submitting..."
+                    : "Apply Now"}
+                </button>
+
+              </div>
+
+            )}
+
+          </div>
 
         </div>
 
-        {user?.role ===
-          "developer" && (
-          <>
-            <h2 className="text-xl font-semibold mb-4">
-              Apply For This Job
-            </h2>
-
-            <textarea
-              rows="6"
-              value={
-                coverLetter
-              }
-              onChange={(e) =>
-                setCoverLetter(
-                  e.target.value
-                )
-              }
-              placeholder="Write your cover letter..."
-              className="
-                w-full
-                bg-slate-950
-                border
-                border-slate-700
-                rounded-lg
-                p-4
-                text-white
-                mb-4
-                focus:outline-none
-                focus:border-cyan-500
-              "
-            />
-
-            <button
-              onClick={
-                handleApply
-              }
-              disabled={
-                applying
-              }
-              className="
-                bg-cyan-500
-                hover:bg-cyan-600
-                px-6
-                py-3
-                rounded-lg
-                font-semibold
-                disabled:bg-gray-500
-              "
-            >
-              {applying
-                ? "Applying..."
-                : "Apply Now"}
-            </button>
-          </>
-        )}
       </div>
-    </div>
+    </>
   );
 };
 

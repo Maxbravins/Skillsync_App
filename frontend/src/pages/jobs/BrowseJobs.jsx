@@ -1,10 +1,19 @@
-
-import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Search,
+  Briefcase,
+  DollarSign,
+  Code,
+} from "lucide-react";
+
+import Navbar from "../../components/Navbar";
 import { getAllJobs } from "../../services/job.service";
 
 const BrowseJobs = () => {
   const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
   const [minBudget, setMinBudget] = useState("");
   const [skill, setSkill] = useState("");
@@ -19,6 +28,8 @@ const BrowseJobs = () => {
       setJobs(data.jobs);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -29,7 +40,7 @@ const BrowseJobs = () => {
 
     const matchesBudget =
       minBudget === "" ||
-      job.budget >= Number(minBudget);
+      Number(job.budget) >= Number(minBudget);
 
     const matchesSkill =
       skill === "" ||
@@ -45,91 +56,198 @@ const BrowseJobs = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-4xl font-bold mb-8">
-        Available Jobs
-      </h1>
+    <>
+      <Navbar />
 
-      {/* Filters */}
-      <div className="bg-white p-6 rounded-xl shadow mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="min-h-screen bg-slate-950 text-white">
 
-          <input
-            type="text"
-            placeholder="Search by title..."
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-            className="border p-3 rounded-lg"
-          />
+        <div className="max-w-7xl mx-auto px-6 py-10">
 
-          <input
-            type="number"
-            placeholder="Minimum Budget"
-            value={minBudget}
-            onChange={(e) =>
-              setMinBudget(e.target.value)
-            }
-            className="border p-3 rounded-lg"
-          />
+          <div className="mb-10">
 
-          <input
-            type="text"
-            placeholder="Skill (React, Node...)"
-            value={skill}
-            onChange={(e) =>
-              setSkill(e.target.value)
-            }
-            className="border p-3 rounded-lg"
-          />
+            <h1 className="text-4xl font-bold">
+              Browse Jobs
+            </h1>
 
-        </div>
-      </div>
+            <p className="text-slate-400 mt-2">
+              Discover freelance opportunities that match your skills.
+            </p>
 
-      {/* Job Cards */}
-      {filteredJobs.length === 0 ? (
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h2 className="text-xl">
-            No jobs found.
-          </h2>
-        </div>
-      ) : (
-        <div className="grid gap-6">
-          {filteredJobs.map((job) => (
-            <div
-              key={job._id}
-              className="bg-white p-6 rounded-xl shadow"
-            >
-              <h2 className="text-2xl font-bold mb-3">
-                {job.title}
+          </div>
+
+          {/* Filters */}
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-10">
+
+            <div className="grid md:grid-cols-3 gap-5">
+
+              <input
+                type="text"
+                placeholder="Search job title..."
+                value={search}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+                className="bg-slate-950 border border-slate-700 rounded-lg p-3 outline-none focus:border-cyan-500"
+              />
+
+              <input
+                type="number"
+                placeholder="Minimum Budget"
+                value={minBudget}
+                onChange={(e) =>
+                  setMinBudget(e.target.value)
+                }
+                className="bg-slate-950 border border-slate-700 rounded-lg p-3 outline-none focus:border-cyan-500"
+              />
+
+              <input
+                type="text"
+                placeholder="Required Skill"
+                value={skill}
+                onChange={(e) =>
+                  setSkill(e.target.value)
+                }
+                className="bg-slate-950 border border-slate-700 rounded-lg p-3 outline-none focus:border-cyan-500"
+              />
+
+            </div>
+
+          </div>
+
+          {loading ? (
+
+            <div className="text-center py-20 text-slate-400 text-xl">
+              Loading jobs...
+            </div>
+
+          ) : filteredJobs.length === 0 ? (
+
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center">
+
+              <Search
+                size={60}
+                className="mx-auto text-slate-600 mb-4"
+              />
+
+              <h2 className="text-2xl font-bold">
+                No Jobs Found
               </h2>
 
-              <p className="text-gray-600 mb-3">
-                {job.description}
+              <p className="text-slate-400 mt-3">
+                Try adjusting your search filters.
               </p>
 
-              <p className="font-semibold mb-2">
-                Budget: KES {job.budget}
-              </p>
-
-              <p className="mb-4">
-                Skills:
-                {" "}
-                {job.skills.join(", ")}
-              </p>
-
-              <Link
-                to={`/jobs/${job._id}`}
-                className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              >
-                View Details
-              </Link>
             </div>
-          ))}
+
+          ) : (
+
+            <div className="grid lg:grid-cols-2 gap-6">
+
+              {filteredJobs.map((job) => (
+
+                <div
+                  key={job._id}
+                  className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-cyan-500 transition"
+                >
+
+                  <div className="flex justify-between items-start">
+
+                    <div>
+
+                      <div className="flex items-center gap-3">
+
+                        <Briefcase
+                          className="text-cyan-400"
+                          size={30}
+                        />
+
+                        <h2 className="text-2xl font-bold">
+                          {job.title}
+                        </h2>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                  <p className="text-slate-400 mt-5 leading-7">
+                    {job.description}
+                  </p>
+
+                  <div className="flex items-center gap-2 mt-5">
+
+                    <DollarSign
+                      className="text-green-400"
+                      size={18}
+                    />
+
+                    <span className="font-semibold">
+                      Budget:
+                    </span>
+
+                    <span className="text-cyan-400 font-bold">
+                      KES {job.budget}
+                    </span>
+
+                  </div>
+
+                  <div className="mt-5">
+
+                    <div className="flex items-center gap-2 mb-3">
+
+                      <Code
+                        className="text-indigo-400"
+                        size={18}
+                      />
+
+                      <span className="font-semibold">
+                        Required Skills
+                      </span>
+
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+
+                      {job.skills.map((item, index) => (
+
+                        <span
+                          key={index}
+                          className="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full text-sm"
+                        >
+                          {item}
+                        </span>
+
+                      ))}
+
+                    </div>
+
+                  </div>
+
+                  <div className="mt-8">
+
+                    <Link
+                      to={`/jobs/${job._id}`}
+                      className="inline-block bg-cyan-500 hover:bg-cyan-600 px-5 py-3 rounded-lg font-semibold transition"
+                    >
+                      View Details
+                    </Link>
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
+
         </div>
-      )}
-    </div>
+
+      </div>
+    </>
   );
 };
 

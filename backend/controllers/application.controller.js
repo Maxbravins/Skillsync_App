@@ -170,7 +170,18 @@ export const updateApplicationStatus = async (req, res) => {
     }
 
     application.status = status;
-    await application.save();
+await application.save();
+
+await application.populate("job", "title");
+
+// Create notification for developer
+    await Notification.create({
+  user: application.developer,
+  message:
+    status === "accepted"
+      ? "Congratulations! Your application has been accepted."
+      : "Your application has been rejected.",
+});
 
     res.status(200).json({
       success: true,

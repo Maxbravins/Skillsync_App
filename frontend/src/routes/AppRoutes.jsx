@@ -116,7 +116,7 @@ const AppRoutes = () => {
 />
 
 <Route
-  path="/job-applicants/:status"
+  path="/job-applicants/:jobId/:status?"
   element={
     <ProtectedRoute role="client">
       <JobApplicants />

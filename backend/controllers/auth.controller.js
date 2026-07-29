@@ -39,10 +39,7 @@ export const registerUser = async (req, res) => {
         expiresIn: "7d",
       }
     );
-   headers: {
-  'Authorization'; `Bearer ${token}`
-}
-
+    
     res.status(201).json({
       success: true,
       message: "User registered successfully",

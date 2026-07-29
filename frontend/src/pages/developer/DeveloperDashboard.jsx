@@ -1,5 +1,12 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import {
+  Briefcase,
+  Clock3,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+
 import { getDeveloperDashboard } from "../../services/dashboard.service";
 import Navbar from "../../components/Navbar";
 
@@ -20,95 +27,174 @@ const DeveloperDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <div className="min-h-screen bg-slate-950 text-white">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-6 py-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+      <div className="max-w-7xl mx-auto px-6 py-10">
+
+        <div className="flex justify-between items-center mb-10">
+
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Developer Dashboard</h1>
-            <p className="text-slate-400 text-sm mt-1">Track your job applications and explore new project opportunities.</p>
+            <h1 className="text-4xl font-bold">
+              Developer Dashboard
+            </h1>
+
+            <p className="text-slate-400 mt-2">
+              Track your applications and discover new freelance opportunities.
+            </p>
           </div>
-          <Link 
+
+          <Link
             to="/jobs"
-            className="self-start md:self-auto px-5 py-2.5 font-semibold text-slate-950 bg-gradient-to-r from-cyan-400 to-indigo-500 hover:from-cyan-300 hover:to-indigo-400 rounded-lg transition-all shadow-md shadow-cyan-950/20"
+            className="bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-3 rounded-lg font-semibold"
           >
-            Explore Jobs
+            Browse Jobs
           </Link>
+
         </div>
 
         {stats && (
-          <section className="mb-10">
-            <h2 className="text-lg font-semibold text-slate-300 mb-5">Application Overview</h2>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {/* Total Applications */}
-              <div className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400">Total Applications</span>
-                <span className="text-3xl font-extrabold text-white mt-2">{stats.totalApplications}</span>
-              </div>
 
-              {/* Pending */}
-              <div className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">Pending Review</span>
-                <span className="text-3xl font-extrabold text-white mt-2">{stats.pendingApplications}</span>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
 
-              {/* Accepted */}
-              <div className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Accepted / Offered</span>
-                <span className="text-3xl font-extrabold text-white mt-2">{stats.acceptedApplications}</span>
-              </div>
-
-              {/* Rejected */}
-              <div className="bg-slate-900/40 backdrop-blur border border-slate-800/80 p-5 rounded-xl flex flex-col justify-between min-h-[120px]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-rose-400">Rejected</span>
-                <span className="text-3xl font-extrabold text-white mt-2">{stats.rejectedApplications}</span>
-              </div>
-            </div>
-          </section>
-        )}
-
-        <hr className="border-slate-900 my-10" />
-
-        <section>
-          <h2 className="text-lg font-semibold text-slate-300 mb-6 font-sans">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Link 
-              to="/jobs" 
-              className="group bg-slate-900/30 hover:bg-slate-900/50 backdrop-blur border border-slate-800/60 hover:border-cyan-500/40 p-6 rounded-xl transition-all"
+            <Link
+              to="/my-applications"
+              className="bg-slate-900 rounded-xl p-6 border border-slate-800 hover:border-cyan-500 transition"
             >
-              <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors">Browse Jobs</h3>
-              <p className="text-slate-400 text-xs mt-2 leading-relaxed">Search through contracts and remote listings suited to your skill set.</p>
+              <Briefcase
+                className="text-cyan-400 mb-4"
+                size={34}
+              />
+
+              <p className="text-slate-400">
+                Total Applications
+              </p>
+
+              <h2 className="text-4xl font-bold mt-2">
+                {stats.totalApplications}
+              </h2>
             </Link>
 
-            <Link 
-              to="/my-applications" 
-              className="group bg-slate-900/30 hover:bg-slate-900/50 backdrop-blur border border-slate-800/60 hover:border-cyan-500/40 p-6 rounded-xl transition-all"
+            <Link
+              to="/my-applications?status=pending"
+              className="bg-slate-900 rounded-xl p-6 border border-slate-800 hover:border-yellow-500 transition"
             >
-              <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors">My Applications</h3>
-              <p className="text-slate-400 text-xs mt-2 leading-relaxed">Check the real-time status and feedback of your submitted applications.</p>
+              <Clock3
+                className="text-yellow-400 mb-4"
+                size={34}
+              />
+
+              <p className="text-slate-400">
+                Pending
+              </p>
+
+              <h2 className="text-4xl font-bold mt-2">
+                {stats.pendingApplications}
+              </h2>
             </Link>
 
-            <Link 
-              to="/profile" 
-              className="group bg-slate-900/30 hover:bg-slate-900/50 backdrop-blur border border-slate-800/60 hover:border-cyan-500/40 p-6 rounded-xl transition-all"
+            <Link
+              to="/my-applications?status=accepted"
+              className="bg-slate-900 rounded-xl p-6 border border-slate-800 hover:border-green-500 transition"
             >
-              <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors">My Profile</h3>
-              <p className="text-slate-400 text-xs mt-2 leading-relaxed">Keep your professional bio, experience, and tech stack skills up to date.</p>
+              <CheckCircle
+                className="text-green-400 mb-4"
+                size={34}
+              />
+
+              <p className="text-slate-400">
+                Accepted
+              </p>
+
+              <h2 className="text-4xl font-bold mt-2">
+                {stats.acceptedApplications}
+              </h2>
             </Link>
 
-             <Link 
-            to="/notifications"
-             className="group bg-slate-900/30 hover:bg-slate-900/50 backdrop-blur border border-slate-800/60 hover:border-cyan-500/40 p-6 rounded-xl transition-all"
-             >
-             <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition-colors">Notifications</h3> 
-              <p className="text-slate-400 text-sm mt-2">Stay updated on new applications, accepted jobs, and account activity.</p>
+            <Link
+              to="/my-applications?status=rejected"
+              className="bg-slate-900 rounded-xl p-6 border border-slate-800 hover:border-red-500 transition"
+            >
+              <XCircle
+                className="text-red-400 mb-4"
+                size={34}
+              />
+
+              <p className="text-slate-400">
+                Rejected
+              </p>
+
+              <h2 className="text-4xl font-bold mt-2">
+                {stats.rejectedApplications}
+              </h2>
             </Link>
 
           </div>
-        </section>
-      </main>
+
+        )}
+
+        <h2 className="text-2xl font-bold mb-5">
+          Quick Actions
+        </h2>
+
+        <div className="grid md:grid-cols-4 gap-6">
+
+          <Link
+            to="/jobs"
+            className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-cyan-500 transition"
+          >
+            <h3 className="font-bold text-lg">
+              Browse Jobs
+            </h3>
+
+            <p className="text-slate-400 mt-3">
+              Find freelance projects that match your skills.
+            </p>
+          </Link>
+
+          <Link
+            to="/my-applications"
+            className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-cyan-500 transition"
+          >
+            <h3 className="font-bold text-lg">
+              My Applications
+            </h3>
+
+            <p className="text-slate-400 mt-3">
+              Track every application you've submitted.
+            </p>
+          </Link>
+
+          <Link
+            to="/profile"
+            className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-cyan-500 transition"
+          >
+            <h3 className="font-bold text-lg">
+              My Profile
+            </h3>
+
+            <p className="text-slate-400 mt-3">
+              Update your developer profile and skills.
+            </p>
+          </Link>
+
+          <Link
+            to="/notifications"
+            className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-cyan-500 transition"
+          >
+            <h3 className="font-bold text-lg">
+              Notifications
+            </h3>
+
+            <p className="text-slate-400 mt-3">
+              View job updates and client responses.
+            </p>
+          </Link>
+
+        </div>
+
+      </div>
+
     </div>
   );
 };

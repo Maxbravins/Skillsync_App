@@ -1,195 +1,152 @@
-import {useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import {
+  getClientApplications,
+  updateApplicationStatus,
+} from "../../services/application.service";
 
-import { useParams} from "react-router-dom";
+const JobApplicants = () => {
+  const { status = "all" } = useParams();
 
-import {getJobApplications, updateApplicationStatus } from "../../services/application.service";
-
-const JobApplicants = () => {const { status } =  useParams();
-
-  const [ applications, setApplications ] = useState([]);
-
-  const filteredApplications =
-  status === "all"
-    ? applications
-    : applications.filter(
-        (app) => app.status === status
-      );
+  const [applications, setApplications] = useState([]);
 
   useEffect(() => {
     fetchApplications();
-  }, []);
+  }, [status]);
 
-  const fetchApplications =
-    async () => {
-      try {
-       const data =
-  await getClientApplications();
-  
-        setApplications(
-          data.applications
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    };
+  const fetchApplications = async () => {
+    try {
+      const data = await getClientApplications();
+      setApplications(data.applications);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-  const handleStatus =
-    async (
-      applicationId,
-      status
-    ) => {
-      try {
-        await updateApplicationStatus(
-          applicationId,
-          status
-        );
+  const handleStatus = async (applicationId, newStatus) => {
+    try {
+      await updateApplicationStatus(applicationId, newStatus);
 
-        setApplications(
-          applications.map(
-            (app) =>
-              app._id ===
-              applicationId
-                ? {
-                    ...app,
-                    status,
-                  }
-                : app
-          )
-        );
+      setApplications((prev) =>
+        prev.map((app) =>
+          app._id === applicationId
+            ? { ...app, status: newStatus }
+            : app
+        )
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-        alert(
-          `Application ${status}`
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    };
+  const filteredApplications = applications.filter((app) => {
+    if (status === "all") return true;
+    return app.status === status;
+  });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6">
+    <div className="min-h-screen bg-slate-950 text-white py-8 px-6">
 
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
         <h1 className="text-3xl font-bold mb-8">
-          Job Applicants
+          {status === "all"
+            ? "All Applications"
+            : `${status.charAt(0).toUpperCase() + status.slice(1)} Applications`}
         </h1>
 
-        {filteredApplications.length ===
-        0 ? (
-          <div className="bg-slate-900 p-8 rounded-xl text-center">
-
-            No applicants yet.
-
+        {filteredApplications.length === 0 ? (
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-10 text-center text-slate-400">
+            No applications found.
           </div>
         ) : (
-          filteredApplications.map(
-            (application) => (
-              <div
-                key={
-                  application._id
-                }
-                className="
-                  bg-slate-900
-                  border
-                  border-slate-800
-                  rounded-xl
-                  p-6
-                  mb-6
-                "
-              >
-                <h2 className="text-xl font-bold mb-2">
+          filteredApplications.map((application) => (
+            <div
+              key={application._id}
+              className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-6 hover:border-cyan-500 transition"
+            >
 
-                  {
-                    application
-                      .developer
-                      ?.username
-                  }
+              <div className="flex justify-between items-start">
 
-                </h2>
+                <div>
 
-                <p className="text-slate-400 mb-3">
+                  <h2 className="text-xl font-bold">
+                    {application.developer?.username}
+                  </h2>
 
-                  {
-                    application
-                      .developer
-                      ?.email
-                  }
+                  <p className="text-slate-400">
+                    {application.developer?.email}
+                  </p>
 
-                </p>
+                  <p className="text-sm text-slate-500 mt-2">
+                    Applied:
+                    {" "}
+                    {new Date(application.createdAt).toLocaleDateString()}
+                  </p>
 
-                <h3 className="font-semibold mb-2">
+                </div>
 
-                  Cover Letter
+                <span
+                  className={`px-4 py-1 rounded-full text-sm font-semibold
+                  ${
+                    application.status === "pending"
+                      ? "bg-yellow-500/20 text-yellow-400"
+                      : application.status === "accepted"
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-red-500/20 text-red-400"
+                  }`}
+                >
+                  {application.status}
+                </span>
 
-                </h3>
-
-                <p className="text-slate-300 mb-4">
-
-                  {
-                    application.coverLetter
-                  }
-
-                </p>
-
-                <p className="mb-4">
-                  Status:
-
-                  <span className="ml-2 font-bold capitalize text-cyan-400">
-
-                    {
-                      application.status
-                    }
-
-                  </span>
-                </p>
-
-                {application.status ===
-                  "pending" && (
-                  <div className="flex gap-4">
-
-                    <button
-                      onClick={() =>
-                        handleStatus(
-                          application._id,
-                          "accepted"
-                        )
-                      }
-                      className="
-                        bg-green-600
-                        hover:bg-green-700
-                        px-4
-                        py-2
-                        rounded-lg
-                      "
-                    >
-                      Accept
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        handleStatus(
-                          application._id,
-                          "rejected"
-                        )
-                      }
-                      className="
-                        bg-red-600
-                        hover:bg-red-700
-                        px-4
-                        py-2
-                        rounded-lg
-                      "
-                    >
-                      Reject
-                    </button>
-
-                  </div>
-                )}
               </div>
-            )
-          )
+
+              <hr className="border-slate-800 my-5" />
+
+              <h3 className="font-semibold mb-2">
+                Cover Letter
+              </h3>
+
+              <p className="text-slate-300 leading-relaxed">
+                {application.coverLetter}
+              </p>
+
+              {application.status === "pending" && (
+                <div className="flex gap-4 mt-6">
+
+                  <button
+                    onClick={() =>
+                      handleStatus(
+                        application._id,
+                        "accepted"
+                      )
+                    }
+                    className="bg-green-600 hover:bg-green-700 px-5 py-2 rounded-lg font-medium transition"
+                  >
+                    Accept
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      handleStatus(
+                        application._id,
+                        "rejected"
+                      )
+                    }
+                    className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-lg font-medium transition"
+                  >
+                    Reject
+                  </button>
+
+                </div>
+              )}
+
+            </div>
+          ))
         )}
+
       </div>
+
     </div>
   );
 };
