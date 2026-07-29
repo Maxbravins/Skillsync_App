@@ -30,14 +30,24 @@ export const createJob = async (req, res) => {
         // Get all jobs
 export const getAllJobs = async (req, res) => {
   try {
-    const jobs = await Job.find().populate(
-      "client",
-      "username email"
-    );
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Job.countDocuments();
+
+    const jobs = await Job.find()
+      .populate("client", "username email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
       count: jobs.length,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
       jobs,
     });
   } 
@@ -158,25 +168,31 @@ export const deleteJob = async (req, res) => {
 };
 
 // Get my jobs (for clients)
-export const getMyJobs = async (
-  req,
-  res
-) => {
+export const getMyJobs = async (req, res) => {
   try {
-    const jobs = await Job.find({
-      client: req.user.id,
-    });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Job.countDocuments({ client: req.user.id });
+
+    const jobs = await Job.find({ client: req.user.id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
       count: jobs.length,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
       jobs,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message:
-        "Failed to fetch jobs",
+      message: "Failed to fetch jobs",
     });
   }
 };

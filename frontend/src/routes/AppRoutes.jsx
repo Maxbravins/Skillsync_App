@@ -15,6 +15,11 @@ import Profile from "../pages/profile/Profile";
 import EditJob from "../pages/jobs/EditJob";
 import CreateJob from "../pages/jobs/CreateJob";
 import Notifications from "../pages/notifications/Notifications";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import VerifyOTP from "../pages/auth/VerifyOTP";
+import ResetPassword from "../pages/auth/ResetPassword";
+import AdminDashboard from "../pages/admin/AdminDashboard";
+
 
 const AppRoutes = () => {
   return (
@@ -132,6 +137,19 @@ const AppRoutes = () => {
     </ProtectedRoute>
   }
 />
+
+<Route
+  path="/admin-dashboard"
+  element={
+    <ProtectedRoute role="admin">
+      <AdminDashboard />
+    </ProtectedRoute>
+  }
+/>
+
+<Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/verify-otp" element={<VerifyOTP />} />
+<Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     </BrowserRouter>
   );
