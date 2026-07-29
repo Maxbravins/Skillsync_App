@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import OTP from "../models/OTP.model.js";
 import { sendOTP, sendResetSuccessEmail } from "../services/email.service.js";
 import crypto from "crypto";
-
+    // Register user
 export const registerUser = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
@@ -118,7 +118,62 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// @desc    Request password reset OTP
+    //Logout user
+
+export const logout = async (req, res) => {
+  try {
+    res.cookie("token", "", {
+      httpOnly: true,
+      expires: new Date(0),
+    });
+    res.json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+//  Get me
+export const getMe = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authenticated",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: "Invalid token",
+    });
+  }
+};
+
+//    Request password reset OTP
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -154,7 +209,7 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
-// @desc    Verify OTP
+// Verify OTP
 export const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -204,7 +259,7 @@ export const verifyOTP = async (req, res) => {
   }
 };
 
-// @desc    Reset password
+// Reset password
 export const resetPassword = async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;

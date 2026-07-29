@@ -13,7 +13,7 @@ router.get("/my", auth, authorizeRoles("client"), getMyJobs);
 router.get("/:id", auth, getJobById);
 router.put("/:id", auth, authorizeRoles("client"), updateJob);
 router.delete("/:id", auth, authorizeRoles("client"), deleteJob);
-router.get("/", protect, paginate(Job), getAllJobs);
+router.get("/", auth, paginate(Job), getAllJobs);
 
 
 export default router;
