@@ -1,14 +1,12 @@
 import api from "./api";
 
-export const getAllJobs = async () => {
-  const response = await api.get("/jobs");
+export const getAllJobs = async (page = 1, limit = 10) => {
+  const response = await api.get(`/jobs?page=${page}&limit=${limit}`);
   return response.data;
 };
 
-export const getMyJobs = async () => {
-  const response =
-    await api.get("/jobs/my");
-
+export const getMyJobs = async (page = 1, limit = 10) => {
+  const response = await api.get(`/jobs/my?page=${page}&limit=${limit}`);
   return response.data;
 };
 
@@ -31,4 +29,3 @@ export const deleteJob = async (id) => {
   const response = await api.delete(`/jobs/${id}`);
   return response.data;
 };
-
