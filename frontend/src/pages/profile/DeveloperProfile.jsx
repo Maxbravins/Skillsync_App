@@ -43,7 +43,7 @@ const Profile = () => {
           <div className="flex flex-col md:flex-row gap-6 items-center border-b border-[var(--border-color)] pb-8">
             {user?.profilePicture ? (
               <img
-                src={`http://localhost:5000${user.profilePicture}`}
+                src={`${import.meta.env.VITE_API_URL.replace("/api", "")}${user.profilePicture}`}
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover"
               />
@@ -95,7 +95,7 @@ const Profile = () => {
             <h3 className="font-semibold mb-3">Resume</h3>
             {user?.resume ? (
               <a
-                href={`http://localhost:5000${user.resume}`}
+               href={`${import.meta.env.VITE_API_URL.replace("/api", "")}${user.resume}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 text-cyan-400 hover:underline"
