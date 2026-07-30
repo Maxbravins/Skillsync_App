@@ -61,7 +61,7 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
+      <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
         <Navbar />
         <div className="text-center py-20 text-[var(--text-secondary)] text-xl">Loading Admin Dashboard...</div>
       </div>

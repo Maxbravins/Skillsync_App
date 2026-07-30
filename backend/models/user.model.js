@@ -12,7 +12,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true,
+       lowercase: true,
+      trim: true,
     },
 
     password: {
@@ -23,17 +24,83 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["developer", "client", "admin"],
-      default: "developer",
+      enum: ["admin", "client", "developer"],
+      required: true,
     },
 
-    profileImage: {
+    profilePicture: {
       type: String,
       default: "",
     },
 
-    resetPasswordToken: String,
-    resetPasswordExpires: Date,
+    bio: {
+      type: String,
+      default: "",
+    },
+
+    phone: {
+      type: String,
+      default: "",
+    },
+
+    location: {
+      type: String,
+      default: "",
+    },
+
+    website: {
+      type: String,
+      default: "",
+    },
+
+    skills: {
+      type: [String],
+      default: [],
+    },
+
+    experience: {
+      type: Number,
+      default: 0,
+    },
+
+    github: {
+      type: String,
+      default: "",
+    },
+
+    linkedin: {
+      type: String,
+      default: "",
+    },
+
+    portfolio: {
+      type: String,
+      default: "",
+    },
+
+    company: {
+      type: String,
+      default: "",
+    },
+
+    companyWebsite: {
+      type: String,
+      default: "",
+    },
+
+    resume: {
+      type: String,
+      default: "",
+    },
+
+    resetPasswordToken: {
+      type: String,
+      default: "",
+    },
+
+    resetPasswordExpires: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

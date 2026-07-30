@@ -18,6 +18,7 @@ import ForgotPassword from "../pages/auth/ForgotPassword";
 import VerifyOTP from "../pages/auth/VerifyOTP";
 import ResetPassword from "../pages/auth/ResetPassword";
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import EditProfile from "../pages/profile/EditProfile";
 
 const AppRoutes = () => {
   return (
@@ -42,6 +43,16 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/jobs"
           element={
@@ -141,6 +152,7 @@ const AppRoutes = () => {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
+
   );
 };
 
