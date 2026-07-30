@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getJobById, updateJob } from "../../services/job.service";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 const EditJob = () => {
   const { id } = useParams();
@@ -59,7 +60,7 @@ const EditJob = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
       <Navbar />
       <div className="max-w-3xl mx-auto p-6 py-10">
         <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] shadow rounded-xl p-8">
@@ -123,6 +124,7 @@ const EditJob = () => {
           </form>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

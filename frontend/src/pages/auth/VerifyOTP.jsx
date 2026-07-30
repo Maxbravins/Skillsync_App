@@ -1,26 +1,43 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "../../services/api";
 
 const VerifyOTP = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+
+  const email = location.state?.email || "";
+
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // If the user opens this page directly without coming from Forgot Password
+  if (!email) {
+    navigate("/forgot-password");
+    return null;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setLoading(true);
     setError(null);
 
     try {
-      const res = await api.post("/auth/verify-otp", { email, otp });
-      navigate("/reset-password", { 
-        state: { resetToken: res.data.resetToken } 
+      const res = await api.post("/auth/verify-otp", {
+        email,
+        otp,
+      });
+
+      navigate("/reset-password", {
+        state: {
+          email,
+          resetToken: res.data.resetToken,
+        },
       });
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid OTP");
+      setError(err.response?.data?.message || "Invalid or expired OTP");
     } finally {
       setLoading(false);
     }
@@ -29,8 +46,13 @@ const VerifyOTP = () => {
   return (
     <div className="max-w-md mx-auto">
       <h2 className="text-2xl font-bold mb-2">Verify OTP</h2>
-      <p className="text-slate-400 mb-6">
-        Enter the OTP sent to your email
+
+      <p className="text-slate-400 mb-2">
+        Enter the OTP sent to
+      </p>
+
+      <p className="text-cyan-400 mb-6 font-semibold">
+        {email}
       </p>
 
       {error && (
@@ -41,14 +63,6 @@ const VerifyOTP = () => {
 
       <form onSubmit={handleSubmit}>
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white mb-4"
-          required
-        />
-        <input
           type="text"
           placeholder="Enter 6-digit OTP"
           value={otp}
@@ -57,10 +71,11 @@ const VerifyOTP = () => {
           maxLength={6}
           required
         />
+
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-cyan-500 hover:bg-cyan-600 py-2 rounded-lg disabled:opacity-50"
+          className="w-full bg-cyan-500 hover:bg-cyan-600 py-2 rounded-lg disabled:opacity-50 text-white"
         >
           {loading ? "Verifying..." : "Verify OTP"}
         </button>

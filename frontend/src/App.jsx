@@ -5,11 +5,8 @@ import { LanguageProvider } from "./context/LanguageContext";
 
 function App() {
   return  (
-    <ThemeProvider>
-      <LanguageProvider>
-        <AppRoutes />
-      </LanguageProvider>
-    </ThemeProvider>
+         
+        <AppRoutes />   
   );
 }
 

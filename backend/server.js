@@ -1,8 +1,12 @@
 import dotenv from "dotenv";
+dotenv.config();
+console.log("SERVER EMAIL_USER:", process.env.EMAIL_USER);
+console.log("SERVER EMAIL_PASS:", process.env.EMAIL_PASS ? "Loaded" : "Missing");
+
 import app from "./app.js";
 import connectDB from "./config/db.js";
 
-dotenv.config();
+
 
 connectDB();
 
