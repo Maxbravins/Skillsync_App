@@ -6,21 +6,14 @@ import {
   deleteJob,
   getStats,
 } from "../controllers/admin.controller.js";
-import { protect } from "../middleware/auth.js";
+import auth from "../middleware/auth.middleware.js";
+import authorizeRoles from "../middleware/role.middleware.js";
 
 const router = express.Router();
 
 // All admin routes require authentication and admin role
-router.use(protect);
-router.use((req, res, next) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ 
-      success: false, 
-      message: "Admin access required" 
-    });
-  }
-  next();
-});
+router.use(auth);
+router.use(authorizeRoles("admin"));
 
 router.get("/stats", getStats);
 router.get("/users", getAllUsers);

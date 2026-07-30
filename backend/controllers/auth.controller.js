@@ -1,4 +1,4 @@
-import User from "../models/User.model.js";
+import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import OTP from "../models/OTP.model.js";
@@ -139,23 +139,13 @@ export const logout = async (req, res) => {
 };
 
 
-//  Get me
+// Get me
 export const getMe = async (req, res) => {
   try {
-    const token = req.cookies.token;
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Not authenticated",
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(req.user.id).select("-password");
 
     if (!user) {
-      return res.status(401).json({
+      return res.status(404).json({
         success: false,
         message: "User not found",
       });
@@ -166,9 +156,9 @@ export const getMe = async (req, res) => {
       user,
     });
   } catch (error) {
-    res.status(401).json({
+    res.status(500).json({
       success: false,
-      message: "Invalid token",
+      message: error.message,
     });
   }
 };
@@ -281,7 +271,7 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    user.password = newPassword;
+    user.password = await bcrypt.hash(newPassword, 10);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();

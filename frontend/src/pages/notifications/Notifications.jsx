@@ -1,74 +1,68 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getNotifications, markAsRead } from "../../services/notification.service";
-import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { Bell, BellOff } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 const Notifications = () => {
+  const { t } = useLanguage();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const data = await getNotifications();
-      setNotifications(data.notifications);
+      setNotifications(data.notifications || []);
     } catch (error) {
       console.log(error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const handleRead = async (id) => {
     try {
       await markAsRead(id);
 
-      setNotifications(
-        notifications.map((notification) =>
+      setNotifications((prev) =>
+        prev.map((notification) =>
           notification._id === id
             ? { ...notification, isRead: true }
             : notification
         )
       );
-
-      setTimeout(() => {
-        navigate("/client-dashboard");
-      }, 1000);
     } catch (error) {
       console.log(error);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
       <Navbar />
 
       <main className="max-w-3xl mx-auto px-6 py-10">
         <div className="mb-10">
-          <h1 className="text-3xl font-bold text-white tracking-tight">
-            Notifications
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("notifications")}
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-[var(--text-secondary)] text-sm mt-1">
             Stay up to date with job updates and responses.
           </p>
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-slate-400">
-            Loading notifications...
+          <div className="text-center py-20 text-[var(--text-secondary)]">
+            {t("loading")}
           </div>
         ) : notifications.length === 0 ? (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center">
-            <BellOff size={48} className="mx-auto text-slate-600 mb-4" />
-            <h2 className="text-xl font-bold text-white">
-              No Notifications
-            </h2>
-            <p className="text-slate-400 mt-2">
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-12 text-center">
+            <BellOff size={48} className="mx-auto text-[var(--text-secondary)] mb-4" />
+            <h2 className="text-xl font-bold">{t("noData")}</h2>
+            <p className="text-[var(--text-secondary)] mt-2">
               You're all caught up. Check back later.
             </p>
           </div>
@@ -79,24 +73,24 @@ const Notifications = () => {
                 key={notification._id}
                 className={`border rounded-xl p-5 flex items-start gap-4 transition ${
                   notification.isRead
-                    ? "bg-slate-900 border-slate-800"
-                    : "bg-cyan-950/20 border-cyan-800/40"
+                    ? "bg-[var(--bg-secondary)] border-[var(--border-color)]"
+                    : "bg-cyan-500/10 border-cyan-500/30"
                 }`}
               >
                 <div
                   className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                    notification.isRead ? "bg-slate-800" : "bg-cyan-500/20"
+                    notification.isRead ? "bg-[var(--bg-primary)]" : "bg-cyan-500/20"
                   }`}
                 >
                   <Bell
                     size={18}
-                    className={notification.isRead ? "text-slate-500" : "text-cyan-400"}
+                    className={notification.isRead ? "text-[var(--text-secondary)]" : "text-cyan-400"}
                   />
                 </div>
 
                 <div className="flex-1">
-                  <p className="text-slate-200">{notification.message}</p>
-                  <small className="text-slate-500">
+                  <p className="text-[var(--text-primary)]">{notification.message}</p>
+                  <small className="text-[var(--text-secondary)]">
                     {new Date(notification.createdAt).toLocaleString()}
                   </small>
                 </div>
