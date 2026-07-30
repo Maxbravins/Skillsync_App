@@ -3,6 +3,7 @@ import { FaUsers, FaBriefcase, FaFileAlt, FaCheckCircle } from "react-icons/fa";
 import api from "../../services/api";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { downloadApplicationsPDF } from "../../services/pdf.service";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -39,6 +40,28 @@ const AdminDashboard = () => {
     };
   }, []);
 
+  const handleExportPDF = async () => {
+  try {
+    const blob = await downloadApplicationsPDF();
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "applications-report.pdf";
+
+    document.body.appendChild(link);
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to export PDF");
+  }
+};
+
   const handleDeleteUser = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
@@ -73,8 +96,16 @@ const AdminDashboard = () => {
       <Navbar />
 
       <div className="flex-1 max-w-7xl mx-auto px-6 py-10 w-full">
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
 
+        <button
+          onClick={handleExportPDF}
+          className="bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-2 rounded-lg font-semibold transition"
+        >
+          Export Applications PDF
+        </button>
+      </div>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-color)]">

@@ -14,6 +14,10 @@ const EditProfile = () => {
     bio: user?.bio || "",
     phone: user?.phone || "",
     location: user?.location || "",
+    website: user?.website || "",
+    experience: user?.experience || "",
+    company: user?.company || "",
+    companyWebsite: user?.companyWebsite || "",
     github: user?.github || "",
     linkedin: user?.linkedin || "",
     portfolio: user?.portfolio || "",
@@ -22,6 +26,12 @@ const EditProfile = () => {
 
   const [profilePicture, setProfilePicture] = useState(null);
   const [resume, setResume] = useState(null);
+  const [preview, setPreview] = useState(
+    user?.profilePicture
+      ? `http://localhost:5000${user.profilePicture}`
+      : null
+  );
+
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -29,6 +39,23 @@ const EditProfile = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+  };
+
+  const handleProfilePicture = (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    setProfilePicture(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
+  const handleResume = (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    setResume(file);
   };
 
   const handleSubmit = async (e) => {
@@ -51,20 +78,22 @@ const EditProfile = () => {
         formData.append("resume", resume);
       }
 
-      const res = await api.put("/users/profile", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-            });
+      const res = await api.put(
+        "/users/profile",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-            updateUser(res.data.user);
+      updateUser(res.data.user);
 
-            alert("Profile updated successfully!");
+      alert("Profile updated successfully!");
 
-            navigate("/profile");
-
-                }
-     catch (error) {
+      navigate("/profile");
+    } catch (error) {
       console.log(error);
 
       alert(
@@ -81,102 +110,174 @@ const EditProfile = () => {
       <Navbar />
 
       <main className="max-w-3xl mx-auto py-10 px-6">
+
         <div className="bg-[var(--bg-secondary)] p-8 rounded-xl border border-[var(--border-color)]">
 
           <h1 className="text-3xl font-bold mb-8">
             Edit Profile
           </h1>
 
-          {/* Current Profile Picture */}
           <div className="flex justify-center mb-8">
-            {user?.profilePicture ? (
+
+            {preview ? (
+
               <img
-                src={user.profilePicture}
+                src={preview}
                 alt="Profile"
-                className="w-28 h-28 rounded-full object-cover border-4 border-cyan-500"
+                className="w-32 h-32 rounded-full object-cover border-4 border-cyan-500"
               />
+
             ) : (
-              <div className="w-28 h-28 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-500 flex items-center justify-center text-4xl font-bold text-white">
+
+              <div className="w-32 h-32 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-500 flex items-center justify-center text-5xl font-bold text-white">
                 {user?.username?.charAt(0).toUpperCase()}
               </div>
+
             )}
+
           </div>
 
           <form
             onSubmit={handleSubmit}
             className="space-y-5"
           >
+
             <input
               type="text"
               name="username"
-              placeholder="Username"
               value={form.username}
               onChange={handleChange}
+              placeholder="Username"
               className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
             />
 
             <textarea
-              name="bio"
-              placeholder="Tell people about yourself..."
               rows="4"
+              name="bio"
               value={form.bio}
               onChange={handleChange}
+              placeholder="Tell people about yourself..."
               className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
             />
 
             <input
               type="text"
               name="phone"
-              placeholder="Phone Number"
               value={form.phone}
               onChange={handleChange}
+              placeholder="Phone Number"
               className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
             />
 
             <input
               type="text"
               name="location"
-              placeholder="Location"
               value={form.location}
               onChange={handleChange}
+              placeholder="Location"
               className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
             />
 
-            <input
-              type="text"
-              name="skills"
-              placeholder="React, Node.js, MongoDB"
-              value={form.skills}
-              onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
-            />
+                        {/* ================= Developer Fields ================= */}
 
-            <input
-              type="url"
-              name="github"
-              placeholder="GitHub URL"
-              value={form.github}
-              onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
-            />
+            {user?.role === "developer" && (
+              <>
+                <input
+                  type="number"
+                  name="experience"
+                  placeholder="Years of Experience"
+                  value={form.experience}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
+                />
 
-            <input
-              type="url"
-              name="linkedin"
-              placeholder="LinkedIn URL"
-              value={form.linkedin}
-              onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
-            />
+                <input
+                  type="text"
+                  name="skills"
+                  placeholder="React, Node.js, Laravel"
+                  value={form.skills}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
+                />
 
-            <input
-              type="url"
-              name="portfolio"
-              placeholder="Portfolio Website"
-              value={form.portfolio}
-              onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
-            />
+                <input
+                  type="url"
+                  name="github"
+                  placeholder="GitHub URL"
+                  value={form.github}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
+                />
+
+                <input
+                  type="url"
+                  name="linkedin"
+                  placeholder="LinkedIn URL"
+                  value={form.linkedin}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
+                />
+
+                <input
+                  type="url"
+                  name="portfolio"
+                  placeholder="Portfolio Website"
+                  value={form.portfolio}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
+                />
+              </>
+            )}
+
+            {/* ================= Client Fields ================= */}
+
+            {user?.role === "client" && (
+              <>
+                <input
+                  type="text"
+                  name="company"
+                  placeholder="Company Name"
+                  value={form.company}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
+                />
+
+                <input
+                  type="url"
+                  name="companyWebsite"
+                  placeholder="Company Website"
+                  value={form.companyWebsite}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
+                />
+
+                <input
+                  type="url"
+                  name="website"
+                  placeholder="Business Website"
+                  value={form.website}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]"
+                />
+              </>
+            )}
+
+            {/* ================= Admin Fields ================= */}
+
+            {user?.role === "admin" && (
+              <div className="rounded-lg bg-cyan-500/10 border border-cyan-500/20 p-4">
+                <p className="text-cyan-400 font-semibold">
+                  Administrator Account
+                </p>
+
+                <p className="text-sm text-[var(--text-secondary)] mt-2">
+                  Administrators only maintain personal information and profile
+                  picture.
+                </p>
+              </div>
+            )}
+
+            {/* ================= Profile Picture ================= */}
 
             <div>
               <label className="block mb-2 font-medium">
@@ -186,42 +287,44 @@ const EditProfile = () => {
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) =>
-                  setProfilePicture(e.target.files[0])
-                }
+                onChange={handleProfilePicture}
                 className="w-full"
               />
             </div>
 
-            <div>
-              <label className="block mb-2 font-medium">
-                Resume
-              </label>
+            {/* ================= Resume ================= */}
 
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                onChange={(e) =>
-                  setResume(e.target.files[0])
-                }
-                className="w-full"
-              />
-            </div>
+            {user?.role === "developer" && (
+              <div>
+                <label className="block mb-2 font-medium">
+                  Resume (PDF/DOC)
+                </label>
+
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleResume}
+                  className="w-full"
+                />
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 py-3 rounded-lg text-white font-semibold transition"
             >
-              {loading ? "Saving..." : "Save Changes"}
+              {loading ? "Saving Changes..." : "Save Changes"}
             </button>
 
           </form>
 
         </div>
+
       </main>
 
       <Footer />
+
     </div>
   );
 };
