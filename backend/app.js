@@ -5,28 +5,34 @@ import userRoutes from "./routes/user.routes.js";
 import jobRoutes from "./routes/job.routes.js";
 import applicationRoutes from "./routes/application.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
-import errorHandler from "./middleware/error.middleware.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import errorHandler from "./middleware/error.middleware.js";
 
 const app = express();
 
-//Routes
+// Middleware
 app.use(cors());
-app.use(errorHandler);
 app.use(express.json());
+
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Home route
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "Welcome to SkillSync API"
+    message: "Welcome to SkillSync API",
   });
 });
+
+// Error handling middleware (must be registered after all routes)
+app.use(errorHandler);
 
 export default app;

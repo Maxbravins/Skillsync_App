@@ -1,5 +1,4 @@
-import {
-  BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
@@ -20,136 +19,126 @@ import VerifyOTP from "../pages/auth/VerifyOTP";
 import ResetPassword from "../pages/auth/ResetPassword";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 
-
 const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Default redirect */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-        <Route
-  path="/profile"
-  element={
-    <ProtectedRoute>
-      <Profile />
-    </ProtectedRoute>
-  }
-/>
+        {/* Public Auth Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-           {/* Default route */}
+        {/* Protected Routes */}
         <Route
-          path="/" element={<Navigate to="/login" />}
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
         />
-
         <Route
-          path="/login" element={<Login />}
+          path="/jobs"
+          element={
+            <ProtectedRoute>
+              <BrowseJobs />
+            </ProtectedRoute>
+          }
         />
-
         <Route
-          path="/register" element={<Register />}
+          path="/jobs/:id"
+          element={
+            <ProtectedRoute>
+              <JobDetails />
+            </ProtectedRoute>
+          }
         />
-
         <Route
-          path="/client-dashboard" element={
-            <ProtectedRoute
-              role="client"
-            >
-              <ClientDashboard />
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
             </ProtectedRoute>
           }
         />
 
+        {/* Developer Routes */}
         <Route
-          path="/developer-dashboard" element={
-            <ProtectedRoute
-              role="developer"
-            >
+          path="/developer-dashboard"
+          element={
+            <ProtectedRoute role="developer">
               <DeveloperDashboard />
             </ProtectedRoute>
           }
         />
-
         <Route
-          path="*" element={<Navigate to="/login" />}
+          path="/my-applications"
+          element={
+            <ProtectedRoute role="developer">
+              <MyApplications />
+            </ProtectedRoute>
+          }
         />
 
+        {/* Client Routes */}
         <Route
-  path="/jobs" element={<BrowseJobs />}
-/>
-
+          path="/client-dashboard"
+          element={
+            <ProtectedRoute role="client">
+              <ClientDashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route
-          path="/jobs/:id" element={<JobDetails />}
+          path="/create-job"
+          element={
+            <ProtectedRoute role="client">
+              <CreateJob />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-jobs"
+          element={
+            <ProtectedRoute role="client">
+              <MyJobs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/edit-job/:id"
+          element={
+            <ProtectedRoute role="client">
+              <EditJob />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/job-applicants/:jobId/:status?"
+          element={
+            <ProtectedRoute role="client">
+              <JobApplicants />
+            </ProtectedRoute>
+          }
         />
 
-       <Route
-  path="/my-applications"
-  element={
-    <ProtectedRoute
-      role="developer"
-    >
-      <MyApplications />
-    </ProtectedRoute>
-  }
-/>
+        {/* Admin Routes */}
+        <Route
+          path="/admin-dashboard"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
 
-<Route
-  path="/create-job"
-  element={
-    <ProtectedRoute role="client">
-      <CreateJob />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/my-jobs"
-  element={
-    <ProtectedRoute role="client">
-      <MyJobs />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/edit-job/:id"
-  element={
-    <ProtectedRoute
-      role="client"
-    >
-      <EditJob />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/job-applicants/:jobId/:status?"
-  element={
-    <ProtectedRoute role="client">
-      <JobApplicants />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/notifications"
-  element={
-    <ProtectedRoute>
-      <Notifications />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/admin-dashboard"
-  element={
-    <ProtectedRoute role="admin">
-      <AdminDashboard />
-    </ProtectedRoute>
-  }
-/>
-
-<Route path="/forgot-password" element={<ForgotPassword />} />
-<Route path="/verify-otp" element={<VerifyOTP />} />
-<Route path="/reset-password" element={<ResetPassword />} />
+        {/* Fallback route - MUST be last */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );

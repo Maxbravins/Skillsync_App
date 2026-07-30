@@ -1,6 +1,6 @@
 import Application from "../models/application.model.js";
-import Job from "../models/Job.model.js";
-import Notification from "../models/Notification.model.js";
+import Job from "../models/job.model.js";
+import Notification from "../models/notification.model.js";
 
 // Apply for a job
 export const applyForJob = async (req, res) => {
