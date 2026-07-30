@@ -1,5 +1,6 @@
 import useAuth from "../../hooks/useAuth";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import { User, Mail, Shield } from "lucide-react";
 
 const Profile = () => {
@@ -79,6 +80,7 @@ const Profile = () => {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

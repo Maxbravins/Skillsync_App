@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Briefcase, Clock3, CheckCircle, XCircle } from "lucide-react";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import { getMyApplications } from "../../services/application.service";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -36,8 +37,8 @@ const MyApplications = () => {
     <>
       <Navbar />
 
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
-        <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
+        <div className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
           <div className="mb-10">
             <h1 className="text-4xl font-bold">{t("applications")}</h1>
             <p className="text-[var(--text-secondary)] mt-2">
@@ -112,6 +113,7 @@ const MyApplications = () => {
           )}
         </div>
       </div>
+      <Footer />
     </>
   );
 };

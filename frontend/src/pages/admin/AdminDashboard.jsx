@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { FaUsers, FaBriefcase, FaFileAlt, FaCheckCircle } from "react-icons/fa";
 import api from "../../services/api";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -68,10 +69,10 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-6 py-10">
+      <div className="flex-1 max-w-7xl mx-auto px-6 py-10 w-full">
         <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
         {/* Stats Cards */}
@@ -230,6 +231,7 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

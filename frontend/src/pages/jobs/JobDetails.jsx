@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Briefcase, DollarSign, User, Calendar } from "lucide-react";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import { getJobById } from "../../services/job.service";
 import { applyForJob } from "../../services/application.service";
 import useAuth from "../../hooks/useAuth";
@@ -60,8 +61,8 @@ const JobDetails = () => {
     <>
       <Navbar />
 
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
-        <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
+        <div className="flex-1 max-w-5xl mx-auto px-6 py-10 w-full">
           <button
             onClick={() => navigate("/jobs")}
             className="text-cyan-400 hover:text-cyan-300 mb-8 font-medium"
@@ -148,6 +149,7 @@ const JobDetails = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 };
