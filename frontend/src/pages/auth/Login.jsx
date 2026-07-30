@@ -31,11 +31,22 @@ const Login = () => {
       const data = await loginUser(formData);
       login(data.user, data.token);
 
-      if (data.user.role === "client") {
-        navigate("/client-dashboard");
-      } else {
-        navigate("/developer-dashboard");
-      }
+      switch (data.user.role) {
+  case "admin":
+    navigate("/admin-dashboard");
+    break;
+
+  case "client":
+    navigate("/client-dashboard");
+    break;
+
+  case "developer":
+    navigate("/developer-dashboard");
+    break;
+
+  default:
+    navigate("/");
+    }
     } catch (error) {
       setErrorMsg(error.response?.data?.message || "Login failed. Please check your credentials.");
     } finally {

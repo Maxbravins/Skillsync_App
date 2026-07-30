@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { getNotifications, markAsRead } from "../../services/notification.service";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import { Bell, BellOff } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -41,10 +42,10 @@ const Notifications = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
       <Navbar />
 
-      <main className="max-w-3xl mx-auto px-6 py-10">
+      <main className="flex-1 max-w-3xl mx-auto px-6 py-10 w-full">
         <div className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight">
             {t("notifications")}
@@ -108,6 +109,7 @@ const Notifications = () => {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 };

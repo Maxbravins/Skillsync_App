@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createJob } from "../../services/job.service";
 
+
 const CreateJob = () => {
   const navigate = useNavigate();
 

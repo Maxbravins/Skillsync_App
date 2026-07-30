@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getClientDashboard } from "../../services/dashboard.service";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import { useLanguage } from "../../context/LanguageContext";
 
 const ClientDashboard = () => {
@@ -25,10 +26,9 @@ const ClientDashboard = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
-      <Navbar />
+    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
 
-      <main className="max-w-7xl mx-auto px-6 py-10">
+     <main className="flex-1 max-w-7xl mx-auto px-6 py-10 w-full">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Client {t("dashboard")}</h1>
@@ -159,6 +159,7 @@ const ClientDashboard = () => {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Search, Briefcase, DollarSign, Code } from "lucide-react";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import { getAllJobs } from "../../services/job.service";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -48,8 +49,8 @@ const BrowseJobs = () => {
     <>
       <Navbar />
 
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
-        <div className="max-w-7xl mx-auto px-6 py-10">
+      <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
+        <div className="flex-1 max-w-7xl mx-auto px-6 py-10 w-full">
           <div className="mb-10">
             <h1 className="text-4xl font-bold">{t("browseJobs")}</h1>
             <p className="text-[var(--text-secondary)] mt-2">
@@ -159,6 +160,7 @@ const BrowseJobs = () => {
           )}
         </div>
       </div>
+      <Footer />
     </>
   );
 };

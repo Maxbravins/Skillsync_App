@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { getMyJobs, deleteJob } from "../../services/job.service";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 const MyJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -55,10 +56,10 @@ const MyJobs = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto p-6 py-10">
+      <div className="flex-1 max-w-6xl mx-auto p-6 py-10 w-full">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
           <h1 className="text-3xl font-bold">My Posted Jobs</h1>
@@ -166,6 +167,7 @@ const MyJobs = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
