@@ -1,6 +1,7 @@
 import Application from "../models/application.model.js";
 import Job from "../models/job.model.js";
 import Notification from "../models/notification.model.js";
+import { sendApplicationEmail, sendAcceptanceEmail } from "../services/email.service.js";
 
 // Apply for a job
 export const applyForJob = async (req, res) => {
@@ -9,7 +10,10 @@ export const applyForJob = async (req, res) => {
     const { jobId } = req.params;
 
     // Check if job exists
-    const job = await Job.findById(jobId);
+        const job = await Job.findById(jobId).populate(
+        "client",
+        "username email"
+      );
 
     if (!job) {
       return res.status(404).json({
@@ -39,23 +43,31 @@ export const applyForJob = async (req, res) => {
       coverLetter,
     });
 
-    // Populate developer username
-    await application.populate(
-      "developer",
-      "username"
-    );
+   // Populate developer username
+      await application.populate(
+        "developer",
+        "username"
+      );
 
-    // Create notification for client
-    await Notification.create({
-      user: job.client,
-      message: `${application.developer.username} applied for your job "${job.title}".`,
-    });
+      // Create notification for client
+      await Notification.create({
+        user: job.client._id,
+        message: `${application.developer.username} applied for your job "${job.title}".`,
+      });
 
-    res.status(201).json({
-      success: true,
-      message: "Application submitted successfully",
-      application,
-    });
+      // Send email to client
+      await sendApplicationEmail({
+        email: job.client.email,
+        clientName: job.client.username,
+        developerName: application.developer.username,
+        jobTitle: job.title,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Application submitted successfully",
+        application,
+      });
 
   } catch (error) {
     res.status(500).json({
@@ -170,18 +182,28 @@ export const updateApplicationStatus = async (req, res) => {
     }
 
     application.status = status;
-await application.save();
+        await application.save();
 
-await application.populate("job", "title");
+        await application.populate("job", "title");
+        await application.populate("developer", "username email");
 
-// Create notification for developer
-    await Notification.create({
-  user: application.developer,
-  message:
-    status === "accepted"
-      ? "Congratulations! Your application has been accepted."
-      : "Your application has been rejected.",
-});
+        // Create notification
+        await Notification.create({
+          user: application.developer._id,
+          message:
+            status === "accepted"
+              ? "Congratulations! Your application has been accepted."
+              : "Your application has been rejected.",
+        });
+
+        // Send email only if accepted
+        if (status === "accepted") {
+          await sendAcceptanceEmail({
+            email: application.developer.email,
+            developerName: application.developer.username,
+            jobTitle: application.job.title,
+          });
+        }
 
     res.status(200).json({
       success: true,

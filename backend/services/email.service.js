@@ -60,3 +60,117 @@ export const sendResetSuccessEmail = async (email) => {
 
   await transporter.sendMail(mailOptions);
 };
+
+export const sendApplicationEmail = async ({
+  email,
+  clientName,
+  developerName,
+  jobTitle,
+}) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "New Job Application - SkillSync",
+      html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+        <h2 style="color:#06b6d4;">SkillSync</h2>
+
+        <p>Hello <strong>${clientName}</strong>,</p>
+
+        <p>
+          A developer has submitted an application for your job posting.
+        </p>
+
+        <table style="width:100%;margin-top:20px;border-collapse:collapse;">
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Developer</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">${developerName}</td>
+          </tr>
+
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Job</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">${jobTitle}</td>
+          </tr>
+        </table>
+
+        <p style="margin-top:25px;">
+          Log in to SkillSync to review this application.
+        </p>
+
+        <hr>
+
+        <p style="font-size:12px;color:#888;">
+          © 2026 SkillSync. All rights reserved.
+        </p>
+
+      </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
+
+export const sendAcceptanceEmail = async ({
+  email,
+  developerName,
+  jobTitle,
+}) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Congratulations! Your Application Was Accepted",
+
+      html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #ddd;border-radius:10px;">
+
+        <h2 style="color:#06b6d4;text-align:center;">
+          SkillSync
+        </h2>
+
+        <h3 style="color:#16a34a;">
+          Congratulations ${developerName}! 
+        </h3>
+
+        <p>
+          We are pleased to inform you that your application has been
+          <strong>accepted</strong>.
+        </p>
+
+        <table style="width:100%;border-collapse:collapse;margin-top:20px;">
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Job</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">${jobTitle}</td>
+          </tr>
+        </table>
+
+        <p style="margin-top:25px;">
+          Please log into your SkillSync account to view the next steps
+          and communicate with the client.
+        </p>
+
+        <hr>
+
+        <p style="font-size:12px;color:#888;text-align:center;">
+          © 2026 SkillSync. All rights reserved.
+        </p>
+
+      </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
