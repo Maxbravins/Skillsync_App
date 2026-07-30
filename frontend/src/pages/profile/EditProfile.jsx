@@ -27,10 +27,10 @@ const EditProfile = () => {
   const [profilePicture, setProfilePicture] = useState(null);
   const [resume, setResume] = useState(null);
   const [preview, setPreview] = useState(
-    user?.profilePicture
-      ? `http://localhost:5000${user.profilePicture}`
-      : null
-  );
+  user?.profilePicture
+    ? `${import.meta.env.VITE_API_URL.replace("/api", "")}${user.profilePicture}`
+    : null
+);
 
   const [loading, setLoading] = useState(false);
 
