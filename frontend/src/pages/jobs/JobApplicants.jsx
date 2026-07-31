@@ -183,7 +183,7 @@ const JobApplicants = () => {
 
               {application.isPaid && (
                 <div className="mt-6 text-green-400 font-semibold">
-                  ✅ Developer Paid
+                   Developer Paid
                 </div>
               )}
             </div>
