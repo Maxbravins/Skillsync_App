@@ -72,54 +72,58 @@ const ClientDashboard = () => {
                 {t("dashboardStatistics")}
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <Link
-                  to="/my-jobs"
-                  className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 transition"
+                  to="/applications/all"
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 hover:scale-105 transition"
                 >
                   <p className="text-cyan-400 uppercase text-sm font-semibold">
                     {t("applications")}
                   </p>
+
                   <h3 className="text-4xl font-bold mt-4">
                     {stats?.totalApplications || 0}
                   </h3>
                 </Link>
 
                 <Link
-                  to="/my-jobs"
-                  className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-yellow-500 transition"
-                >
-                  <p className="text-yellow-400 uppercase text-sm font-semibold">
-                    {t("pending")}
-                  </p>
-                  <h3 className="text-4xl font-bold mt-4">
-                    {stats?.pendingApplications || 0}
-                  </h3>
-                </Link>
+                    to="/applications/pending"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-yellow-500 hover:scale-105 transition"
+                  >
+                    <p className="text-yellow-400 uppercase text-sm font-semibold">
+                      {t("pending")}
+                    </p>
+
+                    <h3 className="text-4xl font-bold mt-4">
+                      {stats?.pendingApplications || 0}
+                    </h3>
+                  </Link>
 
                 <Link
-                  to="/my-jobs"
-                  className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-green-500 transition"
+                  to="/applications/accepted"
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-green-500 hover:scale-105 transition"
                 >
                   <p className="text-green-400 uppercase text-sm font-semibold">
                     {t("accepted")}
                   </p>
+
                   <h3 className="text-4xl font-bold mt-4">
                     {stats?.acceptedApplications || 0}
                   </h3>
                 </Link>
 
                 <Link
-                  to="/my-jobs"
-                  className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-red-500 transition"
-                >
-                  <p className="text-red-400 uppercase text-sm font-semibold">
-                    {t("rejected")}
-                  </p>
-                  <h3 className="text-4xl font-bold mt-4">
-                    {stats?.rejectedApplications || 0}
-                  </h3>
-                </Link>
+                to="/applications/rejected"
+                className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-red-500 hover:scale-105 transition"
+              >
+                <p className="text-red-400 uppercase text-sm font-semibold">
+                  {t("rejected")}
+                </p>
+
+                <h3 className="text-4xl font-bold mt-4">
+                  {stats?.rejectedApplications || 0}
+                </h3>
+              </Link>
               </div>
             </section>
 
