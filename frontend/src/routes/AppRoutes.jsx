@@ -20,6 +20,7 @@ import ResetPassword from "../pages/auth/ResetPassword";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminReports from "../pages/admin/AdminReports";
 import EditProfile from "../pages/profile/EditProfile";
+import Payment from "./pages/client/Payment";
 
 const AppRoutes = () => {
   return (
@@ -156,6 +157,11 @@ const AppRoutes = () => {
               <AdminReports />
             </ProtectedRoute>
           }
+        />
+
+        <Route
+          path="/payment/:applicationId"
+          element={<Payment />}
         />
 
         {/* Fallback route - MUST be last */}

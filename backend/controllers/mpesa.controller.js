@@ -1,6 +1,7 @@
 import Transaction from "../models/transaction.model.js";
 import Application from "../models/application.model.js";
 import Job from "../models/job.model.js";
+import Notification from "../models/notification.model.js";
 import { initiateSTKPush } from "../services/mpesa.service.js";
 
 export const initiatePayment = async (req, res) => {
@@ -15,9 +16,9 @@ export const initiatePayment = async (req, res) => {
       });
     }
 
-    const application = await Application.findById(applicationId).populate(
-      "job"
-    );
+    const application = await Application.findById(applicationId)
+      .populate("job")
+      .populate("developer", "username email");
 
     if (!application) {
       return res.status(404).json({
@@ -29,7 +30,14 @@ export const initiatePayment = async (req, res) => {
     if (application.status !== "accepted") {
       return res.status(400).json({
         success: false,
-        message: "Only accepted applications can be paid for",
+        message: "Only accepted applications can be paid for.",
+      });
+    }
+
+    if (application.paymentStatus === "paid") {
+      return res.status(400).json({
+        success: false,
+        message: "This application has already been paid.",
       });
     }
 
@@ -38,19 +46,21 @@ export const initiatePayment = async (req, res) => {
     if (job.client.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized to pay for this job",
+        message: "Not authorized.",
       });
     }
 
-    const existing = await Transaction.findOne({
+    const existingTransaction = await Transaction.findOne({
       application: application._id,
-      status: "completed",
+      status: {
+        $in: ["pending", "completed"],
+      },
     });
 
-    if (existing) {
+    if (existingTransaction) {
       return res.status(400).json({
         success: false,
-        message: "This job has already been paid for",
+        message: "A payment already exists for this application.",
       });
     }
 
@@ -65,7 +75,7 @@ export const initiatePayment = async (req, res) => {
       application: application._id,
       job: job._id,
       client: req.user.id,
-      developer: application.developer,
+      developer: application.developer._id,
       amount: job.budget,
       phoneNumber,
       status: "pending",
@@ -73,13 +83,19 @@ export const initiatePayment = async (req, res) => {
       checkoutRequestID: stkResponse.CheckoutRequestID,
     });
 
+    application.transaction = transaction._id;
+    application.paymentStatus = "pending";
+    await application.save();
+
     res.status(200).json({
       success: true,
-      message: "STK Push sent. Check your phone to complete payment.",
-      transactionId: transaction._id,
-      checkoutRequestID: stkResponse.CheckoutRequestID,
+      message: "STK Push sent successfully.",
+      transaction,
     });
+
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({
       success: false,
       message: error.message,
@@ -92,46 +108,119 @@ export const mpesaCallback = async (req, res) => {
     const callback = req.body?.Body?.stkCallback;
 
     if (!callback) {
-      return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
+      return res.status(200).json({
+        ResultCode: 0,
+        ResultDesc: "Accepted",
+      });
     }
 
-    const { CheckoutRequestID, ResultCode, ResultDesc, CallbackMetadata } =
-      callback;
+    const {
+      CheckoutRequestID,
+      ResultCode,
+      ResultDesc,
+      CallbackMetadata,
+    } = callback;
 
     const transaction = await Transaction.findOne({
       checkoutRequestID: CheckoutRequestID,
     });
 
     if (!transaction) {
-      return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
+      return res.status(200).json({
+        ResultCode: 0,
+        ResultDesc: "Accepted",
+      });
     }
 
+    transaction.resultCode = ResultCode;
+    transaction.resultDesc = ResultDesc;
+
     if (ResultCode === 0) {
-      const items = CallbackMetadata?.Item || [];
-      const receipt = items.find(
+      const metadata = CallbackMetadata?.Item || [];
+
+      const receipt = metadata.find(
         (item) => item.Name === "MpesaReceiptNumber"
       );
 
       transaction.status = "completed";
-      transaction.mpesaReceiptNumber = receipt?.Value || "";
-      transaction.resultDesc = ResultDesc;
+      transaction.mpesaReceiptNumber =
+        receipt?.Value || "";
+      transaction.paidAt = new Date();
+
+      await transaction.save();
+
+      const application = await Application.findById(
+        transaction.application
+      );
+
+      if (application) {
+        application.paymentStatus = "paid";
+        application.paidAt = new Date();
+        application.transaction = transaction._id;
+
+        await application.save();
+      }
+
+      const job = await Job.findById(transaction.job)
+        .populate("client", "username")
+        .populate("developer", "username email");
+
+      if (job) {
+        await Notification.create({
+          user: transaction.client,
+          message: `Payment for "${job.title}" was completed successfully.`,
+        });
+
+        await Notification.create({
+          user: transaction.developer,
+          message: `You have received payment for "${job.title}".`,
+        });
+
+        // We'll add payment confirmation emails here later.
+      }
+
     } else {
       transaction.status = "failed";
-      transaction.resultDesc = ResultDesc;
+      await transaction.save();
+
+      const application = await Application.findById(
+        transaction.application
+      );
+
+      if (application) {
+        application.paymentStatus = "unpaid";
+        application.transaction = null;
+
+        await application.save();
+      }
+
+      await Notification.create({
+        user: transaction.client,
+        message: `Payment failed. ${ResultDesc}`,
+      });
     }
 
-    await transaction.save();
+    return res.status(200).json({
+      ResultCode: 0,
+      ResultDesc: "Accepted",
+    });
 
-    res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
   } catch (error) {
-    console.log(error);
-    res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
+    console.error(error);
+
+    return res.status(200).json({
+      ResultCode: 0,
+      ResultDesc: "Accepted",
+    });
   }
 };
-
+// Get single transaction
 export const getTransactionStatus = async (req, res) => {
   try {
-    const transaction = await Transaction.findById(req.params.id);
+    const transaction = await Transaction.findById(req.params.id)
+      .populate("job", "title budget")
+      .populate("client", "username email")
+      .populate("developer", "username email");
 
     if (!transaction) {
       return res.status(404).json({
@@ -141,8 +230,8 @@ export const getTransactionStatus = async (req, res) => {
     }
 
     if (
-      transaction.client.toString() !== req.user.id &&
-      transaction.developer.toString() !== req.user.id &&
+      transaction.client._id.toString() !== req.user.id &&
+      transaction.developer._id.toString() !== req.user.id &&
       req.user.role !== "admin"
     ) {
       return res.status(403).json({
@@ -155,6 +244,39 @@ export const getTransactionStatus = async (req, res) => {
       success: true,
       transaction,
     });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+// Get payment history
+export const getMyTransactions = async (req, res) => {
+  try {
+    let filter = {};
+
+    if (req.user.role === "client") {
+      filter.client = req.user.id;
+    } else if (req.user.role === "developer") {
+      filter.developer = req.user.id;
+    }
+
+    const transactions = await Transaction.find(filter)
+      .populate("job", "title budget")
+      .populate("client", "username")
+      .populate("developer", "username")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: transactions.length,
+      transactions,
+    });
+
   } catch (error) {
     res.status(500).json({
       success: false,

@@ -5,6 +5,8 @@ import {
   updateApplicationStatus,
 } from "../../services/application.service";
 
+import { initiatePayment } from "../../services/mpesa.service";
+
 const JobApplicants = () => {
   const { status = "all" } = useParams();
 
@@ -39,6 +41,30 @@ const JobApplicants = () => {
     }
   };
 
+  const handlePayment = async (applicationId) => {
+    const phoneNumber = prompt(
+      "Enter M-Pesa Number (e.g. 0712345678)"
+    );
+
+    if (!phoneNumber) return;
+
+    try {
+      const res = await initiatePayment(
+        applicationId,
+        phoneNumber
+      );
+
+      alert(res.message);
+
+      fetchApplications();
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Payment initiation failed."
+      );
+    }
+  };
+
   const filteredApplications = applications.filter((app) => {
     if (status === "all") return true;
     return app.status === status;
@@ -46,7 +72,6 @@ const JobApplicants = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white py-8 px-6">
-
       <div className="max-w-6xl mx-auto">
 
         <h1 className="text-3xl font-bold mb-8">
@@ -65,11 +90,9 @@ const JobApplicants = () => {
               key={application._id}
               className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-6 hover:border-cyan-500 transition"
             >
-
               <div className="flex justify-between items-start">
 
                 <div>
-
                   <h2 className="text-xl font-bold">
                     {application.developer?.username}
                   </h2>
@@ -78,27 +101,34 @@ const JobApplicants = () => {
                     {application.developer?.email}
                   </p>
 
-                  <p className="text-sm text-slate-500 mt-2">
-                    Applied:
-                    {" "}
-                    {new Date(application.createdAt).toLocaleDateString()}
+                  <p className="text-lg font-semibold text-cyan-400 mt-2">
+                    {application.job?.title}
                   </p>
 
+                  <p className="text-slate-400">
+                    Budget: KES {application.job?.budget}
+                  </p>
+
+                  <p className="text-sm text-slate-500 mt-2">
+                    Applied{" "}
+                    {new Date(
+                      application.createdAt
+                    ).toLocaleDateString()}
+                  </p>
                 </div>
 
                 <span
                   className={`px-4 py-1 rounded-full text-sm font-semibold
-                  ${
-                    application.status === "pending"
-                      ? "bg-yellow-500/20 text-yellow-400"
-                      : application.status === "accepted"
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-red-500/20 text-red-400"
-                  }`}
+                    ${
+                      application.status === "pending"
+                        ? "bg-yellow-500/20 text-yellow-400"
+                        : application.status === "accepted"
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-red-500/20 text-red-400"
+                    }`}
                 >
                   {application.status}
                 </span>
-
               </div>
 
               <hr className="border-slate-800 my-5" />
@@ -113,7 +143,6 @@ const JobApplicants = () => {
 
               {application.status === "pending" && (
                 <div className="flex gap-4 mt-6">
-
                   <button
                     onClick={() =>
                       handleStatus(
@@ -121,7 +150,7 @@ const JobApplicants = () => {
                         "accepted"
                       )
                     }
-                    className="bg-green-600 hover:bg-green-700 px-5 py-2 rounded-lg font-medium transition"
+                    className="bg-green-600 hover:bg-green-700 px-5 py-2 rounded-lg"
                   >
                     Accept
                   </button>
@@ -133,20 +162,34 @@ const JobApplicants = () => {
                         "rejected"
                       )
                     }
-                    className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-lg font-medium transition"
+                    className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-lg"
                   >
                     Reject
                   </button>
-
                 </div>
               )}
 
+              {application.status === "accepted" &&
+                !application.isPaid && (
+                  <button
+                    onClick={() =>
+                      handlePayment(application._id)
+                    }
+                    className="mt-6 bg-cyan-600 hover:bg-cyan-700 px-5 py-2 rounded-lg font-semibold"
+                  >
+                    Pay Developer
+                  </button>
+                )}
+
+              {application.isPaid && (
+                <div className="mt-6 text-green-400 font-semibold">
+                  ✅ Developer Paid
+                </div>
+              )}
             </div>
           ))
         )}
-
       </div>
-
     </div>
   );
 };
