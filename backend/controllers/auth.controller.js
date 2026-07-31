@@ -1,17 +1,17 @@
-import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import OTP from "../models/OTP.model.js";
+import User from "../models/user.model.js";
 import { sendOTP, sendResetSuccessEmail } from "../services/email.service.js";
-import crypto from "crypto";
-    // Register user
+// Register user
 export const registerUser = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
 
     // check if user exists
-    
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -26,7 +26,7 @@ export const registerUser = async (req, res) => {
     // create user
     const user = await User.create({
       username,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       role,
     });
@@ -40,9 +40,9 @@ export const registerUser = async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "7d",
-      }
+      },
     );
-    
+
     res.status(201).json({
       success: true,
       message: "User registered successfully",
@@ -54,9 +54,7 @@ export const registerUser = async (req, res) => {
         role: user.role,
       },
     });
-  } 
-  
-  catch (error) {
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
@@ -69,8 +67,9 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(400).json({
@@ -96,7 +95,7 @@ export const loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "7d",
-      }
+      },
     );
 
     res.status(200).json({
@@ -118,7 +117,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-    //Logout user
+//Logout user
 
 export const logout = async (req, res) => {
   try {
@@ -137,7 +136,6 @@ export const logout = async (req, res) => {
     });
   }
 };
-
 
 // Get me
 export const getMe = async (req, res) => {
@@ -167,12 +165,13 @@ export const getMe = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    const normalizedEmail = email?.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found" 
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
       });
     }
 
@@ -180,15 +179,17 @@ export const forgotPassword = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+    await OTP.deleteMany({ email: normalizedEmail });
+
     // Save OTP
     await OTP.create({
-      email,
+      email: normalizedEmail,
       otp,
       expiresAt,
     });
 
     // Send email
-    await sendOTP(email, otp);
+    await sendOTP(normalizedEmail, otp);
 
     res.json({
       success: true,
@@ -203,8 +204,9 @@ export const forgotPassword = async (req, res) => {
 export const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
 
-    const otpRecord = await OTP.findOne({ email, otp });
+    const otpRecord = await OTP.findOne({ email: normalizedEmail, otp });
 
     if (!otpRecord) {
       return res.status(400).json({
@@ -232,11 +234,11 @@ export const verifyOTP = async (req, res) => {
       .digest("hex");
 
     await User.findOneAndUpdate(
-      { email },
-      { 
+      { email: normalizedEmail },
+      {
         resetPasswordToken: hashedToken,
         resetPasswordExpires: Date.now() + 15 * 60 * 1000, // 15 minutes
-      }
+      },
     );
 
     res.json({

@@ -3,41 +3,56 @@ dotenv.config();
 
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
+const FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL || "SkillSync <onboarding@resend.dev>";
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "SkillSync <onboarding@resend.dev>";
+export const sendEmail = async ({ to, subject, html }) => {
+  if (!resend || !process.env.RESEND_API_KEY) {
+    console.warn("Email delivery skipped: RESEND_API_KEY is not configured.");
+    return { success: false, skipped: true, reason: "missing_api_key" };
+  }
 
-export const sendOTP = async (email, otp) => {
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
-      to: email,
-      subject: "SkillSync - Password Reset OTP",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-          <h2 style="color: #0ea5e9; text-align: center;">SkillSync</h2>
-          <h3 style="text-align: center;">Password Reset Request</h3>
-          <p>You requested to reset your password. Use the OTP below:</p>
-          <div style="text-align: center; padding: 16px; font-size: 32px; font-weight: bold; letter-spacing: 8px; background: #f0f4f8; border-radius: 8px; margin: 16px 0;">
-            ${otp}
-          </div>
-          <p style="color: #666; font-size: 14px;">This OTP will expire in 10 minutes.</p>
-          <p style="color: #666; font-size: 14px;">If you didn't request this, please ignore this email.</p>
-          <hr style="border: 1px solid #e0e0e0; margin: 20px 0;" />
-          <p style="color: #999; font-size: 12px; text-align: center;">© 2026 SkillSync. All rights reserved.</p>
-        </div>
-      `,
+      to,
+      subject,
+      html,
     });
-    return true;
+
+    return { success: true, skipped: false };
   } catch (error) {
-    console.error("Email error:", error);
-    return false;
+    console.error("Email delivery failed:", error);
+    return { success: false, skipped: false, reason: error.message };
   }
 };
 
+export const sendOTP = async (email, otp) => {
+  return sendEmail({
+    to: email,
+    subject: "SkillSync - Password Reset OTP",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: #0ea5e9; text-align: center;">SkillSync</h2>
+        <h3 style="text-align: center;">Password Reset Request</h3>
+        <p>You requested to reset your password. Use the OTP below:</p>
+        <div style="text-align: center; padding: 16px; font-size: 32px; font-weight: bold; letter-spacing: 8px; background: #f0f4f8; border-radius: 8px; margin: 16px 0;">
+          ${otp}
+        </div>
+        <p style="color: #666; font-size: 14px;">This OTP will expire in 10 minutes.</p>
+        <p style="color: #666; font-size: 14px;">If you didn't request this, please ignore this email.</p>
+        <hr style="border: 1px solid #e0e0e0; margin: 20px 0;" />
+        <p style="color: #999; font-size: 12px; text-align: center;">© 2026 SkillSync. All rights reserved.</p>
+      </div>
+    `,
+  });
+};
+
 export const sendResetSuccessEmail = async (email) => {
-  await resend.emails.send({
-    from: FROM_EMAIL,
+  return sendEmail({
     to: email,
     subject: "SkillSync - Password Reset Successful",
     html: `
@@ -59,12 +74,10 @@ export const sendApplicationEmail = async ({
   developerName,
   jobTitle,
 }) => {
-  try {
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to: email,
-      subject: "New Job Application - SkillSync",
-      html: `
+  return sendEmail({
+    to: email,
+    subject: "New Job Application - SkillSync",
+    html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
         <h2 style="color:#06b6d4;">SkillSync</h2>
         <p>Hello <strong>${clientName}</strong>,</p>
@@ -83,13 +96,8 @@ export const sendApplicationEmail = async ({
         <hr>
         <p style="font-size:12px;color:#888;">© 2026 SkillSync. All rights reserved.</p>
       </div>
-      `,
-    });
-    return true;
-  } catch (error) {
-    console.error(error);
-    return false;
-  }
+    `,
+  });
 };
 
 export const sendAcceptanceEmail = async ({
@@ -97,12 +105,10 @@ export const sendAcceptanceEmail = async ({
   developerName,
   jobTitle,
 }) => {
-  try {
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to: email,
-      subject: "Congratulations! Your Application Was Accepted",
-      html: `
+  return sendEmail({
+    to: email,
+    subject: "Congratulations! Your Application Was Accepted",
+    html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #ddd;border-radius:10px;">
         <h2 style="color:#06b6d4;text-align:center;">SkillSync</h2>
         <h3 style="color:#16a34a;">Congratulations ${developerName}!</h3>
@@ -117,11 +123,6 @@ export const sendAcceptanceEmail = async ({
         <hr>
         <p style="font-size:12px;color:#888;text-align:center;">© 2026 SkillSync. All rights reserved.</p>
       </div>
-      `,
-    });
-    return true;
-  } catch (error) {
-    console.error(error);
-    return false;
-  }
+    `,
+  });
 };
