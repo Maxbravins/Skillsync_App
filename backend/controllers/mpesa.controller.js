@@ -1,7 +1,7 @@
-import Transaction from "../models/transaction.model.js";
 import Application from "../models/application.model.js";
 import Job from "../models/job.model.js";
 import Notification from "../models/notification.model.js";
+import Transaction from "../models/transaction.model.js";
 import { initiateSTKPush } from "../services/mpesa.service.js";
 
 export const initiatePayment = async (req, res) => {
@@ -64,12 +64,22 @@ export const initiatePayment = async (req, res) => {
       });
     }
 
-    const stkResponse = await initiateSTKPush({
-      phoneNumber,
-      amount: job.budget,
-      accountReference: `SkillSync-${job._id.toString().slice(-6)}`,
-      transactionDesc: `Payment for ${job.title}`,
-    });
+    let stkResponse;
+
+    try {
+      stkResponse = await initiateSTKPush({
+        phoneNumber,
+        amount: job.budget,
+        accountReference: `SkillSync-${job._id.toString().slice(-6)}`,
+        transactionDesc: `Payment for ${job.title}`,
+      });
+    } catch (error) {
+      return res.status(502).json({
+        success: false,
+        message:
+          error.message || "M-Pesa could not initiate the payment request.",
+      });
+    }
 
     const transaction = await Transaction.create({
       application: application._id,
@@ -92,13 +102,12 @@ export const initiatePayment = async (req, res) => {
       message: "STK Push sent successfully.",
       transaction,
     });
-
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Payment initiation failed.",
     });
   }
 };
@@ -114,12 +123,8 @@ export const mpesaCallback = async (req, res) => {
       });
     }
 
-    const {
-      CheckoutRequestID,
-      ResultCode,
-      ResultDesc,
-      CallbackMetadata,
-    } = callback;
+    const { CheckoutRequestID, ResultCode, ResultDesc, CallbackMetadata } =
+      callback;
 
     const transaction = await Transaction.findOne({
       checkoutRequestID: CheckoutRequestID,
@@ -139,19 +144,16 @@ export const mpesaCallback = async (req, res) => {
       const metadata = CallbackMetadata?.Item || [];
 
       const receipt = metadata.find(
-        (item) => item.Name === "MpesaReceiptNumber"
+        (item) => item.Name === "MpesaReceiptNumber",
       );
 
       transaction.status = "completed";
-      transaction.mpesaReceiptNumber =
-        receipt?.Value || "";
+      transaction.mpesaReceiptNumber = receipt?.Value || "";
       transaction.paidAt = new Date();
 
       await transaction.save();
 
-      const application = await Application.findById(
-        transaction.application
-      );
+      const application = await Application.findById(transaction.application);
 
       if (application) {
         application.paymentStatus = "paid";
@@ -178,14 +180,11 @@ export const mpesaCallback = async (req, res) => {
 
         // We'll add payment confirmation emails here later.
       }
-
     } else {
       transaction.status = "failed";
       await transaction.save();
 
-      const application = await Application.findById(
-        transaction.application
-      );
+      const application = await Application.findById(transaction.application);
 
       if (application) {
         application.paymentStatus = "unpaid";
@@ -204,7 +203,6 @@ export const mpesaCallback = async (req, res) => {
       ResultCode: 0,
       ResultDesc: "Accepted",
     });
-
   } catch (error) {
     console.error(error);
 
@@ -244,7 +242,6 @@ export const getTransactionStatus = async (req, res) => {
       success: true,
       transaction,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -252,7 +249,6 @@ export const getTransactionStatus = async (req, res) => {
     });
   }
 };
-
 
 // Get payment history
 export const getMyTransactions = async (req, res) => {
@@ -276,7 +272,6 @@ export const getMyTransactions = async (req, res) => {
       count: transactions.length,
       transactions,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
