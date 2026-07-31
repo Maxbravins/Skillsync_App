@@ -4,13 +4,21 @@ dotenv.config();
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
-
+    transporter.verify((error, success) => {
+      if (error) {
+        console.error("Email configuration error:", error);
+      } else {
+        console.log("Email server is ready");
+      }
+    });
 export const sendOTP = async (email, otp) => {
   try {
     const mailOptions = {
@@ -166,10 +174,12 @@ export const sendAcceptanceEmail = async ({
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions).catch(console.error);
 
     return true;
-  } catch (error) {
+
+  }
+   catch (error) {
     console.error(error);
     return false;
   }

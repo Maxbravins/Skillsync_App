@@ -170,9 +170,18 @@ export const updateApplicationStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
+    if (!["accepted", "rejected"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
     const application = await Application.findById(
       req.params.applicationId
-    );
+    )
+      .populate("job")
+      .populate("developer", "username email");
 
     if (!application) {
       return res.status(404).json({
@@ -181,36 +190,65 @@ export const updateApplicationStatus = async (req, res) => {
       });
     }
 
+    // Prevent updating an application that is already finalized
+    if (application.status !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: `Application has already been ${application.status}.`,
+      });
+    }
+
     application.status = status;
-        await application.save();
+    await application.save();
 
-        await application.populate("job", "title");
-        await application.populate("developer", "username email");
-
-        // Create notification
-        await Notification.create({
-          user: application.developer._id,
-          message:
-            status === "accepted"
-              ? "Congratulations! Your application has been accepted."
-              : "Your application has been rejected.",
-        });
-
-        // Send email only if accepted
-        if (status === "accepted") {
-          await sendAcceptanceEmail({
-            email: application.developer.email,
-            developerName: application.developer.username,
-            jobTitle: application.job.title,
-          });
+    // If one developer is accepted, reject every other pending applicant
+    if (status === "accepted") {
+      await Application.updateMany(
+        {
+          job: application.job._id,
+          _id: { $ne: application._id },
+          status: "pending",
+        },
+        {
+          $set: {
+            status: "rejected",
+          },
         }
+      );
+    }
+
+    // Prevent duplicate notifications
+    const message =
+      status === "accepted"
+        ? "Congratulations! Your application has been accepted."
+        : "Your application has been rejected.";
+
+    const notificationExists = await Notification.findOne({
+      user: application.developer._id,
+      message,
+    });
+
+    if (!notificationExists) {
+      await Notification.create({
+        user: application.developer._id,
+        message,
+      });
+    }
+
+    // Send acceptance email only once
+    if (status === "accepted") {
+      await sendAcceptanceEmail({
+        email: application.developer.email,
+        developerName: application.developer.username,
+        jobTitle: application.job.title,
+      });
+    }
 
     res.status(200).json({
       success: true,
-      message: "Application status updated",
+      message: "Application status updated successfully",
       application,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
