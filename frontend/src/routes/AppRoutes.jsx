@@ -22,6 +22,8 @@ import Notifications from "../pages/notifications/Notifications";
 import EditProfile from "../pages/profile/EditProfile";
 import Profile from "../pages/profile/Profile";
 
+
+
 const AppRoutes = () => {
   return (
     <BrowserRouter>
