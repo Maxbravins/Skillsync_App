@@ -40,8 +40,8 @@ const Navbar = () => {
   ).length;
 
   return (
-    <nav className="sticky top-0 z-50 bg-[var(--bg-secondary)]/90 backdrop-blur border-b border-[var(--border-color)] px-4 py-3 shadow-lg sm:px-6">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+    <nav className="sticky top-0 z-50 bg-[var(--bg-secondary)]/90 backdrop-blur border-b border-[var(--border-color)] px-3 py-3 shadow-lg sm:px-6">
+      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
         {/* Logo */}
         <Link
           to={
@@ -51,7 +51,7 @@ const Navbar = () => {
                 ? "/admin-dashboard"
                 : "/developer-dashboard"
           }
-          className="flex items-center gap-3"
+          className="flex min-w-0 items-center gap-3"
         >
           <img
             src="/logo.png"
@@ -59,12 +59,12 @@ const Navbar = () => {
             className="w-10 h-10 rounded-xl ring-2 ring-cyan-500/40"
           />
 
-          <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-indigo-500 bg-clip-text text-transparent">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-bold bg-gradient-to-r from-cyan-400 to-indigo-500 bg-clip-text text-transparent sm:text-xl">
               SkillSync
             </h1>
 
-            <p className="text-[11px] text-[var(--text-secondary)]">
+            <p className="truncate text-[10px] text-[var(--text-secondary)] sm:text-[11px]">
               Freelance Marketplace
             </p>
           </div>
@@ -157,14 +157,14 @@ const Navbar = () => {
         )}
 
         {/* Controls (Theme, Language, Notifications, User) */}
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2 sm:gap-4">
           {/* Language Selector */}
-          <div className="flex items-center gap-1 bg-[var(--bg-primary)] px-2 py-1 rounded-lg border border-[var(--border-color)] text-xs text-[var(--text-primary)]">
+          <div className="flex items-center gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 py-1 text-[10px] text-[var(--text-primary)] sm:text-xs">
             <Globe className="w-4 h-4 text-cyan-400" />
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="bg-transparent outline-none cursor-pointer text-[var(--text-primary)]"
+              className="cursor-pointer bg-transparent text-[10px] outline-none text-[var(--text-primary)] sm:text-xs"
             >
               <option value="en" className="bg-slate-900 text-white">
                 EN
