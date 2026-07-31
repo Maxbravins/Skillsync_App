@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { FaUsers, FaBriefcase, FaFileAlt, FaCheckCircle } from "react-icons/fa";
 import api from "../../services/api";
 import Navbar from "../../components/Navbar";
@@ -105,6 +106,13 @@ const AdminDashboard = () => {
         >
           Export Applications PDF
         </button>
+
+         <Link
+        to="/admin/reports"
+        className="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold transition"
+      >
+        View Reports
+      </Link>
       </div>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

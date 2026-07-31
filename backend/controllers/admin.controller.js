@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import Job from "../models/job.model.js";
 import Application from "../models/application.model.js";
+import Transaction from "../models/transaction.model.js";
 
 // Get admin stats
 export const getStats = async (req, res) => {
@@ -10,6 +11,16 @@ export const getStats = async (req, res) => {
     const totalApplications = await Application.countDocuments();
     const activeJobs = await Job.countDocuments({ status: "open" });
 
+    const revenueResult = await Transaction.aggregate([
+      { $match: { status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+
+    const totalRevenue = revenueResult[0]?.total || 0;
+    const completedTransactions = await Transaction.countDocuments({
+      status: "completed",
+    });
+
     res.status(200).json({
       success: true,
       stats: {
@@ -17,25 +28,9 @@ export const getStats = async (req, res) => {
         totalJobs,
         totalApplications,
         activeJobs,
+        totalRevenue,
+        completedTransactions,
       },
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// Get all users
-export const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find().select("-password").sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      count: users.length,
-      users,
     });
   } catch (error) {
     res.status(500).json({
@@ -108,6 +103,27 @@ export const deleteJob = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Job deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+// Get all transactions
+export const getRecentTransactions = async (req, res) => {
+  try {
+    const transactions = await Transaction.find()
+      .populate("client", "username email")
+      .populate("developer", "username email")
+      .populate("job", "title")
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    res.status(200).json({
+      success: true,
+      transactions,
     });
   } catch (error) {
     res.status(500).json({
