@@ -18,6 +18,7 @@ import ForgotPassword from "../pages/auth/ForgotPassword";
 import VerifyOTP from "../pages/auth/VerifyOTP";
 import ResetPassword from "../pages/auth/ResetPassword";
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminReports from "../pages/admin/AdminReports";
 import EditProfile from "../pages/profile/EditProfile";
 
 const AppRoutes = () => {
@@ -144,6 +145,15 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute role="admin">
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+         <Route
+          path="/admin/reports"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminReports />
             </ProtectedRoute>
           }
         />
