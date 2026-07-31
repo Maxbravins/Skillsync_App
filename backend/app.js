@@ -9,6 +9,7 @@ import notificationRoutes from "./routes/notification.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import errorHandler from "./middleware/error.middleware.js";
 import path from "path";
+import mpesaRoutes from "./routes/mpesa.routes.js";
 import { fileURLToPath } from "url";
 import pdfRoutes from "./routes/pdf.routes.js";
 
@@ -36,6 +37,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/api/mpesa", mpesaRoutes);
 app.use("/api/pdf", pdfRoutes);
 
 // Home route

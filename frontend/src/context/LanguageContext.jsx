@@ -43,6 +43,14 @@ export const translations = {
     pending: "Pending",
     accepted: "Accepted",
     rejected: "Rejected",
+    clientDashboardSubtitle: "Manage your job listings and track developer applications.",
+    dashboardStatistics: "Dashboard Statistics",
+    quickActions: "Quick Actions",
+    loadingDashboard: "Loading dashboard...",
+    createJobDesc: "Publish a new job listing.",
+    myJobsDesc: "View and manage your posted jobs.",
+    profileDesc: "Update your account details.",
+    notificationsDesc: "View all your latest notifications.",
   },
   sw: {
     // Swahili
@@ -79,6 +87,14 @@ export const translations = {
     pending: "Inasubiri",
     accepted: "Imekubaliwa",
     rejected: "Imekataliwa",
+    clientDashboardSubtitle: "Simamia orodha za kazi zako na fuatilia maombi ya wasanidi programu.",
+    dashboardStatistics: "Takwimu za Dashibodi",
+    quickActions: "Vitendo vya Haraka",
+    loadingDashboard: "Inapakia dashibodi...",
+    createJobDesc: "Chapisha orodha mpya ya kazi.",
+    myJobsDesc: "Angalia na simamia kazi ulizochapisha.",
+    profileDesc: "Sasisha maelezo ya akaunti yako.",
+    notificationsDesc: "Angalia arifa zako zote za hivi karibuni.",
   },
   fr: {
     // French
@@ -115,6 +131,14 @@ export const translations = {
     pending: "En attente",
     accepted: "Accepté",
     rejected: "Rejeté",
+    clientDashboardSubtitle: "Gérez vos offres d'emploi et suivez les candidatures des développeurs.",
+    dashboardStatistics: "Statistiques du tableau de bord",
+    quickActions: "Actions rapides",
+    loadingDashboard: "Chargement du tableau de bord...",
+    createJobDesc: "Publier une nouvelle offre d'emploi.",
+    myJobsDesc: "Consultez et gérez vos offres publiées.",
+    profileDesc: "Mettez à jour les détails de votre compte.",
+    notificationsDesc: "Consultez toutes vos dernières notifications.",
   },
 };
 
