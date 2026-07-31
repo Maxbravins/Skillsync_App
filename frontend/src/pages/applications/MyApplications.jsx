@@ -1,13 +1,18 @@
-import { useEffect, useState, useCallback } from "react";
+import { Briefcase, CheckCircle, Clock3, XCircle } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Briefcase, Clock3, CheckCircle, XCircle } from "lucide-react";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import { getMyApplications } from "../../services/application.service";
+import Navbar from "../../components/Navbar";
 import { useLanguage } from "../../context/LanguageContext";
+import useAuth from "../../hooks/useAuth";
+import {
+  getClientApplications,
+  getMyApplications,
+} from "../../services/application.service";
 
 const MyApplications = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -16,14 +21,18 @@ const MyApplications = () => {
 
   const fetchApplications = useCallback(async () => {
     try {
-      const data = await getMyApplications();
+      const data =
+        user?.role === "client"
+          ? await getClientApplications()
+          : await getMyApplications();
+
       setApplications(data.applications || []);
     } catch (error) {
       console.log(error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     fetchApplications();

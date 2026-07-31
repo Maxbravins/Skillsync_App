@@ -92,7 +92,7 @@ const AppRoutes = () => {
         <Route
           path="/my-applications"
           element={
-            <ProtectedRoute role="developer">
+            <ProtectedRoute>
               <MyApplications />
             </ProtectedRoute>
           }
