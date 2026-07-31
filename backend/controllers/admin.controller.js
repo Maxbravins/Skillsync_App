@@ -40,6 +40,26 @@ export const getStats = async (req, res) => {
   }
 };
 
+// Get all users
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // Get all jobs
 export const getAllJobs = async (req, res) => {
   try {
@@ -111,6 +131,7 @@ export const deleteJob = async (req, res) => {
     });
   }
 };
+
 // Get all transactions
 export const getRecentTransactions = async (req, res) => {
   try {
