@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { loginUser } from "../../services/auth.service";
+import { Link, useNavigate } from "react-router-dom";
+import { useLanguage } from "../../context/LanguageContext";
 import useAuth from "../../hooks/useAuth";
-import { useNavigate, Link } from "react-router-dom";
+import { loginUser } from "../../services/auth.service";
 
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -32,23 +34,23 @@ const Login = () => {
       login(data.user, data.token);
 
       switch (data.user.role) {
-  case "admin":
-    navigate("/admin-dashboard");
-    break;
+        case "admin":
+          navigate("/admin-dashboard");
+          break;
 
-  case "client":
-    navigate("/client-dashboard");
-    break;
+        case "client":
+          navigate("/client-dashboard");
+          break;
 
-  case "developer":
-    navigate("/developer-dashboard");
-    break;
+        case "developer":
+          navigate("/developer-dashboard");
+          break;
 
-  default:
-    navigate("/");
-    }
+        default:
+          navigate("/");
+      }
     } catch (error) {
-      setErrorMsg(error.response?.data?.message || "Login failed. Please check your credentials.");
+      setErrorMsg(error.response?.data?.message || t("loginFailed"));
     } finally {
       setLoading(false);
     }
@@ -62,17 +64,15 @@ const Login = () => {
 
       <div className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 p-8 rounded-2xl shadow-2xl relative z-10">
         <div className="flex flex-col items-center mb-8">
-          <img 
-            src="/logo.png" 
-            alt="SkillSync Logo" 
+          <img
+            src="/logo.png"
+            alt="SkillSync Logo"
             className="h-14 w-14 rounded-xl object-cover mb-4 ring-4 ring-cyan-500/20"
           />
           <h1 className="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent tracking-wide">
-            Welcome Back
+            {t("welcomeBack")}
           </h1>
-          <p className="text-slate-400 text-sm mt-2">
-            Enter your credentials to access your account
-          </p>
+          <p className="text-slate-400 text-sm mt-2">{t("welcomeSubtitle")}</p>
         </div>
 
         {errorMsg && (
@@ -83,8 +83,11 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-slate-300 text-sm font-semibold mb-2" htmlFor="email">
-              Email Address
+            <label
+              className="block text-slate-300 text-sm font-semibold mb-2"
+              htmlFor="email"
+            >
+              {t("emailAddress")}
             </label>
             <input
               type="email"
@@ -98,8 +101,11 @@ const Login = () => {
           </div>
 
           <div>
-            <label className="block text-slate-300 text-sm font-semibold mb-2" htmlFor="password">
-              Password
+            <label
+              className="block text-slate-300 text-sm font-semibold mb-2"
+              htmlFor="password"
+            >
+              {t("password")}
             </label>
             <input
               type="password"
@@ -117,7 +123,7 @@ const Login = () => {
               to="/forgot-password"
               className="text-sm text-cyan-400 hover:text-cyan-300 transition"
             >
-              Forgot Password?
+              {t("forgotPassword")}
             </Link>
           </div>
 
@@ -129,16 +135,19 @@ const Login = () => {
             {loading ? (
               <span className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></span>
             ) : (
-              "Sign In"
+              t("signIn")
             )}
           </button>
         </form>
 
         <div className="mt-8 text-center border-t border-slate-800/80 pt-6">
           <p className="text-slate-400 text-sm">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
-              Sign Up
+            {t("dontHaveAccount")}{" "}
+            <Link
+              to="/register"
+              className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+            >
+              {t("signUp")}
             </Link>
           </p>
         </div>

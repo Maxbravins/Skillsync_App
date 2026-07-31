@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useLanguage } from "../../context/LanguageContext";
 import api from "../../services/api";
 
 const VerifyOTP = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
 
   const email = location.state?.email || "";
 
@@ -37,7 +39,7 @@ const VerifyOTP = () => {
         },
       });
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid or expired OTP");
+      setError(err.response?.data?.message || t("invalidOtp"));
     } finally {
       setLoading(false);
     }
@@ -45,15 +47,11 @@ const VerifyOTP = () => {
 
   return (
     <div className="max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-2">Verify OTP</h2>
+      <h2 className="text-2xl font-bold mb-2">{t("verifyOtpTitle")}</h2>
 
-      <p className="text-slate-400 mb-2">
-        Enter the OTP sent to
-      </p>
+      <p className="text-slate-400 mb-2">{t("verifyOtpSubtitle")}</p>
 
-      <p className="text-cyan-400 mb-6 font-semibold">
-        {email}
-      </p>
+      <p className="text-cyan-400 mb-6 font-semibold">{email}</p>
 
       {error && (
         <div className="bg-red-500/20 text-red-400 p-3 rounded-lg mb-4">
@@ -64,7 +62,7 @@ const VerifyOTP = () => {
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder="Enter 6-digit OTP"
+          placeholder={t("otpPlaceholder")}
           value={otp}
           onChange={(e) => setOtp(e.target.value)}
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white mb-4"
@@ -77,7 +75,7 @@ const VerifyOTP = () => {
           disabled={loading}
           className="w-full bg-cyan-500 hover:bg-cyan-600 py-2 rounded-lg disabled:opacity-50 text-white"
         >
-          {loading ? "Verifying..." : "Verify OTP"}
+          {loading ? t("verifyingOtp") : t("verifyOtpTitle")}
         </button>
       </form>
     </div>

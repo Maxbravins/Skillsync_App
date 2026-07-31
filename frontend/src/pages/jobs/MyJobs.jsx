@@ -1,8 +1,9 @@
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
-import { getMyJobs, deleteJob } from "../../services/job.service";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import Navbar from "../../components/Navbar";
+import { useLanguage } from "../../context/LanguageContext";
+import { deleteJob, getMyJobs } from "../../services/job.service";
 
 const MyJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -10,6 +11,7 @@ const MyJobs = () => {
   const [sortBy, setSortBy] = useState("newest");
 
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -28,7 +30,7 @@ const MyJobs = () => {
 
   const handleDelete = async (jobId) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this job listing?"
+      t("confirmDelete") || "Are you sure you want to delete this job listing?",
     );
 
     if (!confirmDelete) return;
@@ -38,7 +40,7 @@ const MyJobs = () => {
       setJobs(jobs.filter((job) => job._id !== jobId));
     } catch (error) {
       console.error("Failed to delete job:", error);
-      alert("Could not delete job. Please try again.");
+      alert(t("deleteError") || "Could not delete job. Please try again.");
     }
   };
 
@@ -62,7 +64,7 @@ const MyJobs = () => {
       <div className="flex-1 max-w-6xl mx-auto p-6 py-10 w-full">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-          <h1 className="text-3xl font-bold">My Posted Jobs</h1>
+          <h1 className="text-3xl font-bold">{t("myPostedJobs")}</h1>
 
           <div className="flex gap-3">
             <select
@@ -70,16 +72,22 @@ const MyJobs = () => {
               onChange={(e) => setSortBy(e.target.value)}
               className="bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg px-3 py-2 outline-none cursor-pointer"
             >
-              <option value="newest" className="bg-slate-900 text-white">Newest</option>
-              <option value="highest" className="bg-slate-900 text-white">Highest Budget</option>
-              <option value="lowest" className="bg-slate-900 text-white">Lowest Budget</option>
+              <option value="newest" className="bg-slate-900 text-white">
+                {t("newest")}
+              </option>
+              <option value="highest" className="bg-slate-900 text-white">
+                {t("highestBudget")}
+              </option>
+              <option value="lowest" className="bg-slate-900 text-white">
+                {t("lowestBudget")}
+              </option>
             </select>
 
             <Link
               to="/create-job"
               className="bg-cyan-500 hover:bg-cyan-600 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition"
             >
-              + Post a New Job
+              + {t("postNewJob")}
             </Link>
           </div>
         </div>
@@ -87,14 +95,12 @@ const MyJobs = () => {
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <p className="text-[var(--text-secondary)] font-medium text-lg">
-              Loading your jobs...
+              {t("loadingYourJobs")}
             </p>
           </div>
         ) : sortedJobs.length === 0 ? (
           <div className="text-center py-12 bg-[var(--bg-secondary)] rounded-xl border border-dashed border-[var(--border-color)]">
-            <p className="text-[var(--text-secondary)]">
-              You haven't posted any jobs yet.
-            </p>
+            <p className="text-[var(--text-secondary)]">{t("noJobsPosted")}</p>
           </div>
         ) : (
           <div className="grid gap-6">
@@ -116,11 +122,12 @@ const MyJobs = () => {
 
                     <div className="flex flex-wrap gap-3 mb-4">
                       <span className="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-md text-sm font-medium">
-                        Budget: KES {job.budget?.toLocaleString()}
+                        {t("budget")}: KES {job.budget?.toLocaleString()}
                       </span>
 
                       <span className="bg-indigo-500/20 text-indigo-400 px-3 py-1 rounded-md text-sm font-medium">
-                        Posted: {new Date(job.createdAt).toLocaleDateString()}
+                        {t("posted")}:{" "}
+                        {new Date(job.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
@@ -144,21 +151,21 @@ const MyJobs = () => {
                       to={`/job-applicants/${job._id}`}
                       className="text-cyan-400 hover:bg-cyan-500/10 border border-cyan-500/30 px-3 py-2 rounded-lg text-sm font-medium transition"
                     >
-                      View Applicants
+                      {t("viewApplicants")}
                     </Link>
 
                     <button
                       onClick={() => navigate(`/edit-job/${job._id}`)}
                       className="text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-color)] px-3 py-2 rounded-lg text-sm font-medium transition"
                     >
-                      Edit
+                      {t("edit")}
                     </button>
 
                     <button
                       onClick={() => handleDelete(job._id)}
                       className="text-red-400 hover:bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-lg text-sm font-medium transition"
                     >
-                      Delete
+                      {t("delete")}
                     </button>
                   </div>
                 </div>

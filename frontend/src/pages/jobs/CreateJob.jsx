@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createJob } from "../../services/job.service";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import Navbar from "../../components/Navbar";
+import { useLanguage } from "../../context/LanguageContext";
+import { createJob } from "../../services/job.service";
 
 const CreateJob = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -29,109 +31,101 @@ const CreateJob = () => {
         title: formData.title,
         description: formData.description,
         budget: Number(formData.budget),
-        skills: formData.skills
-          .split(",")
-          .map((skill) => skill.trim()),
+        skills: formData.skills.split(",").map((skill) => skill.trim()),
       });
 
-      alert("Job created successfully!");
+      alert(t("jobCreatedSuccessfully"));
       navigate("/my-jobs");
     } catch (error) {
-      alert(
-        error.response?.data?.message ||
-          "Failed to create job"
-      );
+      alert(error.response?.data?.message || t("failedToCreateJob"));
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
       <Navbar />
-    <div className="max-w-3xl mx-auto p-6">
-      <div
-        className="p-6 rounded-xl shadow-lg"
-        style={{
-          backgroundColor: "var(--bg-card)",
-          color: "var(--text-primary)",
-        }}
-      >
-        <h1 className="text-3xl font-bold mb-6">
-          Create New Job
-        </h1>
+      <div className="max-w-3xl mx-auto p-6">
+        <div
+          className="p-6 rounded-xl shadow-lg"
+          style={{
+            backgroundColor: "var(--bg-card)",
+            color: "var(--text-primary)",
+          }}
+        >
+          <h1 className="text-3xl font-bold mb-6">{t("createNewJob")}</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="text"
+              name="title"
+              placeholder={t("jobTitle")}
+              value={formData.title}
+              onChange={handleChange}
+              className="w-full rounded-lg p-3 border"
+              style={{
+                backgroundColor: "var(--bg-secondary)",
+                color: "var(--text-primary)",
+                borderColor: "var(--border-color)",
+              }}
+              required
+            />
 
-          <input
-            type="text"
-            name="title"
-            placeholder="Job Title"
-            value={formData.title}
-            onChange={handleChange}
-            className="w-full rounded-lg p-3 border"
-            style={{
-              backgroundColor: "var(--bg-secondary)",
-              color: "var(--text-primary)",
-              borderColor: "var(--border-color)",
-            }}
-            required
-          />
+            <textarea
+              name="description"
+              placeholder={t("jobDescription")}
+              value={formData.description}
+              onChange={handleChange}
+              rows={5}
+              className="w-full rounded-lg p-3 border"
+              style={{
+                backgroundColor: "var(--bg-secondary)",
+                color: "var(--text-primary)",
+                borderColor: "var(--border-color)",
+              }}
+              required
+            />
 
-          <textarea
-            name="description"
-            placeholder="Job Description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={5}
-            className="w-full rounded-lg p-3 border"
-            style={{
-              backgroundColor: "var(--bg-secondary)",
-              color: "var(--text-primary)",
-              borderColor: "var(--border-color)",
-            }}
-            required
-          />
+            <input
+              type="number"
+              name="budget"
+              placeholder={t("budget")}
+              value={formData.budget}
+              onChange={handleChange}
+              className="w-full rounded-lg p-3 border"
+              style={{
+                backgroundColor: "var(--bg-secondary)",
+                color: "var(--text-primary)",
+                borderColor: "var(--border-color)",
+              }}
+              required
+            />
 
-          <input
-            type="number"
-            name="budget"
-            placeholder="Budget"
-            value={formData.budget}
-            onChange={handleChange}
-            className="w-full rounded-lg p-3 border"
-            style={{
-              backgroundColor: "var(--bg-secondary)",
-              color: "var(--text-primary)",
-              borderColor: "var(--border-color)",
-            }}
-            required
-          />
+            <input
+              type="text"
+              name="skills"
+              placeholder="React, Node.js, MongoDB"
+              value={formData.skills}
+              onChange={handleChange}
+              className="w-full rounded-lg p-3 border"
+              style={{
+                backgroundColor: "var(--bg-secondary)",
+                color: "var(--text-primary)",
+                borderColor: "var(--border-color)",
+              }}
+              required
+            />
 
-          <input
-            type="text"
-            name="skills"
-            placeholder="React, Node.js, MongoDB"
-            value={formData.skills}
-            onChange={handleChange}
-            className="w-full rounded-lg p-3 border"
-            style={{
-              backgroundColor: "var(--bg-secondary)",
-              color: "var(--text-primary)",
-              borderColor: "var(--border-color)",
-            }}
-            required
-          />
-
-          <button
-            type="submit"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition"
-          >
-            Create Job
-          </button>
-        </form>
-      </div>
+            <button
+              type="submit"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition"
+            >
+              {t("createJobButton")}
+            </button>
+          </form>
+        </div>
       </div>
       <Footer />
-    </div>  
+    </div>
   );
 };
 

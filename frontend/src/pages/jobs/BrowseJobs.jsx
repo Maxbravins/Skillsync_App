@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
+import { Briefcase, Code, DollarSign, Search } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Briefcase, DollarSign, Code } from "lucide-react";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import { getAllJobs } from "../../services/job.service";
+import Navbar from "../../components/Navbar";
 import { useLanguage } from "../../context/LanguageContext";
+import { getAllJobs } from "../../services/job.service";
 
 const BrowseJobs = () => {
   const { t } = useLanguage();
@@ -40,7 +40,8 @@ const BrowseJobs = () => {
 
     const matchesSkill =
       skill === "" ||
-      (job.skills && job.skills.some((s) => s.toLowerCase().includes(skill.toLowerCase())));
+      (job.skills &&
+        job.skills.some((s) => s.toLowerCase().includes(skill.toLowerCase())));
 
     return matchesSearch && matchesBudget && matchesSkill;
   });
@@ -54,7 +55,7 @@ const BrowseJobs = () => {
           <div className="mb-10">
             <h1 className="text-4xl font-bold">{t("browseJobs")}</h1>
             <p className="text-[var(--text-secondary)] mt-2">
-              Discover freelance opportunities that match your skills.
+              {t("browseJobsSubtitle")}
             </p>
           </div>
 
@@ -71,7 +72,7 @@ const BrowseJobs = () => {
 
               <input
                 type="number"
-                placeholder="Minimum Budget"
+                placeholder={t("minimumBudget")}
                 value={minBudget}
                 onChange={(e) => setMinBudget(e.target.value)}
                 className="bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg p-3 outline-none focus:border-cyan-500"
@@ -79,7 +80,7 @@ const BrowseJobs = () => {
 
               <input
                 type="text"
-                placeholder="Required Skill"
+                placeholder={t("requiredSkill")}
                 value={skill}
                 onChange={(e) => setSkill(e.target.value)}
                 className="bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg p-3 outline-none focus:border-cyan-500"
@@ -93,10 +94,13 @@ const BrowseJobs = () => {
             </div>
           ) : filteredJobs.length === 0 ? (
             <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-12 text-center">
-              <Search size={60} className="mx-auto text-[var(--text-secondary)] mb-4" />
+              <Search
+                size={60}
+                className="mx-auto text-[var(--text-secondary)] mb-4"
+              />
               <h2 className="text-2xl font-bold">{t("noData")}</h2>
               <p className="text-[var(--text-secondary)] mt-3">
-                Try adjusting your search filters.
+                {t("adjustFilters")}
               </p>
             </div>
           ) : (
@@ -151,7 +155,7 @@ const BrowseJobs = () => {
                       to={`/jobs/${job._id}`}
                       className="inline-block bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-3 rounded-lg font-semibold transition"
                     >
-                      View Details
+                      {t("viewDetails")}
                     </Link>
                   </div>
                 </div>
