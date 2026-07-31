@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getClientDashboard } from "../../services/dashboard.service";
-import Navbar from "../../components/Navbar";
+import { Link } from "react-router-dom";
 import Footer from "../../components/Footer";
+import Navbar from "../../components/Navbar";
 import { useLanguage } from "../../context/LanguageContext";
+import { getClientDashboard } from "../../services/dashboard.service";
 
 const ClientDashboard = () => {
   const { t } = useLanguage();
@@ -44,9 +44,7 @@ const ClientDashboard = () => {
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
           <div>
-            <h1 className="text-4xl font-bold">
-              Client {t("dashboard")}
-            </h1>
+            <h1 className="text-4xl font-bold">Client {t("dashboard")}</h1>
 
             <p className="mt-2 text-[var(--text-secondary)]">
               {t("clientDashboardSubtitle")}
@@ -74,7 +72,7 @@ const ClientDashboard = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
                 <Link
-                  to="/my-jobs"
+                  to="/my-applications"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 transition"
                 >
                   <p className="text-cyan-400 uppercase text-sm font-semibold">
@@ -86,7 +84,7 @@ const ClientDashboard = () => {
                 </Link>
 
                 <Link
-                  to="/my-jobs"
+                  to="/my-applications?status=pending"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-yellow-500 transition"
                 >
                   <p className="text-yellow-400 uppercase text-sm font-semibold">
@@ -98,7 +96,7 @@ const ClientDashboard = () => {
                 </Link>
 
                 <Link
-                  to="/my-jobs"
+                  to="/my-applications?status=accepted"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-green-500 transition"
                 >
                   <p className="text-green-400 uppercase text-sm font-semibold">
@@ -110,7 +108,7 @@ const ClientDashboard = () => {
                 </Link>
 
                 <Link
-                  to="/my-jobs"
+                  to="/my-applications?status=rejected"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-red-500 transition"
                 >
                   <p className="text-red-400 uppercase text-sm font-semibold">
