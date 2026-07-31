@@ -1,5 +1,6 @@
 import Profile from "../models/profile.model.js";
 import User from "../models/user.model.js";
+import Application from "../models/application.model.js";
 
 export const createProfile = async (req, res) => {
   try {
@@ -100,5 +101,64 @@ export const updateProfile = async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    let jobsPosted = 0;
+    let applications = 0;
+
+    if (user.role === "client") {
+
+      const jobs = await Job.find({
+        client: user._id,
+      });
+
+      jobsPosted = jobs.length;
+
+      const jobIds = jobs.map(job => job._id);
+
+      applications = await Application.countDocuments({
+        job: {
+          $in: jobIds,
+        },
+      });
+
+    } else {
+
+      applications =
+        await Application.countDocuments({
+          developer: user._id,
+        });
+
+    }
+
+    res.json({
+      success: true,
+      user,
+      stats: {
+        jobsPosted,
+        applications,
+      },
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
   }
 };

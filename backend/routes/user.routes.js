@@ -1,17 +1,11 @@
 import express from "express";
 import auth from "../middleware/auth.middleware.js";
-import { createProfile, updateProfile } from "../controllers/user.controller.js";
+import { createProfile, updateProfile, getProfile } from "../controllers/user.controller.js";
 import upload from "../middleware/upload.middleware.js";
 
 const router = express.Router();
 
-router.get("/profile", auth, (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Protected route accessed",
-    user: req.user,
-  });
-});
+router.get("/profile", auth, getProfile);
 
 router.post("/profile", auth, createProfile);
 
