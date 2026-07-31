@@ -74,7 +74,7 @@ const ClientDashboard = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <Link
-                  to="/applications/all"
+                  to="/applications"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 hover:scale-105 transition"
                 >
                   <p className="text-cyan-400 uppercase text-sm font-semibold">
@@ -87,7 +87,7 @@ const ClientDashboard = () => {
                 </Link>
 
                 <Link
-                    to="/applications/pending"
+                    to="/my-jobs"
                     className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-yellow-500 hover:scale-105 transition"
                   >
                     <p className="text-yellow-400 uppercase text-sm font-semibold">
@@ -100,7 +100,7 @@ const ClientDashboard = () => {
                   </Link>
 
                 <Link
-                  to="/applications/accepted"
+                  to="/my-jobs"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-green-500 hover:scale-105 transition"
                 >
                   <p className="text-green-400 uppercase text-sm font-semibold">
@@ -113,7 +113,7 @@ const ClientDashboard = () => {
                 </Link>
 
                 <Link
-                to="/applications/rejected"
+                to="/my-jobs"
                 className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-red-500 hover:scale-105 transition"
               >
                 <p className="text-red-400 uppercase text-sm font-semibold">
