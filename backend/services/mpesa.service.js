@@ -1,8 +1,14 @@
 const BASE_URL = "https://sandbox.safaricom.co.ke";
 
 const getAccessToken = async () => {
+  if (!process.env.MPESA_CONSUMER_KEY || !process.env.MPESA_CONSUMER_SECRET) {
+    throw new Error(
+      "M-Pesa credentials are not configured. Set MPESA_CONSUMER_KEY and MPESA_CONSUMER_SECRET.",
+    );
+  }
+
   const auth = Buffer.from(
-    `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
+    `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`,
   ).toString("base64");
 
   const response = await fetch(
@@ -12,7 +18,7 @@ const getAccessToken = async () => {
       headers: {
         Authorization: `Basic ${auth}`,
       },
-    }
+    },
   );
 
   if (!response.ok) {
@@ -24,13 +30,23 @@ const getAccessToken = async () => {
   return data.access_token;
 };
 
-const formatPhoneNumber = (phone) => {
+export const formatPhoneNumber = (phone) => {
+  if (!phone || typeof phone !== "string") {
+    throw new Error("Invalid phone number");
+  }
+
   let cleaned = phone.replace(/\D/g, "");
 
-  if (cleaned.startsWith("0")) {
-    cleaned = "254" + cleaned.slice(1);
-  } else if (cleaned.startsWith("7") || cleaned.startsWith("1")) {
-    cleaned = "254" + cleaned;
+  if (cleaned.length === 9 && cleaned.startsWith("7")) {
+    cleaned = `254${cleaned}`;
+  } else if (cleaned.length === 10 && cleaned.startsWith("0")) {
+    cleaned = `254${cleaned.slice(1)}`;
+  } else if (cleaned.length === 12 && cleaned.startsWith("254")) {
+    cleaned = cleaned;
+  } else {
+    throw new Error(
+      "Invalid phone number. Use a Kenyan number like 0712345678.",
+    );
   }
 
   return cleaned;
@@ -56,12 +72,25 @@ export const initiateSTKPush = async ({
   accountReference,
   transactionDesc,
 }) => {
+  if (!process.env.MPESA_SHORTCODE || !process.env.MPESA_PASSKEY) {
+    throw new Error(
+      "M-Pesa shortcode credentials are not configured. Set MPESA_SHORTCODE and MPESA_PASSKEY.",
+    );
+  }
+
+  if (!process.env.MPESA_CALLBACK_URL) {
+    throw new Error(
+      "M-Pesa callback URL is not configured. Set MPESA_CALLBACK_URL.",
+    );
+  }
+
   const accessToken = await getAccessToken();
   const timestamp = getTimestamp();
   const formattedPhone = formatPhoneNumber(phoneNumber);
+  const safeAmount = Math.max(1, Math.round(amount));
 
   const password = Buffer.from(
-    `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
+    `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`,
   ).toString("base64");
 
   const payload = {
@@ -69,13 +98,13 @@ export const initiateSTKPush = async ({
     Password: password,
     Timestamp: timestamp,
     TransactionType: "CustomerPayBillOnline",
-    Amount: Math.round(amount),
+    Amount: safeAmount,
     PartyA: formattedPhone,
     PartyB: process.env.MPESA_SHORTCODE,
     PhoneNumber: formattedPhone,
     CallBackURL: process.env.MPESA_CALLBACK_URL,
-    AccountReference: accountReference,
-    TransactionDesc: transactionDesc,
+    AccountReference: accountReference?.slice(0, 12) || "SkillSync",
+    TransactionDesc: transactionDesc?.slice(0, 20) || "Payment",
   };
 
   const response = await fetch(`${BASE_URL}/mpesa/stkpush/v1/processrequest`, {
@@ -90,7 +119,9 @@ export const initiateSTKPush = async ({
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.errorMessage || "STK Push request failed");
+    throw new Error(
+      data.errorMessage || data.errorCode || "STK Push request failed",
+    );
   }
 
   return data;

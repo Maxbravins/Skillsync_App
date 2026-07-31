@@ -1,26 +1,26 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import Login from "../pages/auth/Login";
-import Register from "../pages/auth/Register";
-import ClientDashboard from "../pages/client/ClientDashboard";
-import DeveloperDashboard from "../pages/developer/DeveloperDashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
-import BrowseJobs from "../pages/jobs/BrowseJobs";
-import JobDetails from "../pages/jobs/JobDetails";
-import MyApplications from "../pages/applications/MyApplications";
-import JobApplicants from "../pages/applications/JobApplicants";
-import MyJobs from "../pages/jobs/MyJobs";
-import Profile from "../pages/profile/Profile";
-import EditJob from "../pages/jobs/EditJob";
-import CreateJob from "../pages/jobs/CreateJob";
-import Notifications from "../pages/notifications/Notifications";
-import ForgotPassword from "../pages/auth/ForgotPassword";
-import VerifyOTP from "../pages/auth/VerifyOTP";
-import ResetPassword from "../pages/auth/ResetPassword";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminReports from "../pages/admin/AdminReports";
+import JobApplicants from "../pages/applications/JobApplicants";
+import MyApplications from "../pages/applications/MyApplications";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import Login from "../pages/auth/Login";
+import Register from "../pages/auth/Register";
+import ResetPassword from "../pages/auth/ResetPassword";
+import VerifyOTP from "../pages/auth/VerifyOTP";
+import ClientDashboard from "../pages/client/ClientDashboard";
+import Payment from "../pages/client/Payment";
+import DeveloperDashboard from "../pages/developer/DeveloperDashboard";
+import BrowseJobs from "../pages/jobs/BrowseJobs";
+import CreateJob from "../pages/jobs/CreateJob";
+import EditJob from "../pages/jobs/EditJob";
+import JobDetails from "../pages/jobs/JobDetails";
+import MyJobs from "../pages/jobs/MyJobs";
+import Notifications from "../pages/notifications/Notifications";
 import EditProfile from "../pages/profile/EditProfile";
-import Payment from "./pages/client/Payment";
+import Profile from "../pages/profile/Profile";
 
 const AppRoutes = () => {
   return (
@@ -150,7 +150,7 @@ const AppRoutes = () => {
           }
         />
 
-         <Route
+        <Route
           path="/admin/reports"
           element={
             <ProtectedRoute role="admin">
@@ -159,16 +159,12 @@ const AppRoutes = () => {
           }
         />
 
-        <Route
-          path="/payment/:applicationId"
-          element={<Payment />}
-        />
+        <Route path="/payment/:applicationId" element={<Payment />} />
 
         {/* Fallback route - MUST be last */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
-
   );
 };
 
