@@ -1,12 +1,14 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getJobById, updateJob } from "../../services/job.service";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import Navbar from "../../components/Navbar";
+import { useLanguage } from "../../context/LanguageContext";
+import { getJobById, updateJob } from "../../services/job.service";
 
 const EditJob = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -51,11 +53,11 @@ const EditJob = () => {
         skills: formData.skills.split(",").map((s) => s.trim()),
       });
 
-      alert("Job updated successfully!");
+      alert(t("jobUpdatedSuccessfully"));
       navigate("/my-jobs");
     } catch (error) {
       console.log(error);
-      alert("Failed to update job.");
+      alert(t("jobUpdateFailed"));
     }
   };
 
@@ -64,47 +66,55 @@ const EditJob = () => {
       <Navbar />
       <div className="max-w-3xl mx-auto p-6 py-10">
         <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] shadow rounded-xl p-8">
-          <h1 className="text-2xl font-bold mb-6">Edit Job</h1>
+          <h1 className="text-2xl font-bold mb-6">{t("editJob")}</h1>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium mb-1">Job Title</label>
+              <label className="block text-sm font-medium mb-1">
+                {t("jobTitle")}
+              </label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder="Job Title"
+                placeholder={t("jobTitle")}
                 className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] p-3 rounded-lg outline-none focus:border-cyan-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-medium mb-1">
+                {t("description")}
+              </label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="Description"
+                placeholder={t("description")}
                 rows="5"
                 className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] p-3 rounded-lg outline-none focus:border-cyan-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Budget (KES)</label>
+              <label className="block text-sm font-medium mb-1">
+                {t("budget")} (KES)
+              </label>
               <input
                 type="number"
                 name="budget"
                 value={formData.budget}
                 onChange={handleChange}
-                placeholder="Budget"
+                placeholder={t("budget")}
                 className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] p-3 rounded-lg outline-none focus:border-cyan-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Required Skills (comma separated)</label>
+              <label className="block text-sm font-medium mb-1">
+                {t("requiredSkills")}
+              </label>
               <input
                 type="text"
                 name="skills"
@@ -119,7 +129,7 @@ const EditJob = () => {
               type="submit"
               className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 font-semibold transition"
             >
-              Update Job
+              {t("updateJob")}
             </button>
           </form>
         </div>

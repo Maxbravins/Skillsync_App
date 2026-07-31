@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { registerUser } from "../../services/auth.service";
 import { Link, useNavigate } from "react-router-dom";
+import { useLanguage } from "../../context/LanguageContext";
+import { registerUser } from "../../services/auth.service";
 
 const Register = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -30,12 +32,12 @@ const Register = () => {
 
     try {
       await registerUser(formData);
-      setSuccessMsg("Registration successful! Redirecting to login...");
+      setSuccessMsg(t("registrationSuccess"));
       setTimeout(() => {
         navigate("/login");
       }, 2000);
     } catch (error) {
-      setErrorMsg(error.response?.data?.message || "Registration failed. Please try again.");
+      setErrorMsg(error.response?.data?.message || t("registrationFailed"));
     } finally {
       setLoading(false);
     }
@@ -49,16 +51,16 @@ const Register = () => {
 
       <div className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-slate-800/80 p-8 rounded-2xl shadow-2xl relative z-10">
         <div className="flex flex-col items-center mb-8">
-          <img 
-            src="/logo.png" 
-            alt="SkillSync Logo" 
+          <img
+            src="/logo.png"
+            alt="SkillSync Logo"
             className="h-14 w-14 rounded-xl object-cover mb-4 ring-4 ring-cyan-500/20"
           />
           <h1 className="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent tracking-wide">
-            Get Started
+            {t("getStarted")}
           </h1>
           <p className="text-slate-400 text-sm mt-2">
-            Create an account to join the SkillSync community
+            {t("createAccountSubtitle")}
           </p>
         </div>
 
@@ -76,8 +78,11 @@ const Register = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-slate-300 text-sm font-semibold mb-2" htmlFor="username">
-              Username
+            <label
+              className="block text-slate-300 text-sm font-semibold mb-2"
+              htmlFor="username"
+            >
+              {t("username")}
             </label>
             <input
               type="text"
@@ -91,8 +96,11 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-slate-300 text-sm font-semibold mb-2" htmlFor="email">
-              Email Address
+            <label
+              className="block text-slate-300 text-sm font-semibold mb-2"
+              htmlFor="email"
+            >
+              {t("emailAddress")}
             </label>
             <input
               type="email"
@@ -106,8 +114,11 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-slate-300 text-sm font-semibold mb-2" htmlFor="password">
-              Password
+            <label
+              className="block text-slate-300 text-sm font-semibold mb-2"
+              htmlFor="password"
+            >
+              {t("password")}
             </label>
             <input
               type="password"
@@ -121,7 +132,10 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-slate-300 text-sm font-semibold mb-2" htmlFor="role">
+            <label
+              className="block text-slate-300 text-sm font-semibold mb-2"
+              htmlFor="role"
+            >
               I am a...
             </label>
             <select
@@ -148,16 +162,19 @@ const Register = () => {
             {loading ? (
               <span className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></span>
             ) : (
-              "Sign Up"
+              t("signUp")
             )}
           </button>
         </form>
 
         <div className="mt-8 text-center border-t border-slate-800/80 pt-6">
           <p className="text-slate-400 text-sm">
-            Already have an account?{" "}
-            <Link to="/login" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
-              Sign In
+            {t("alreadyHaveAccount")}{" "}
+            <Link
+              to="/login"
+              className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+            >
+              {t("signIn")}
             </Link>
           </p>
         </div>

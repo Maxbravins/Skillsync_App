@@ -1,16 +1,18 @@
-import { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Briefcase, DollarSign, User, Calendar } from "lucide-react";
-import Navbar from "../../components/Navbar";
+import { Briefcase, Calendar, DollarSign, User } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Footer from "../../components/Footer";
-import { getJobById } from "../../services/job.service";
-import { applyForJob } from "../../services/application.service";
+import Navbar from "../../components/Navbar";
+import { useLanguage } from "../../context/LanguageContext";
 import useAuth from "../../hooks/useAuth";
+import { applyForJob } from "../../services/application.service";
+import { getJobById } from "../../services/job.service";
 
 const JobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const [job, setJob] = useState(null);
   const [coverLetter, setCoverLetter] = useState("");
@@ -31,16 +33,16 @@ const JobDetails = () => {
 
   const handleApply = async () => {
     if (!coverLetter.trim()) {
-      return alert("Please write your cover letter.");
+      return alert(t("pleaseWriteCoverLetter"));
     }
 
     try {
       setApplying(true);
       const data = await applyForJob(job._id, coverLetter);
-      alert(data.message);
+      alert(data.message || t("applicationSubmitted"));
       navigate("/my-applications");
     } catch (error) {
-      alert(error.response?.data?.message || "Application submission failed.");
+      alert(error.response?.data?.message || t("applicationFailed"));
     } finally {
       setApplying(false);
     }
@@ -51,7 +53,7 @@ const JobDetails = () => {
       <>
         <Navbar />
         <div className="min-h-screen bg-[var(--bg-primary)] flex justify-center items-center text-[var(--text-primary)] text-xl">
-          Loading Job...
+          {t("loadingJob")}
         </div>
       </>
     );
@@ -67,7 +69,7 @@ const JobDetails = () => {
             onClick={() => navigate("/jobs")}
             className="text-cyan-400 hover:text-cyan-300 mb-8 font-medium"
           >
-            ← Back to Jobs
+            ← {t("backToJobs")}
           </button>
 
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-8 shadow-lg">
@@ -84,7 +86,7 @@ const JobDetails = () => {
               <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <DollarSign className="text-green-400" size={20} />
-                  <h3 className="font-semibold">Budget</h3>
+                  <h3 className="font-semibold">{t("budget")}</h3>
                 </div>
                 <p className="text-3xl font-bold text-cyan-400">
                   KES {job.budget?.toLocaleString()}
@@ -94,7 +96,7 @@ const JobDetails = () => {
               <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <User className="text-indigo-400" size={20} />
-                  <h3 className="font-semibold">Client</h3>
+                  <h3 className="font-semibold">{t("client")}</h3>
                 </div>
                 <p>{job.client?.username || "Client"}</p>
               </div>
@@ -103,13 +105,11 @@ const JobDetails = () => {
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
                 <Calendar className="text-cyan-400" size={18} />
-                <span>Posted:</span>
-                <strong>
-                  {new Date(job.createdAt).toLocaleDateString()}
-                </strong>
+                <span>{t("posted")}: </span>
+                <strong>{new Date(job.createdAt).toLocaleDateString()}</strong>
               </div>
 
-              <h3 className="font-semibold mb-3">Required Skills</h3>
+              <h3 className="font-semibold mb-3">{t("requiredSkills")}</h3>
               <div className="flex flex-wrap gap-3">
                 {job.skills &&
                   job.skills.map((skill, index) => (
@@ -126,14 +126,14 @@ const JobDetails = () => {
             {user?.role === "developer" && (
               <div className="border-t border-[var(--border-color)] pt-8">
                 <h2 className="text-2xl font-bold mb-4">
-                  Apply for this Job
+                  {t("applyForThisJob")}
                 </h2>
 
                 <textarea
                   rows={7}
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
-                  placeholder="Explain why you're the right developer for this project..."
+                  placeholder={t("coverLetterPlaceholder")}
                   className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-xl p-4 outline-none focus:border-cyan-500 mb-5"
                 />
 
@@ -142,7 +142,7 @@ const JobDetails = () => {
                   disabled={applying}
                   className="bg-cyan-500 hover:bg-cyan-600 text-white px-8 py-3 rounded-xl font-bold transition disabled:opacity-50"
                 >
-                  {applying ? "Submitting..." : "Apply Now"}
+                  {applying ? t("submitting") : t("applyNow")}
                 </button>
               </div>
             )}

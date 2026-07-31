@@ -1,9 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
-import { getNotifications, markAsRead } from "../../services/notification.service";
-import Navbar from "../../components/Navbar";
-import Footer from "../../components/Footer";
 import { Bell, BellOff } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import Footer from "../../components/Footer";
+import Navbar from "../../components/Navbar";
 import { useLanguage } from "../../context/LanguageContext";
+import {
+  getNotifications,
+  markAsRead,
+} from "../../services/notification.service";
 
 const Notifications = () => {
   const { t } = useLanguage();
@@ -33,8 +36,8 @@ const Notifications = () => {
         prev.map((notification) =>
           notification._id === id
             ? { ...notification, isRead: true }
-            : notification
-        )
+            : notification,
+        ),
       );
     } catch (error) {
       console.log(error);
@@ -51,7 +54,7 @@ const Notifications = () => {
             {t("notifications")}
           </h1>
           <p className="text-[var(--text-secondary)] text-sm mt-1">
-            Stay up to date with job updates and responses.
+            {t("stayUpdated")}
           </p>
         </div>
 
@@ -61,10 +64,13 @@ const Notifications = () => {
           </div>
         ) : notifications.length === 0 ? (
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-12 text-center">
-            <BellOff size={48} className="mx-auto text-[var(--text-secondary)] mb-4" />
+            <BellOff
+              size={48}
+              className="mx-auto text-[var(--text-secondary)] mb-4"
+            />
             <h2 className="text-xl font-bold">{t("noData")}</h2>
             <p className="text-[var(--text-secondary)] mt-2">
-              You're all caught up. Check back later.
+              {t("allCaughtUp")}
             </p>
           </div>
         ) : (
@@ -80,17 +86,25 @@ const Notifications = () => {
               >
                 <div
                   className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                    notification.isRead ? "bg-[var(--bg-primary)]" : "bg-cyan-500/20"
+                    notification.isRead
+                      ? "bg-[var(--bg-primary)]"
+                      : "bg-cyan-500/20"
                   }`}
                 >
                   <Bell
                     size={18}
-                    className={notification.isRead ? "text-[var(--text-secondary)]" : "text-cyan-400"}
+                    className={
+                      notification.isRead
+                        ? "text-[var(--text-secondary)]"
+                        : "text-cyan-400"
+                    }
                   />
                 </div>
 
                 <div className="flex-1">
-                  <p className="text-[var(--text-primary)]">{notification.message}</p>
+                  <p className="text-[var(--text-primary)]">
+                    {notification.message}
+                  </p>
                   <small className="text-[var(--text-secondary)]">
                     {new Date(notification.createdAt).toLocaleString()}
                   </small>
@@ -101,7 +115,7 @@ const Notifications = () => {
                     onClick={() => handleRead(notification._id)}
                     className="shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white text-sm px-4 py-2 rounded-lg font-medium transition"
                   >
-                    Mark as Read
+                    {t("markAsRead")}
                   </button>
                 )}
               </div>
