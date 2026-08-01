@@ -3,15 +3,27 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import OTP from "../models/OTP.model.js";
 import User from "../models/user.model.js";
+import Category from "../models/category.model.js";
 import { sendOTP, sendResetSuccessEmail } from "../services/email.service.js";
+
 // Register user
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const {
+      username,
+      email,
+      password,
+      role,
+      category,
+    } = req.body;
+
     const normalizedEmail = email?.trim().toLowerCase();
 
-    // check if user exists
-    const existingUser = await User.findOne({ email: normalizedEmail });
+    // Check if user exists
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
+
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -19,19 +31,40 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // hash password
+    // Developers must choose a category
+    let selectedCategory = null;
 
+    if (role === "developer") {
+      if (!category) {
+        return res.status(400).json({
+          success: false,
+          message: "Developer category is required.",
+        });
+      }
+
+      selectedCategory = await Category.findById(category);
+
+      if (!selectedCategory) {
+        return res.status(404).json({
+          success: false,
+          message: "Invalid category selected.",
+        });
+      }
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // create user
+    // Create user
     const user = await User.create({
       username,
       email: normalizedEmail,
       password: hashedPassword,
       role,
+      category: selectedCategory?._id || null,
     });
 
-    // jwt token
+    // JWT
     const token = jwt.sign(
       {
         id: user._id,
@@ -40,7 +73,7 @@ export const registerUser = async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "7d",
-      },
+      }
     );
 
     res.status(201).json({
@@ -52,8 +85,10 @@ export const registerUser = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        category: user.category,
       },
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,

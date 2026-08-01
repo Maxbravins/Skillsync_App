@@ -1,25 +1,70 @@
 import Job from "../models/job.model.js";
+import User from "../models/user.model.js";
+import Category from "../models/category.model.js";
+import { sendNewJobAlertEmail } from "../services/email.service.js";
 
     // Create a new job
 export const createJob = async (req, res) => {
   try {
-    const { title, description, budget, skills } = req.body;
+    const {
+      title,
+      description,
+      budget,
+      skills,
+      category,
+    } = req.body;
+
+    const platformFee = budget * 0.10;
+    const totalAmount = budget + platformFee;
 
     const job = await Job.create({
       title,
       description,
       budget,
+      platformFee,
+      totalAmount,
+      paymentStatus: "pending",
+      isPublished: false,
       skills,
+      category,
       client: req.user.id,
     });
 
+    // Get client
+    const client = await User.findById(req.user.id);
+
+  // Get category details
+    const selectedCategory = await Category.findById(category);
+
+// Find developers matching category + skills
+    const developers = await User.find({
+      role: "developer",
+      category,
+      emailNotifications: true,
+      available: true,
+      skills: {
+        $in: skills,
+      },
+    });
+
+    // Send emails in the background
+    for (const developer of developers) {
+      await sendNewJobAlertEmail({
+        email: developer.email,
+        developerName: developer.username,
+        jobTitle: title,
+        category: selectedCategory.name,
+        budget,
+        clientName: client.username,
+      });
+    }
+
     res.status(201).json({
       success: true,
-      message: "Job created successfully",
+      message: `Job created successfully. ${developers.length} developers notified.`,
       job,
     });
-  } 
-  catch (error) {
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
@@ -34,13 +79,18 @@ export const getAllJobs = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const total = await Job.countDocuments();
+    const total = await Job.countDocuments({
+        isPublished: true,
+      });
 
-    const jobs = await Job.find()
-      .populate("client", "username email")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+      const jobs = await Job.find({
+        isPublished: true,
+      })
+        .populate("client", "username email")
+        .populate("category", "name")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
 
     res.status(200).json({
       success: true,
@@ -62,10 +112,9 @@ export const getAllJobs = async (req, res) => {
         // Get job by ID
 export const getJobById = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id).populate(
-      "client",
-      "username email"
-    );
+    const job = await Job.findById(req.params.id)
+  .populate("client", "username email")
+  .populate("category", "name");
 
     if (!job) {
       return res.status(404).json({
@@ -176,7 +225,10 @@ export const getMyJobs = async (req, res) => {
 
     const total = await Job.countDocuments({ client: req.user.id });
 
-    const jobs = await Job.find({ client: req.user.id })
+    const jobs = await Job.find({
+      client: req.user.id,
+      })
+      .populate("category", "name")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);

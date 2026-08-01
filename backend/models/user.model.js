@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-       lowercase: true,
+      lowercase: true,
       trim: true,
     },
 
@@ -26,6 +26,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["admin", "client", "developer"],
       required: true,
+    },
+
+    // NEW
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null,
     },
 
     profilePicture: {
@@ -78,6 +85,24 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    resume: {
+      type: String,
+      default: "",
+    },
+
+    // Developer Availability
+    available: {
+      type: Boolean,
+      default: true,
+    },
+
+    // Email notification preference
+    emailNotifications: {
+      type: Boolean,
+      default: true,
+    },
+
+    // Client Company
     company: {
       type: String,
       default: "",
@@ -88,9 +113,16 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    resume: {
-      type: String,
-      default: "",
+    // Wallet (future payments)
+    walletBalance: {
+      type: Number,
+      default: 0,
+    },
+
+    // Premium account (future)
+    isPremium: {
+      type: Boolean,
+      default: false,
     },
 
     resetPasswordToken: {
@@ -107,6 +139,4 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-const User = mongoose.model("User", userSchema);
-
-export default User;
+export default mongoose.model("User", userSchema);
