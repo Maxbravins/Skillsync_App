@@ -126,3 +126,59 @@ export const sendAcceptanceEmail = async ({
     `,
   });
 };
+
+export const sendNewJobAlertEmail = async ({
+  email,
+  developerName,
+  jobTitle,
+  category,
+  budget,
+  clientName,
+}) => {
+  return sendEmail({
+    to: email,
+    subject: ` New ${category} Job Available on SkillSync`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;padding:25px;border:1px solid #ddd;border-radius:10px;">
+        <h2 style="color:#06b6d4;text-align:center;">SkillSync</h2>
+
+        <h3>Hello ${developerName},</h3>
+
+        <p>A new project matching your skills has just been posted.</p>
+
+        <table style="width:100%;border-collapse:collapse;margin-top:20px;">
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Job</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">${jobTitle}</td>
+          </tr>
+
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Category</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">${category}</td>
+          </tr>
+
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Budget</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">KES ${budget}</td>
+          </tr>
+
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Client</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">${clientName}</td>
+          </tr>
+        </table>
+
+        <p style="margin-top:25px;">
+          Login to SkillSync and apply before the opportunity closes.
+        </p>
+
+        <hr>
+
+        <p style="font-size:12px;color:#888;text-align:center;">
+          SkillSync automatically matches jobs with developers based on their skills.
+        </p>
+
+      </div>
+    `,
+  });
+};

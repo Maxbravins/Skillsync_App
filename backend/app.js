@@ -12,6 +12,7 @@ import path from "path";
 import mpesaRoutes from "./routes/mpesa.routes.js";
 import { fileURLToPath } from "url";
 import pdfRoutes from "./routes/pdf.routes.js";
+import categoryRoutes from "./routes/category.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +59,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/mpesa", mpesaRoutes);
 app.use("/api/pdf", pdfRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // Home route
 app.get("/", (req, res) => {
