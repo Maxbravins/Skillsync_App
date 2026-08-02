@@ -5,7 +5,7 @@ const transactionSchema = new mongoose.Schema(
     application: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Application",
-      required: true,
+      required: null,
     },
 
     job: {
@@ -23,13 +23,31 @@ const transactionSchema = new mongoose.Schema(
     developer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: null,
     },
 
     amount: {
       type: Number,
       required: true,
     },
+
+    // Original project amount
+      projectAmount: {
+        type: Number,
+        required: true,
+      },
+
+      // SkillSync commission (10%)
+      platformFee: {
+        type: Number,
+        required: true,
+      },
+
+      // Total amount client pays
+      totalAmount: {
+        type: Number,
+        required: true,
+      },
 
     phoneNumber: {
       type: String,
@@ -61,6 +79,16 @@ const transactionSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    paymentType: {
+    type: String,
+    enum: [
+        "platform_fee",
+        "project_payment",
+        "withdrawal"
+      ],
+      required: true,
+      },
 
     resultCode: {
       type: Number,
