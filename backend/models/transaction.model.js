@@ -2,11 +2,17 @@ import mongoose from "mongoose";
 
 const transactionSchema = new mongoose.Schema(
   {
-    application: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Application",
-      required: null,
-    },
+  application: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Application",
+    default: null,
+  },
+
+  contract: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Contract",
+  default: null,
+  },
 
     job: {
       type: mongoose.Schema.Types.ObjectId,
@@ -26,10 +32,31 @@ const transactionSchema = new mongoose.Schema(
       required: null,
     },
 
+    paymentType: {
+    type: String,
+    enum: [
+    "platform_fee",
+    "contract_payment",
+    "withdrawal",
+  ],
+  required: true,
+},
+
     amount: {
       type: Number,
       required: true,
     },
+    
+    commission: {
+    type: Number,
+    default: 0,
+  },
+
+    developerAmount: {
+    type: Number,
+    default: 0,
+  },
+
 
     // Original project amount
       projectAmount: {
@@ -64,6 +91,16 @@ const transactionSchema = new mongoose.Schema(
       ],
       default: "pending",
     },
+
+    released: {
+    type: Boolean,
+    default: false,
+  },
+
+  releasedAt: {
+    type: Date,
+    default: null,
+  },
 
     merchantRequestID: {
       type: String,
@@ -104,6 +141,11 @@ const transactionSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    withdrawnAt: {
+    type: Date,
+    default: null,
+  },
   },
   {
     timestamps: true,

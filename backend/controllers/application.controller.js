@@ -2,6 +2,8 @@ import Application from "../models/application.model.js";
 import Job from "../models/job.model.js";
 import Notification from "../models/notification.model.js";
 import { sendApplicationEmail, sendAcceptanceEmail } from "../services/email.service.js";
+import Contract from "../models/contract.model.js";
+import { calculateCommission } from "../services/platformFee.service.js";
 
 // Apply for a job
 export const applyForJob = async (req, res) => {
@@ -200,6 +202,32 @@ export const updateApplicationStatus = async (req, res) => {
 
     application.status = status;
     await application.save();
+    
+    if (status === "accepted") {
+
+    const commission = application.job.budget * 0.10;
+
+    const developerAmount = application.job.budget - commission;
+
+    await Contract.create({
+
+        job: application.job._id,
+
+        application: application._id,
+
+        client: application.job.client,
+
+        developer: application.developer._id,
+
+        amount: application.job.budget,
+
+        commission,
+
+        developerAmount,
+
+    });
+
+}
 
     // If one developer is accepted, reject every other pending applicant
     if (status === "accepted") {
@@ -215,7 +243,24 @@ export const updateApplicationStatus = async (req, res) => {
           },
         }
       );
-    }
+
+      const commission = calculateCommission(
+        application.job.budget
+    );
+
+    const developerAmount =
+        application.job.budget - commission;
+
+    await Contract.create({
+        application: application._id,
+        job: application.job._id,
+        client: application.job.client,
+        developer: application.developer._id,
+        amount: application.job.budget,
+        commission,
+        developerAmount,
+    });
+        }
 
     // Prevent duplicate notifications
     const message =

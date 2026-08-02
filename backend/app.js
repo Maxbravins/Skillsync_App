@@ -14,6 +14,9 @@ import { fileURLToPath } from "url";
 import pdfRoutes from "./routes/pdf.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import platformPaymentRoutes from "./routes/platformPayment.routes.js";
+import contractRoutes from "./routes/contract.routes.js";
+import walletRoutes from "./routes/wallet.routes.js";
+import withdrawalRoutes from "./routes/withdrawal.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,6 +65,9 @@ app.use("/api/mpesa", mpesaRoutes);
 app.use("/api/pdf", pdfRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/platform-payment", platformPaymentRoutes);
+app.use("/api/contracts", contractRoutes);
+app.use("/api/wallet", walletRoutes);
+app.use("/api/withdrawals", withdrawalRoutes);
 
 // Home route
 app.get("/", (req, res) => {

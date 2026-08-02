@@ -151,7 +151,8 @@ export const platformCallback = async (req, res) => {
             await transaction.save();
 
             const job = await Job.findById(transaction.job)
-            .populate("category");
+            .populate("category")
+            .populate("client", "username email");
 
             job.platformFeePaid = true;
 
@@ -164,13 +165,32 @@ export const platformCallback = async (req, res) => {
             const client = await User.findById(job.client);
 
             const developers = await User.find({
-                role: "developer",
-                category: job.category,
-                available: true,
-                emailNotifications: true,
-            });
+            role: "developer",
+            category: job.category._id,
+            available: true,
+            emailNotifications: true,
+            skills: {
+                $in: job.skills,
+            },
+        });
 
-        } else {
+        for (const developer of developers) {
+
+        await sendNewJobAlertEmail({
+            email: developer.email,
+            developerName: developer.username,
+            jobTitle: job.title,
+            category: job.category.name,
+            budget: job.budget,
+            clientName: client.username,
+        });
+
+        await Notification.create({
+            user: developer._id,
+            message: `A new "${job.title}" project has been posted.`,
+        });
+    }
+} else {
 
             transaction.status = "failed";
 
