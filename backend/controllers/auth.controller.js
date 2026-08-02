@@ -5,6 +5,7 @@ import OTP from "../models/OTP.model.js";
 import User from "../models/user.model.js";
 import Category from "../models/category.model.js";
 import { sendOTP, sendResetSuccessEmail } from "../services/email.service.js";
+import Wallet from "../models/wallet.model.js";
 
 // Register user
 export const registerUser = async (req, res) => {
@@ -63,6 +64,16 @@ export const registerUser = async (req, res) => {
       role,
       category: selectedCategory?._id || null,
     });
+
+    if (user.role === "developer") {
+
+    await Wallet.create({
+
+        developer: user._id,
+
+    });
+
+  }
 
     // JWT
     const token = jwt.sign(

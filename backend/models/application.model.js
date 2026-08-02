@@ -3,10 +3,10 @@ import mongoose from "mongoose";
 const applicationSchema = new mongoose.Schema(
   {
     developer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+   },
 
     job: {
       type: mongoose.Schema.Types.ObjectId,
