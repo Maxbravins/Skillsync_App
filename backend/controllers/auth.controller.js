@@ -3,7 +3,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import OTP from "../models/OTP.model.js";
 import User from "../models/user.model.js";
-import Category from "../models/category.model.js";
+import category from "../models/category.model.js";
 import { sendOTP, sendResetSuccessEmail } from "../services/email.service.js";
 import Wallet from "../models/wallet.model.js";
 
