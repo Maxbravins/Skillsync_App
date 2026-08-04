@@ -17,6 +17,7 @@ import platformPaymentRoutes from "./routes/platformPayment.routes.js";
 import contractRoutes from "./routes/contract.routes.js";
 import walletRoutes from "./routes/wallet.routes.js";
 import withdrawalRoutes from "./routes/withdrawal.routes.js";
+import adminWalletRoutes from "./routes/adminWallet.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,6 +69,7 @@ app.use("/api/platform-payment", platformPaymentRoutes);
 app.use("/api/contracts", contractRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/withdrawals", withdrawalRoutes);
+app.use("/api/admin-wallet", adminWalletRoutes);
 
 // Home route
 app.get("/", (req, res) => {

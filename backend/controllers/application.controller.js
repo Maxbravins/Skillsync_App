@@ -3,7 +3,7 @@ import Job from "../models/job.model.js";
 import Notification from "../models/notification.model.js";
 import { sendApplicationEmail, sendAcceptanceEmail } from "../services/email.service.js";
 import Contract from "../models/contract.model.js";
-import { calculateCommission } from "../services/platformFee.service.js";
+import { calculateCommission,  calculateDeveloperAmount } from "../services/platformFee.service.js";
 
 // Apply for a job
 export const applyForJob = async (req, res) => {
@@ -202,7 +202,7 @@ export const updateApplicationStatus = async (req, res) => {
 
     application.status = status;
     await application.save();
-    
+
     if (status === "accepted") {
 
     const commission = application.job.budget * 0.10;

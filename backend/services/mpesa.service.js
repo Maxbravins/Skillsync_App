@@ -108,19 +108,107 @@ export const initiateSTKPush = async ({
   };
 
   const response = await fetch(`${BASE_URL}/mpesa/stkpush/v1/processrequest`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+  const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.errorMessage || data.errorCode || "STK Push request failed",
+      );
+    }
+
+    return data;
+  };
+
+const getSecurityCredential = () => {
+    if (!process.env.MPESA_SECURITY_CREDENTIAL) {
+      throw new Error(
+        "MPESA_SECURITY_CREDENTIAL is not configured."
+      );
+    }
+
+    return process.env.MPESA_SECURITY_CREDENTIAL;
+  };
+
+export const initiateB2CPayment = async ({
+  phoneNumber,
+  amount,
+  remarks,
+  occasion,
+}) => {
+
+  if (
+      !process.env.MPESA_INITIATOR_NAME ||
+      !process.env.MPESA_SHORTCODE
+    ) {
+      throw new Error(
+        "B2C credentials are not configured."
+      );
+    }
+
+    if (
+      !process.env.MPESA_B2C_RESULT_URL ||
+      !process.env.MPESA_B2C_TIMEOUT_URL
+    ) {
+      throw new Error(
+        "B2C callback URLs are not configured."
+      );
+    }
+
+  const accessToken = await getAccessToken();
+
+  const formattedPhone = formatPhoneNumber(phoneNumber);
+
+  const payload = {
+
+      InitiatorName: process.env.MPESA_INITIATOR_NAME,
+
+      SecurityCredential: getSecurityCredential(),
+
+      CommandID: "BusinessPayment",
+
+      Amount: Math.round(amount),
+
+      PartyA: process.env.MPESA_SHORTCODE,
+
+      PartyB: formattedPhone,
+
+      Remarks: remarks || "SkillSync Withdrawal",
+
+      QueueTimeOutURL: process.env.MPESA_B2C_TIMEOUT_URL,
+
+      ResultURL: process.env.MPESA_B2C_RESULT_URL,
+
+      Occasion: occasion || "Withdrawal",
+
+    };
+
+  const response = await fetch(
+    `${BASE_URL}/mpesa/b2c/v3/paymentrequest`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      }
+    );
 
   const data = await response.json();
 
   if (!response.ok) {
     throw new Error(
-      data.errorMessage || data.errorCode || "STK Push request failed",
+      data.errorMessage ||
+      data.errorCode ||
+      "B2C payment failed."
     );
   }
 
