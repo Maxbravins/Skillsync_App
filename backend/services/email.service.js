@@ -182,7 +182,7 @@ export const sendNewJobAlertEmail = async ({
     `,
   });
 };
-
+    // Send email when payment is released
 export const sendPaymentReleasedEmail = async ({
     email,
     developerName,
@@ -210,8 +210,218 @@ export const sendPaymentReleasedEmail = async ({
             <p style="font-size:12px;color:#777;">
                 Thank you for using SkillSync.
             </p>
-
         </div>
         `,
     });
+};
+
+  // Payment Confirmation Email (Client)
+export const sendPaymentConfirmationToClient = async ({
+  email,
+  clientName,
+  jobTitle,
+  amount,
+}) => {
+  return sendEmail({
+    to: email,
+    subject: "Payment Successful - SkillSync",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #ddd;border-radius:10px;">
+        <h2 style="color:#06b6d4;">SkillSync</h2>
+
+        <h3>Hello ${clientName},</h3>
+
+        <p>Your payment has been received successfully.</p>
+
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Project</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">${jobTitle}</td>
+          </tr>
+
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Amount Paid</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">KES ${amount}</td>
+          </tr>
+        </table>
+
+        <p style="margin-top:20px;">
+        Your project has officially started.
+        </p>
+
+        <hr>
+
+        <p style="font-size:12px;color:#888;">
+        © SkillSync
+        </p>
+
+      </div>
+    `,
+  });
+};
+
+    // Payment Confirmation Email (Developer)
+export const sendPaymentReceivedEmail = async ({
+  email,
+  developerName,
+  jobTitle,
+  amount,
+}) => {
+  return sendEmail({
+    to: email,
+    subject: "You've Been Paid - SkillSync",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #ddd;border-radius:10px;">
+
+        <h2 style="color:#06b6d4;">SkillSync</h2>
+
+        <h3>Hello ${developerName},</h3>
+
+        <p>Good news!</p>
+
+        <p>
+        The client has successfully paid for your project.
+        </p>
+
+        <table style="width:100%;border-collapse:collapse;">
+
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Project</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">${jobTitle}</td>
+          </tr>
+
+          <tr>
+            <td style="padding:10px;border:1px solid #ddd;"><strong>Total Paid</strong></td>
+            <td style="padding:10px;border:1px solid #ddd;">KES ${amount}</td>
+          </tr>
+
+        </table>
+
+        <p style="margin-top:20px;">
+        Your earnings have been placed in your SkillSync Wallet.
+        They will become available after admin approval.
+        </p>
+
+        <hr>
+
+        <p style="font-size:12px;color:#888;">
+        © SkillSync
+        </p>
+
+      </div>
+    `,
+  });
+};
+    // Admin Payment Release Email (Developer)
+export const sendPaymentReleasedEmail = async ({
+  email,
+  developerName,
+  amount,
+}) => {
+  return sendEmail({
+    to: email,
+    subject: "Payment Released - SkillSync",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #ddd;border-radius:10px;">
+
+        <h2 style="color:#06b6d4;">SkillSync</h2>
+
+        <h3>Hello ${developerName},</h3>
+
+        <p>Great news!</p>
+
+        <p>Your payment has been approved by the SkillSync administrator.</p>
+
+        <h2 style="color:#16a34a;">
+          KES ${amount}
+        </h2>
+
+        <p>
+        The money is now available in your wallet and can be withdrawn.
+        </p>
+
+        <hr>
+
+        <p style="font-size:12px;color:#888;">
+        © SkillSync
+        </p>
+
+      </div>
+    `,
+  });
+};
+    // Admin Withdrawal Approval Email (Developer)
+export const sendWithdrawalApprovedEmail = async ({
+  email,
+  developerName,
+  amount,
+}) => {
+  return sendEmail({
+    to: email,
+    subject: "Withdrawal Approved - SkillSync",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #ddd;border-radius:10px;">
+
+        <h2 style="color:#06b6d4;">SkillSync</h2>
+
+        <h3>Hello ${developerName},</h3>
+
+        <p>Your withdrawal request has been approved.</p>
+
+        <h2 style="color:#16a34a;">
+          KES ${amount}
+        </h2>
+
+        <p>
+        Your payment will be sent to your M-Pesa account shortly.
+        </p>
+
+        <hr>
+
+        <p style="font-size:12px;color:#888;">
+        © SkillSync
+        </p>
+
+      </div>
+    `,
+  });
+};
+    // Admin Withdrawal Rejection Email (Developer)
+export const sendWithdrawalRejectedEmail = async ({
+  email,
+  developerName,
+  amount,
+}) => {
+  return sendEmail({
+    to: email,
+    subject: "Withdrawal Rejected - SkillSync",
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #ddd;border-radius:10px;">
+
+        <h2 style="color:#06b6d4;">SkillSync</h2>
+
+        <h3>Hello ${developerName},</h3>
+
+        <p>
+        Unfortunately your withdrawal request was rejected.
+        </p>
+
+        <p>
+        Amount:
+        <strong>KES ${amount}</strong>
+        </p>
+
+        <p>
+        The money has been returned to your SkillSync Wallet.
+        </p>
+
+        <hr>
+
+        <p style="font-size:12px;color:#888;">
+        © SkillSync
+        </p>
+
+      </div>
+    `,
+  });
 };

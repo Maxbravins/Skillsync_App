@@ -3,6 +3,10 @@ import Job from "../models/job.model.js";
 import Notification from "../models/notification.model.js";
 import Transaction from "../models/transaction.model.js";
 import { initiateSTKPush } from "../services/mpesa.service.js";
+import Contract from "../models/contract.model.js";
+import Wallet from "../models/wallet.model.js";
+import { calculateCommission } from "../services/platformFee.service.js";
+import { sendPaymentConfirmationToClient, sendPaymentReceivedEmail } from "../services/email.service.js";
 
 export const initiatePayment = async (req, res) => {
   try {
@@ -122,7 +126,7 @@ export const mpesaCallback = async (req, res) => {
         ResultDesc: "Accepted",
       });
     }
-
+    // Extract relevant data from the callback
     const { CheckoutRequestID, ResultCode, ResultDesc, CallbackMetadata } =
       callback;
 
@@ -162,9 +166,37 @@ export const mpesaCallback = async (req, res) => {
 
         await application.save();
       }
+      // Handle contract creation and wallet update
+      const contract = await Contract.findOne({
+      application: application._id,
+    });
+
+    if (contract) {
+      contract.status = "active";
+      contract.startedAt = new Date();
+      await contract.save();
+
+      const commission = calculateCommission(contract.amount);
+      const developerAmount = contract.amount - commission;
+
+      let wallet = await Wallet.findOne({
+        developer: contract.developer,
+      });
+
+      if (!wallet) {
+        wallet = await Wallet.create({
+          developer: contract.developer,
+        });
+      }
+
+      wallet.pendingBalance += developerAmount;
+      wallet.totalEarned += developerAmount;
+
+      await wallet.save();
+    }
 
       const job = await Job.findById(transaction.job)
-        .populate("client", "username")
+        .populate("client", "username email")
         .populate("developer", "username email");
 
       if (job) {
@@ -178,7 +210,20 @@ export const mpesaCallback = async (req, res) => {
           message: `You have received payment for "${job.title}".`,
         });
 
-        // We'll add payment confirmation emails here later.
+        // Send email notifications to both client and developer
+        await sendPaymentConfirmationToClient({
+        email: job.client.email,
+        clientName: job.client.username,
+        jobTitle: job.title,
+        amount: transaction.amount,
+        });
+
+        await sendPaymentReceivedEmail({
+        email: job.developer.email,
+        developerName: job.developer.username,
+        jobTitle: job.title,
+        amount: transaction.amount,
+      });
       }
     } else {
       transaction.status = "failed";

@@ -12,21 +12,25 @@ const walletSchema = new mongoose.Schema(
     availableBalance: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     pendingBalance: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     totalEarned: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     totalWithdrawn: {
       type: Number,
       default: 0,
+      min: 0,
     },
   },
   {
@@ -34,4 +38,8 @@ const walletSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model("Wallet", walletSchema);
+const Wallet =
+  mongoose.models.Wallet ||
+  mongoose.model("Wallet", walletSchema);
+
+export default Wallet;
