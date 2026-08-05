@@ -182,38 +182,6 @@ export const sendNewJobAlertEmail = async ({
     `,
   });
 };
-    // Send email when payment is released
-export const sendPaymentReleasedEmail = async ({
-    email,
-    developerName,
-    amount,
-}) => {
-    return sendEmail({
-        to: email,
-        subject: "Payment Released - SkillSync",
-        html: `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:25px;">
-            <h2 style="color:#06b6d4;">SkillSync</h2>
-
-            <h3>Hello ${developerName},</h3>
-
-            <p>Your payment has now been released.</p>
-
-            <h1 style="color:green;">
-                KES ${amount}
-            </h1>
-
-            <p>The amount is now available in your wallet.</p>
-
-            <hr>
-
-            <p style="font-size:12px;color:#777;">
-                Thank you for using SkillSync.
-            </p>
-        </div>
-        `,
-    });
-};
 
   // Payment Confirmation Email (Client)
 export const sendPaymentConfirmationToClient = async ({
