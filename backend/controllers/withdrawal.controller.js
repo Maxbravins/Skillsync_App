@@ -179,7 +179,7 @@ export const rejectWithdrawal = async (req, res) => {
 
     const withdrawal = await Withdrawal.findById(req.params.id)
       .populate("wallet")
-      .populate("developer", "username email"),
+      .populate("developer", "username email");
 
     if (!withdrawal) {
       return res.status(404).json({
