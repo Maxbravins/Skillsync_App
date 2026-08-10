@@ -9,9 +9,10 @@ const router = express.Router();
 
 router.post("/", auth, authorizeRoles("client"), createJob);
 router.get("/my", auth, authorizeRoles("client"), getMyJobs);
+router.get("/", auth, paginate(Job), getAllJobs);
 router.get("/:id", auth, getJobById);
 router.put("/:id", auth, authorizeRoles("client"), updateJob);
 router.delete("/:id", auth, authorizeRoles("client"), deleteJob);
-router.get("/", auth, paginate(Job), getAllJobs);
+
 
 export default router;
