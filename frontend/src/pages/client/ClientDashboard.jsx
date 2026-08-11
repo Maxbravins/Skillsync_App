@@ -87,7 +87,7 @@ const ClientDashboard = () => {
                 </Link>
 
                 <Link
-                    to="/my-jobs"
+                    to="/applications?status=pending"
                     className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-yellow-500 hover:scale-105 transition"
                   >
                     <p className="text-yellow-400 uppercase text-sm font-semibold">
