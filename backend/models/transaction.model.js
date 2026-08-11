@@ -32,16 +32,6 @@ const transactionSchema = new mongoose.Schema(
       required: null,
     },
 
-    paymentType: {
-    type: String,
-    enum: [
-    "platform_fee",
-    "contract_payment",
-    "withdrawal",
-  ],
-  required: true,
-},
-
     amount: {
       type: Number,
       required: true,

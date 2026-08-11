@@ -67,6 +67,7 @@ export const initiatePayment = async (req, res) => {
         message: "A payment already exists for this application.",
       });
     }
+     const commission = calculateCommission(job.budget);
 
     let stkResponse;
 
@@ -91,6 +92,10 @@ export const initiatePayment = async (req, res) => {
       client: req.user.id,
       developer: application.developer._id,
       amount: job.budget,
+      projectAmount: job.budget,
+      platformFee: commission,
+      totalAmount: job.budget,
+      paymentType: "project_payment",
       phoneNumber,
       status: "pending",
       merchantRequestID: stkResponse.MerchantRequestID,
@@ -115,7 +120,7 @@ export const initiatePayment = async (req, res) => {
     });
   }
 };
-
+    // M-Pesa callback handler
 export const mpesaCallback = async (req, res) => {
   try {
     const callback = req.body?.Body?.stkCallback;
@@ -157,42 +162,64 @@ export const mpesaCallback = async (req, res) => {
 
       await transaction.save();
 
-      const application = await Application.findById(transaction.application);
+    const application = await Application.findById(
+      transaction.application
+    );
 
-      if (application) {
-        application.paymentStatus = "paid";
-        application.paidAt = new Date();
-        application.transaction = transaction._id;
+    if (!application) {
+      return res.status(200).json({
+        ResultCode: 0,
+        ResultDesc: "Accepted",
+      });
+    }
 
-        await application.save();
-      }
-      // Handle contract creation and wallet update
+    // Only process the payment once
+    if (application.paymentStatus !== "paid") {
+      application.paymentStatus = "paid";
+      application.paidAt = new Date();
+      application.transaction = transaction._id;
+
+      await application.save();
+
+      // Activate the contract
       const contract = await Contract.findOne({
-      application: application._id,
-    });
-
-    if (contract) {
-      contract.status = "active";
-      contract.startedAt = new Date();
-      await contract.save();
-
-      const commission = calculateCommission(contract.amount);
-      const developerAmount = contract.amount - commission;
-
-      let wallet = await Wallet.findOne({
-        developer: contract.developer,
+        application: application._id,
       });
 
-      if (!wallet) {
-        wallet = await Wallet.create({
+      if (contract && contract.status !== "active") {
+        contract.status = "active";
+        contract.startedAt = new Date();
+
+        await contract.save();
+
+        const commission = calculateCommission(
+          contract.amount
+        );
+
+        const developerAmount =
+          contract.amount - commission;
+
+        let wallet = await Wallet.findOne({
           developer: contract.developer,
         });
+
+        if (!wallet) {
+          wallet = await Wallet.create({
+            developer: contract.developer,
+            pendingBalance: 0,
+            totalEarned: 0,
+          });
+        }
+
+        wallet.pendingBalance += developerAmount;
+        wallet.totalEarned += developerAmount;
+
+        await wallet.save();
+
+        transaction.developerAmount = developerAmount;
+        transaction.commission = commission;
+        await transaction.save();
       }
-
-      wallet.pendingBalance += developerAmount;
-      wallet.totalEarned += developerAmount;
-
-      await wallet.save();
     }
 
       const job = await Job.findById(transaction.job)
