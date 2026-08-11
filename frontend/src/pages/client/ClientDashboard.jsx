@@ -100,7 +100,7 @@ const ClientDashboard = () => {
                   </Link>
 
                 <Link
-                  to="/my-jobs"
+                  to="/applications?status=accepted"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-green-500 hover:scale-105 transition"
                 >
                   <p className="text-green-400 uppercase text-sm font-semibold">
@@ -113,7 +113,7 @@ const ClientDashboard = () => {
                 </Link>
 
                 <Link
-                to="/my-jobs"
+                  to="/applications?status=rejected"
                 className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-red-500 hover:scale-105 transition"
               >
                 <p className="text-red-400 uppercase text-sm font-semibold">
