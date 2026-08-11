@@ -5,6 +5,7 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminReports from "../pages/admin/AdminReports";
 import JobApplicants from "../pages/applications/JobApplicants";
 import MyApplications from "../pages/applications/MyApplications";
+import ClientApplications from "../pages/applications/ClientApplications";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
@@ -117,6 +118,16 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
+         <Route
+          path="/applications"
+          element={
+            <ProtectedRoute role="client">
+              <ClientApplications />
+            </ProtectedRoute>
+          }
+        />
+        
         <Route
           path="/my-jobs"
           element={
