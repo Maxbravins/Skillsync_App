@@ -68,7 +68,7 @@ export const initiatePayment = async (req, res) => {
       });
     }
      const commission = calculateCommission(job.budget);
-
+    console.log("PAYMENT DEBUG v2 — commission:", commission ?? "not yet defined");
     let stkResponse;
 
     try {
