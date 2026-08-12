@@ -68,13 +68,15 @@ export const initiatePayment = async (req, res) => {
       });
     }
      const commission = calculateCommission(job.budget);
-    console.log("PAYMENT DEBUG v2 — commission:", commission ?? "not yet defined");
+      const projectAmount = job.budget;
+      const totalAmount = projectAmount + commission;
+
     let stkResponse;
 
     try {
       stkResponse = await initiateSTKPush({
         phoneNumber,
-        amount: job.budget,
+        amount: totalAmount,
         accountReference: `SkillSync-${job._id.toString().slice(-6)}`,
         transactionDesc: `Payment for ${job.title}`,
       });
@@ -85,22 +87,31 @@ export const initiatePayment = async (req, res) => {
           error.message || "M-Pesa could not initiate the payment request.",
       });
     }
+    
+const developerAmount = projectAmount - commission;
 
-    const transaction = await Transaction.create({
-      application: application._id,
-      job: job._id,
-      client: req.user.id,
-      developer: application.developer._id,
-      amount: job.budget,
-      projectAmount: job.budget,
-      platformFee: commission,
-      totalAmount: job.budget,
-      paymentType: "project_payment",
-      phoneNumber,
-      status: "pending",
-      merchantRequestID: stkResponse.MerchantRequestID,
-      checkoutRequestID: stkResponse.CheckoutRequestID,
-    });
+const transaction = await Transaction.create({
+  application: application._id,
+  job: job._id,
+  client: req.user.id,
+  developer: application.developer._id,
+
+  amount: totalAmount,
+  projectAmount: projectAmount,
+  platformFee: commission,
+  totalAmount: totalAmount,
+
+  commission: commission,
+  developerAmount: developerAmount,
+
+  paymentType: "project_payment",
+
+  phoneNumber,
+  status: "pending",
+
+  merchantRequestID: stkResponse.MerchantRequestID,
+  checkoutRequestID: stkResponse.CheckoutRequestID,
+});
 
     application.transaction = transaction._id;
     application.paymentStatus = "pending";
