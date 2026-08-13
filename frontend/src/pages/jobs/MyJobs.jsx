@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import Footer from "../../components/Footer";
 import { useLanguage } from "../../context/LanguageContext";
 import { deleteJob, getMyJobs } from "../../services/job.service";
+import { payPlatformFee } from "../../services/platformPayment.service";
+import api from "../../services/api";
 
 const MyJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -10,6 +12,8 @@ const MyJobs = () => {
   const [errorMsg, setErrorMsg] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [deletingId, setDeletingId] = useState(null);
+  const [payingJobId, setPayingJobId] = useState(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const { t } = useLanguage();
 
@@ -100,6 +104,41 @@ const MyJobs = () => {
         return "bg-slate-500/15 text-slate-400 border border-slate-500/30";
     }
   };
+
+  const handlePlatformPayment = async (job) => {
+  if (!phoneNumber.trim()) {
+    alert("Please enter your M-Pesa phone number.");
+    return;
+  }
+
+  try {
+    setPayingJobId(job._id);
+
+    const { data } = await api.post(
+      `/platform-payments/${job._id}/pay`,
+      {
+        phoneNumber: phoneNumber.trim(),
+      }
+    );
+
+    if (data.success) {
+      alert(
+        "M-Pesa payment request sent. Check your phone and enter your M-Pesa PIN."
+      );
+
+      setPhoneNumber("");
+    }
+  } catch (error) {
+    console.error("Platform payment error:", error);
+
+    alert(
+      error.response?.data?.message ||
+        "Unable to initiate platform fee payment."
+    );
+  } finally {
+    setPayingJobId(null);
+  }
+    };
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
@@ -323,6 +362,36 @@ const MyJobs = () => {
                       >
                         View Job
                       </Link>
+                      {!job.isPublished && !job.platformFeePaid && (
+  <div className="w-full mt-2 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
+    <p className="text-xs text-yellow-400 mb-2">
+      Platform fee required before publishing.
+    </p>
+
+    <p className="text-sm font-semibold mb-2">
+      Fee: KES{" "}
+      {Number(job.platformFee || 0).toLocaleString()}
+    </p>
+
+    <input
+      type="tel"
+      placeholder="M-Pesa number"
+      value={phoneNumber}
+      onChange={(e) => setPhoneNumber(e.target.value)}
+      className="w-full px-3 py-2 mb-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-sm outline-none"
+    />
+
+    <button
+      onClick={() => handlePlatformPayment(job)}
+      disabled={payingJobId === job._id}
+      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {payingJobId === job._id
+        ? "Sending..."
+        : "Pay & Publish"}
+    </button>
+  </div>
+)}
 
                       <Link
                         to={`/job-applicants/${job._id}`}
