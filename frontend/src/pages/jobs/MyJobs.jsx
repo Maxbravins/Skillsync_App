@@ -13,7 +13,7 @@ const MyJobs = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [deletingId, setDeletingId] = useState(null);
   const [payingJobId, setPayingJobId] = useState(null);
-  const [phoneNumber, setPhoneNumber] = useState({});
+  const [phoneNumbers, setPhoneNumbers] = useState({});
 
   const { t } = useLanguage();
     // Fetch jobs on component mount
