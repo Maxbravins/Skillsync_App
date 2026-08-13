@@ -393,3 +393,39 @@ export const sendWithdrawalRejectedEmail = async ({
     `,
   });
 };
+
+    // Application Rejection Email
+export const sendRejectionEmail = async ({
+  email,
+  developerName,
+  jobTitle,
+}) => {
+  await transporter.sendMail({
+    from: `"SkillSync" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `Application Update - ${jobTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+        <h2>Application Update</h2>
+
+        <p>Hello ${developerName},</p>
+
+        <p>
+          Thank you for applying for the <strong>${jobTitle}</strong> project
+          on SkillSync.
+        </p>
+
+        <p>
+          Unfortunately, your application was not selected for this project.
+        </p>
+
+        <p>
+          Don't be discouraged. Keep applying for other opportunities on
+          SkillSync.
+        </p>
+
+        <p>Best regards,<br><strong>SkillSync Team</strong></p>
+      </div>
+    `,
+  });
+};

@@ -1,7 +1,7 @@
 import Application from "../models/application.model.js";
 import Job from "../models/job.model.js";
 import Notification from "../models/notification.model.js";
-import { sendApplicationEmail, sendAcceptanceEmail } from "../services/email.service.js";
+import { sendApplicationEmail, sendAcceptanceEmail, sendRejectionEmail } from "../services/email.service.js";
 import Contract from "../models/contract.model.js";
 import { calculateCommission,  calculateDeveloperAmount } from "../services/platformFee.service.js";
 
@@ -243,9 +243,15 @@ export const updateApplicationStatus = async (req, res) => {
     // --------------------------------------------------
     // REJECT APPLICATION
     // --------------------------------------------------
-    if (status === "rejected") {
-      application.status = "rejected";
-      await application.save();
+      if (status === "rejected") {
+        application.status = "rejected";
+        await application.save();
+
+        await sendRejectionEmail({
+          email: application.developer.email,
+          developerName: application.developer.username,
+          jobTitle: application.job.title,
+        });
 
       const message =
         "Your application has been rejected.";
@@ -262,6 +268,8 @@ export const updateApplicationStatus = async (req, res) => {
           message,
         });
       }
+
+      await sendRejectionEmail(application.developer.email, application.job.title);
 
       return res.status(200).json({
         success: true,
@@ -307,11 +315,16 @@ export const updateApplicationStatus = async (req, res) => {
         user: otherApplication.developer._id,
         message: rejectionMessage,
       });
+
+      await sendRejectionEmail({
+        email: otherApplication.developer.email,
+        developerName: otherApplication.developer.username,
+        jobTitle: application.job.title,
+      });
     }
 
-    // --------------------------------------------------
+   
     // CREATE ONE CONTRACT ONLY
-    // --------------------------------------------------
 
     // Prevent duplicate contract creation
     const existingContract = await Contract.findOne({
