@@ -391,7 +391,7 @@ const handlePlatformPayment = async (job) => {
                 <input
                   type="tel"
                   placeholder="M-Pesa number"
-                  value={phoneNumber[job._id] || ""}
+                  value={phoneNumbers[job._id] || ""}
                   onChange={(e) =>
                     handlePhoneNumberChange(job._id, e.target.value)
                   }
