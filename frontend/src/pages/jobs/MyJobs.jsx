@@ -13,10 +13,10 @@ const MyJobs = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [deletingId, setDeletingId] = useState(null);
   const [payingJobId, setPayingJobId] = useState(null);
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState({});
 
   const { t } = useLanguage();
-
+    // Fetch jobs on component mount
   const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
@@ -40,7 +40,7 @@ const MyJobs = () => {
   useEffect(() => {
     fetchJobs();
   }, [fetchJobs]);
-
+    // Handle job deletion
   const handleDelete = async (jobId) => {
     const confirmDelete = window.confirm(
       t("confirmDelete") ||
@@ -85,7 +85,7 @@ const MyJobs = () => {
 
     return 0;
   });
-
+    // Function to get the style based on job status
   const getStatusStyle = (status) => {
     switch (status) {
       case "Open":
@@ -105,8 +105,11 @@ const MyJobs = () => {
     }
   };
 
-  const handlePlatformPayment = async (job) => {
-  if (!phoneNumber.trim()) {
+    // Handle platform fee payment for a job
+const handlePlatformPayment = async (job) => {
+  const phoneNumber = phoneNumbers[job._id];
+
+  if (!phoneNumber?.trim()) {
     alert("Please enter your M-Pesa phone number.");
     return;
   }
@@ -115,7 +118,7 @@ const MyJobs = () => {
     setPayingJobId(job._id);
 
     const { data } = await api.post(
-      `/platform-payments/${job._id}/pay`,
+      `/platform-payment/${job._id}/pay`,
       {
         phoneNumber: phoneNumber.trim(),
       }
@@ -126,7 +129,11 @@ const MyJobs = () => {
         "M-Pesa payment request sent. Check your phone and enter your M-Pesa PIN."
       );
 
-      setPhoneNumber("");
+      setPhoneNumbers((previous) => {
+        const updated = { ...previous };
+        delete updated[job._id];
+        return updated;
+      });
     }
   } catch (error) {
     console.error("Platform payment error:", error);
@@ -138,6 +145,14 @@ const MyJobs = () => {
   } finally {
     setPayingJobId(null);
   }
+};
+
+    // Handle phone number input change for each job
+    const handlePhoneNumberChange = (jobId, value) => {
+      setPhoneNumbers((previous) => ({
+        ...previous,
+        [jobId]: value,
+      }));
     };
 
   return (
@@ -363,35 +378,37 @@ const MyJobs = () => {
                         View Job
                       </Link>
                       {!job.isPublished && !job.platformFeePaid && (
-  <div className="w-full mt-2 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
-    <p className="text-xs text-yellow-400 mb-2">
-      Platform fee required before publishing.
-    </p>
+              <div className="w-full mt-2 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
+                <p className="text-xs text-yellow-400 mb-2">
+                  Platform fee required before publishing.
+                </p>
 
-    <p className="text-sm font-semibold mb-2">
-      Fee: KES{" "}
-      {Number(job.platformFee || 0).toLocaleString()}
-    </p>
+                <p className="text-sm font-semibold mb-2">
+                  Fee: KES{" "}
+                  {Number(job.platformFee || 0).toLocaleString()}
+                </p>
 
-    <input
-      type="tel"
-      placeholder="M-Pesa number"
-      value={phoneNumber}
-      onChange={(e) => setPhoneNumber(e.target.value)}
-      className="w-full px-3 py-2 mb-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-sm outline-none"
-    />
+                <input
+                  type="tel"
+                  placeholder="M-Pesa number"
+                  value={phoneNumbers[job._id] || ""}
+                  onChange={(e) =>
+                    handlePhoneNumberChange(job._id, e.target.value)
+                  }
+                  className="w-full px-3 py-2 mb-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-sm outline-none"
+                />
 
-    <button
-      onClick={() => handlePlatformPayment(job)}
-      disabled={payingJobId === job._id}
-      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {payingJobId === job._id
-        ? "Sending..."
-        : "Pay & Publish"}
-    </button>
-  </div>
-)}
+                <button
+                  onClick={() => handlePlatformPayment(job)}
+                  disabled={payingJobId === job._id}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {payingJobId === job._id
+                    ? "Sending..."
+                    : "Pay & Publish"}
+                </button>
+              </div>
+            )}
 
                       <Link
                         to={`/job-applicants/${job._id}`}
