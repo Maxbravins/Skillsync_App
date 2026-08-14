@@ -61,27 +61,24 @@ export const payPlatformFee = async (req, res) => {
 
         });
 
-        const transaction = await Transaction.create({
+            const transaction = await Transaction.create({
+                job: job._id,
+                client: req.user.id,
 
-            job: job._id,
+                // Project information
+                amount: fee,
+                projectAmount: job.budget,
+                platformFee: fee,
+                totalAmount: fee,
 
-            client: req.user.id,
+                phoneNumber,
 
-            amount: fee,
+                paymentType: "platform_fee",
+                status: "pending",
 
-            phoneNumber,
-
-            paymentType: "platform_fee",
-
-            status: "pending",
-
-            merchantRequestID:
-                stkResponse.MerchantRequestID,
-
-            checkoutRequestID:
-                stkResponse.CheckoutRequestID,
-
-        });
+                merchantRequestID: stkResponse.MerchantRequestID,
+                checkoutRequestID: stkResponse.CheckoutRequestID,
+            });
 
         res.json({
 
@@ -155,9 +152,8 @@ export const platformCallback = async (req, res) => {
             .populate("client", "username email");
 
             job.platformFeePaid = true;
-
+            job.isPublished = true;
             job.status = "published";
-
             job.publishedAt = new Date();
 
             await job.save();
