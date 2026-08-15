@@ -95,7 +95,12 @@ const Navbar = () => {
                 >
                   {t("createJob")}
                 </Link>
-
+                <Link
+                  to="/premium"
+                  className="text-yellow-400 hover:text-yellow-300 font-semibold transition"
+                >
+                  Premium
+                </Link>
                 <Link
                   to="/profile"
                   className="text-[var(--text-secondary)] hover:text-cyan-400 transition"
@@ -127,7 +132,12 @@ const Navbar = () => {
                 >
                   {t("applications")}
                 </Link>
-
+                <Link
+  to="/premium"
+  className="text-yellow-400 hover:text-yellow-300 font-semibold transition"
+>
+  Premium
+</Link>
                 <Link
                   to="/profile"
                   className="text-[var(--text-secondary)] hover:text-cyan-400 transition"
