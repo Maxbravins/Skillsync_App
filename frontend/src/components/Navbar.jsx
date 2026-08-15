@@ -309,6 +309,12 @@ const Navbar = () => {
                     {t("createJob")}
                   </Link>
                   <Link
+                  to="/premium"
+                  className="text-[var(--text-secondary)] hover:text-yellow-400 transition"
+                >
+                   Premium
+                </Link>
+                <Link
                     to="/profile"
                     className="rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-cyan-400"
                     onClick={() => setMobileMenuOpen(false)}
@@ -340,6 +346,12 @@ const Navbar = () => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t("applications")}
+                  </Link>
+                  <Link
+                    to="/premium"
+                    className="text-[var(--text-secondary)] hover:text-yellow-400 transition"
+                  >
+                     Premium
                   </Link>
                   <Link
                     to="/profile"

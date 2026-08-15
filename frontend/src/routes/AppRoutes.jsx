@@ -22,6 +22,7 @@ import MyJobs from "../pages/jobs/MyJobs";
 import Notifications from "../pages/notifications/Notifications";
 import EditProfile from "../pages/profile/EditProfile";
 import Profile from "../pages/profile/Profile";
+import Premium from "../pages/premium/Premium";
 
 
 
@@ -171,6 +172,15 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
+            <Route
+              path="/premium"
+              element={
+                <ProtectedRoute>
+                  <Premium />
+                </ProtectedRoute>
+              }
+            />
 
         <Route path="/payment/:applicationId" element={<Payment />} />
 
