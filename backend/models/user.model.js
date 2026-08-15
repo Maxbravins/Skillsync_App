@@ -119,10 +119,26 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // Premium account (future)
+// Premium Subscription
     isPremium: {
       type: Boolean,
       default: false,
+    },
+
+    premiumPlan: {
+      type: String,
+      enum: ["free", "monthly", "yearly"],
+      default: "free",
+    },
+
+    premiumStartedAt: {
+      type: Date,
+      default: null,
+    },
+
+    premiumExpiresAt: {
+      type: Date,
+      default: null,
     },
 
     resetPasswordToken: {

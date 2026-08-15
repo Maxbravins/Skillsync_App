@@ -14,6 +14,7 @@ import { fileURLToPath } from "url";
 import pdfRoutes from "./routes/pdf.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import platformPaymentRoutes from "./routes/platformPayment.routes.js";
+import premiumRoutes from "./routes/premium.routes.js";
 import contractRoutes from "./routes/contract.routes.js";
 import walletRoutes from "./routes/wallet.routes.js";
 import withdrawalRoutes from "./routes/withdrawal.routes.js";
@@ -70,6 +71,7 @@ app.use("/api/contracts", contractRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/withdrawals", withdrawalRoutes);
 app.use("/api/admin-wallet", adminWalletRoutes);
+app.use("/api/premium", premiumRoutes);
 
 // Home route
 app.get("/", (req, res) => {
