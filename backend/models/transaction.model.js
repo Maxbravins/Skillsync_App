@@ -23,7 +23,7 @@ const transactionSchema = new mongoose.Schema(
     client: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
     },
 
     user: {
@@ -35,7 +35,7 @@ const transactionSchema = new mongoose.Schema(
     developer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: null,
+      default: null,
     },
 
     amount: {

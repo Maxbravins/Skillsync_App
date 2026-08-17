@@ -109,44 +109,31 @@ calculatePremiumExpiry,
   }
 
   // Create Premium transaction
-  const transaction = await Transaction.create({
-  job: null,
-
-  // Explicit Premium subscriber
+const transaction = await Transaction.create({
   user: user._id,
 
-  client: user.role === "client" ? user._id : null,
-
-  developer:
-  user.role === "developer"
-  ? user._id
-  : null,
-
+  job: null,
   application: null,
   contract: null,
 
+  client: user.role === "client" ? user._id : null,
+  developer: user.role === "developer" ? user._id : null,
+
   amount,
-
   projectAmount: 0,
-
   platformFee: 0,
-
   totalAmount: amount,
 
   phoneNumber,
 
-  paymentType: "premium",
-
   premiumPlan: plan,
 
+  paymentType: "premium",
   status: "pending",
 
-  merchantRequestID:
-  stkResponse.MerchantRequestID || "",
-
-  checkoutRequestID:
-  stkResponse.CheckoutRequestID || "",
-  });
+  merchantRequestID: stkResponse.MerchantRequestID || "",
+  checkoutRequestID: stkResponse.CheckoutRequestID || "",
+});
 
   // Response
   return res.status(200).json({
@@ -174,193 +161,174 @@ calculatePremiumExpiry,
   }
   };
 
-  //M-Pesa Premium callback
-  export const premiumCallback = async (req, res) => {
+// M-Pesa Premium callback
+export const premiumCallback = async (req, res) => {
   try {
-  const callback = req.body?.Body?.stkCallback;
+    const callback = req.body?.Body?.stkCallback;
 
-  // Validate callback
-  if (!callback) {
-  return res.json({
-  ResultCode: 0,
-  ResultDesc: "Accepted",
-  });
-  }
+    // Validate callback
+    if (!callback) {
+      return res.json({
+        ResultCode: 0,
+        ResultDesc: "Accepted",
+      });
+    }
 
-  const {
-  CheckoutRequestID,
-  ResultCode,
-  ResultDesc,
-  CallbackMetadata,
-  } = callback;
+    const {
+      CheckoutRequestID,
+      ResultCode,
+      ResultDesc,
+      CallbackMetadata,
+    } = callback;
 
-  // Find Premium transaction
-  const transaction = await Transaction.findOne({
-  checkoutRequestID: CheckoutRequestID,
-  paymentType: "premium",
-  });
+    // Find the Premium transaction
+    const transaction = await Transaction.findOne({
+      checkoutRequestID: CheckoutRequestID,
+      paymentType: "premium",
+    });
 
-  if (!transaction) {
-  console.warn(
-  `Premium transaction not found for CheckoutRequestID: ${CheckoutRequestID}`
-  );
+    if (!transaction) {
+      console.warn(
+        `Premium transaction not found for CheckoutRequestID: ${CheckoutRequestID}`
+      );
 
-  return res.json({
-  ResultCode: 0,
-  ResultDesc: "Accepted",
-  });
-  }
+      return res.json({
+        ResultCode: 0,
+        ResultDesc: "Accepted",
+      });
+    }
 
-  // Prevent duplicate callback processing
-  if (transaction.status === "completed") {
-  return res.json({
-  ResultCode: 0,
-  ResultDesc: "Accepted",
-  });
-  }
+    // Prevent duplicate callback processing
+    if (transaction.status === "completed") {
+      console.log(
+        `Premium transaction ${transaction._id} was already completed.`
+      );
 
-  transaction.resultCode = ResultCode;
-  transaction.resultDesc = ResultDesc;
+      return res.json({
+        ResultCode: 0,
+        ResultDesc: "Accepted",
+      });
+    }
 
-  // PAYMENT SUCCESSFUL
-  if (ResultCode === 0) {
-  const metadata = CallbackMetadata?.Item || [];
+    transaction.resultCode = ResultCode;
+    transaction.resultDesc = ResultDesc;
 
-  // Extract M-Pesa receipt
-  const receiptItem = metadata.find(
-  (item) =>
-  item.Name === "MpesaReceiptNumber"
-  );
+    // PAYMENT SUCCESSFUL
+    if (ResultCode === 0) {
+      const metadata = CallbackMetadata?.Item || [];
 
-  if (receiptItem?.Value) {
-  transaction.mpesaReceiptNumber =
-  receiptItem.Value;
-  }
+      // Extract M-Pesa receipt number
+      const receiptItem = metadata.find(
+        (item) => item.Name === "MpesaReceiptNumber"
+      );
 
-  transaction.status = "completed";
-  transaction.paidAt = new Date();
+      if (receiptItem?.Value) {
+        transaction.mpesaReceiptNumber = receiptItem.Value;
+      }
 
-  await transaction.save();
+      transaction.status = "completed";
+      transaction.paidAt = new Date();
 
-  // Find Premium subscriber
-  const user = await User.findById(
-  transaction.user
-  );
+      await transaction.save();
 
-  if (!user) {
-  console.error(
-  `Premium payment ${transaction._id} completed, but user ${transaction.user} was not found.`
-  );
+      // FIND PREMIUM USER
+      if (!transaction.user) {
+        console.error(
+          `Premium transaction ${transaction._id} has no user reference.`
+        );
 
-  ```
-   return res.json({
-     ResultCode: 0,
-     ResultDesc: "Accepted",
-   });
-  ```
+        return res.json({
+          ResultCode: 0,
+          ResultDesc: "Accepted",
+        });
+      }
 
-  }
+      const user = await User.findById(transaction.user);
 
-  // Validate stored Premium plan
-  const plan = transaction.premiumPlan;
+      if (!user) {
+        console.error(
+          `Premium payment ${transaction._id} completed, but user ${transaction.user} was not found.`
+        );
 
-  if (!plan) {
-  console.error(
-  `Premium transaction ${transaction._id} has no premiumPlan.`
-  );
+        return res.json({
+          ResultCode: 0,
+          ResultDesc: "Accepted",
+        });
+      }
 
-  ```
-   return res.json({
-     ResultCode: 0,
-     ResultDesc: "Accepted",
-   });
-  ```
+      // VALIDATE PREMIUM PLAN
+      const plan = transaction.premiumPlan;
 
-  }
+      if (!plan || !["monthly", "yearly"].includes(plan)) {
+        console.error(
+          `Premium transaction ${transaction._id} has an invalid plan: ${plan}`
+        );
 
-  // Calculate Premium dates
-  const startedAt = new Date();
+        return res.json({
+          ResultCode: 0,
+          ResultDesc: "Accepted",
+        });
+      }
 
-  const expiresAt =
-  calculatePremiumExpiry(
-  plan,
-  startedAt
-  );
+      // CALCULATE PREMIUM DATES
 
-  // Activate Premium account
-  user.isPremium = true;
+      const startedAt = new Date();
 
-  user.premiumPlan = plan;
+      const expiresAt = calculatePremiumExpiry(
+        plan,
+        startedAt
+      );
 
-  user.premiumStartedAt = startedAt;
+      // ACTIVATE PREMIUM
+      user.isPremium = true;
+      user.premiumPlan = plan;
+      user.premiumStartedAt = startedAt;
+      user.premiumExpiresAt = expiresAt;
 
-  user.premiumExpiresAt = expiresAt;
+      await user.save();
 
-  await user.save();
+      // LOG SUCCESS
+      console.log("========================================");
+      console.log("PREMIUM PAYMENT SUCCESSFUL");
+      console.log(`User: ${user.username}`);
+      console.log(`Email: ${user.email}`);
+      console.log(`Plan: ${plan}`);
+      console.log(`Amount: KES ${transaction.amount}`);
+      console.log(
+        `Receipt: ${transaction.mpesaReceiptNumber}`
+      );
+      console.log(
+        `Expires: ${expiresAt.toISOString()}`
+      );
+      console.log("========================================");
+    }
 
-  console.log(
-  "========================================"
-  );
+    // PAYMENT FAILED / CANCELLED
+    else {
+      transaction.status = "failed";
 
-  console.log(
-  "PREMIUM PAYMENT SUCCESSFUL"
-  );
+      await transaction.save();
 
-  console.log(
-  `User: ${user.username}`
-  );
+      console.log(
+        `Premium payment failed: ${ResultDesc}`
+      );
+    }
 
-  console.log(
-  `Email: ${user.email}`
-  );
-
-  console.log(
-  `Plan: ${plan}`
-  );
-
-  console.log(
-  `Amount: KES ${transaction.amount}`
-  );
-
-  console.log(
-  `Receipt: ${transaction.mpesaReceiptNumber}`
-  );
-
-  console.log(
-  `Expires: ${expiresAt.toISOString()}`
-  );
-
-  console.log(
-  "========================================"
-  );
-  }
-
-  // PAYMENT FAILED / CANCELLED
-  else {
-  transaction.status = "failed";
-
-  await transaction.save();
-
-  console.log(
-  `Premium payment failed: ${ResultDesc}`
-  );
-  }
-
-  // Always acknowledge Safaricom callback
-  return res.json({
-  ResultCode: 0,
-  ResultDesc: "Accepted",
-  });
+    // Always acknowledge Safaricom callback
+    return res.json({
+      ResultCode: 0,
+      ResultDesc: "Accepted",
+    });
   } catch (error) {
-  console.error(
-  "Premium callback error:",
-  error
-  );
+    console.error(
+      "Premium callback error:",
+      error
+    );
 
-  // Always acknowledge M-Pesa callback
-  return res.json({
-  ResultCode: 0,
-  ResultDesc: "Accepted",
-  });
+    // Always acknowledge M-Pesa callback
+    return res.json({
+      ResultCode: 0,
+      ResultDesc: "Accepted",
+    });
   }
-  };
+};
