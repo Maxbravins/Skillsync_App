@@ -7,7 +7,7 @@ calculatePremiumExpiry,
 } from "../services/premium.service.js";
 
 
-    //Initiate Premium subscription payment
+   //.Initiate Premium subscription payment
   export const payPremium = async (req, res) => {
   try {
   const { plan, phoneNumber } = req.body;
