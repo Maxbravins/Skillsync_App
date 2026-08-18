@@ -144,6 +144,7 @@ export const getStats = async (req, res) => {
         // JOBS
         totalJobs,
         publishedJobs,
+        activeJobs: publishedJobs,
         pendingJobs,
 
         // APPLICATIONS
