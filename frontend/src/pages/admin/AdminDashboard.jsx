@@ -898,17 +898,12 @@ const AdminDashboard = () => {
                   )}
 
                 </tbody>
-
               </table>
 
             </div>
-
           </div>
-
         )}
-
       </main>
-
       <Footer />
 
     </div>
