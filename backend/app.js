@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { apiLimiter } from "./middleware/rateLimiter.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import jobRoutes from "./routes/job.routes.js";
@@ -53,6 +54,8 @@ app.use(
 );
 
 app.use(express.json());
+
+app.use("/api", apiLimiter);
 
 // Routes
 app.use("/api/auth", authRoutes);
