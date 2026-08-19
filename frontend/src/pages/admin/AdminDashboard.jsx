@@ -25,6 +25,8 @@ const AdminDashboard = () => {
   const [transactions, setTransactions] = useState([]);
 
   const [activeTab, setActiveTab] = useState("users");
+  const [transactionFilter, setTransactionFilter] = useState("all");
+  const [transactionSearch, setTransactionSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
   const [jobSearch, setJobSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -248,6 +250,27 @@ const AdminDashboard = () => {
           .includes(search)
     );
   }, [jobs, jobSearch]);
+      // SEARCH TRANSACTIONS
+const filteredTransactions = transactions.filter((tx) => {
+  const search = transactionSearch.toLowerCase().trim();
+
+  const matchesSearch =
+    !search ||
+    tx.paymentType?.toLowerCase().includes(search) ||
+    tx.status?.toLowerCase().includes(search) ||
+    tx.client?.username?.toLowerCase().includes(search) ||
+    tx.developer?.username?.toLowerCase().includes(search) ||
+    tx.user?.username?.toLowerCase().includes(search) ||
+    tx.job?.title?.toLowerCase().includes(search) ||
+    tx.mpesaReceiptNumber?.toLowerCase().includes(search);
+
+  const matchesFilter =
+    transactionFilter === "all" ||
+    tx.status === transactionFilter ||
+    tx.paymentType === transactionFilter;
+
+  return matchesSearch && matchesFilter;
+});
 
       // LOADING
   if (loading) {
@@ -920,152 +943,237 @@ const AdminDashboard = () => {
           </section>
         )}
 
-        {/* TRANSACTIONS TAB */}
+         {/* TRANSACTIONS TAB */}
 
-        {activeTab === "transactions" && (
-          <section className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl overflow-hidden">
+          {activeTab === "transactions" && (
+            <section className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl overflow-hidden">
 
-            <div className="p-5 border-b border-[var(--border-color)]">
+              <div className="p-5 border-b border-[var(--border-color)]">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
-              <h2 className="text-xl font-semibold">
-                Recent Transactions
-              </h2>
+                  <div>
+                    <h2 className="text-xl font-semibold">
+                      Transaction Management
+                    </h2>
 
-              <p className="text-sm text-[var(--text-secondary)] mt-1">
-                Monitor recent payments processed by
-                SkillSync.
-              </p>
+                    <p className="text-sm text-[var(--text-secondary)] mt-1">
+                      Monitor payments processed through SkillSync.
+                    </p>
+                  </div>
 
-            </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
 
-            <div className="overflow-x-auto">
+                    <input
+                      type="text"
+                      value={transactionSearch}
+                      onChange={(e) =>
+                        setTransactionSearch(e.target.value)
+                      }
+                      placeholder="Search transactions..."
+                      className="px-4 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] outline-none focus:ring-2 focus:ring-cyan-400"
+                    />
 
-              <table className="w-full min-w-[1000px]">
+                    <select
+                      value={transactionFilter}
+                      onChange={(e) =>
+                        setTransactionFilter(e.target.value)
+                      }
+                      className="px-4 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] outline-none"
+                    >
+                      <option value="all">
+                        All Transactions
+                      </option>
 
-                <thead className="bg-[var(--bg-primary)]">
+                      <option value="completed">
+                        Completed
+                      </option>
 
-                  <tr>
-                    <th className="px-4 py-3 text-left">
-                      Type
-                    </th>
+                      <option value="pending">
+                        Pending
+                      </option>
 
-                    <th className="px-4 py-3 text-left">
-                      User
-                    </th>
+                      <option value="failed">
+                        Failed
+                      </option>
 
-                    <th className="px-4 py-3 text-left">
-                      Job
-                    </th>
+                      <option value="premium">
+                        Premium
+                      </option>
 
-                    <th className="px-4 py-3 text-left">
-                      Amount
-                    </th>
+                      <option value="platform_fee">
+                        Platform Fee
+                      </option>
 
-                    <th className="px-4 py-3 text-left">
-                      Status
-                    </th>
+                      <option value="project_payment">
+                        Project Payment
+                      </option>
+                    </select>
 
-                    <th className="px-4 py-3 text-left">
-                      Receipt
-                    </th>
+                  </div>
+                </div>
+              </div>
 
-                    <th className="px-4 py-3 text-left">
-                      Date
-                    </th>
-                  </tr>
+              <div className="overflow-x-auto">
 
-                </thead>
+                <table className="w-full min-w-[1100px]">
 
-                <tbody>
+                  <thead className="bg-[var(--bg-primary)]">
 
-                  {transactions.length > 0 ? (
-                    transactions.map((tx) => {
-
-                      const displayUser =
-                        tx.user?.username ||
-                        tx.client?.username ||
-                        tx.developer?.username ||
-                        "Unknown";
-
-                      return (
-                        <tr
-                          key={tx._id}
-                          className="border-t border-[var(--border-color)] hover:bg-[var(--bg-primary)] transition"
-                        >
-
-                          <td className="px-4 py-4">
-
-                            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 text-cyan-400">
-                              {tx.paymentType ||
-                                "payment"}
-                            </span>
-
-                          </td>
-
-                          <td className="px-4 py-4 font-medium">
-                            {displayUser}
-                          </td>
-
-                          <td className="px-4 py-4">
-                            {tx.job?.title || "—"}
-                          </td>
-
-                          <td className="px-4 py-4 font-semibold">
-                            {formatMoney(tx.amount)}
-                          </td>
-
-                          <td className="px-4 py-4">
-
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-semibold ${getTransactionStatus(
-                                tx.status
-                              )}`}
-                            >
-                              {tx.status}
-                            </span>
-
-                          </td>
-
-                          <td className="px-4 py-4 text-sm">
-                            {tx.mpesaReceiptNumber ||
-                              "—"}
-                          </td>
-
-                          <td className="px-4 py-4 text-sm">
-                            {formatDate(
-                              tx.createdAt
-                            )}
-                          </td>
-
-                        </tr>
-                      );
-                    })
-                  ) : (
                     <tr>
-                      <td
-                        colSpan="7"
-                        className="px-6 py-10 text-center text-[var(--text-secondary)]"
-                      >
-                        No transactions found.
-                      </td>
+
+                      <th className="px-4 py-3 text-left">
+                        Type
+                      </th>
+
+                      <th className="px-4 py-3 text-left">
+                        User
+                      </th>
+
+                      <th className="px-4 py-3 text-left">
+                        Job
+                      </th>
+
+                      <th className="px-4 py-3 text-left">
+                        Amount
+                      </th>
+
+                      <th className="px-4 py-3 text-left">
+                        Status
+                      </th>
+
+                      <th className="px-4 py-3 text-left">
+                        Receipt
+                      </th>
+
+                      <th className="px-4 py-3 text-left">
+                        Date
+                      </th>
+
                     </tr>
-                  )}
 
-                </tbody>
+                  </thead>
 
-              </table>
+                  <tbody>
 
-            </div>
+                    {filteredTransactions.length > 0 ? (
 
-          </section>
-        )}
+                      filteredTransactions.map((tx) => {
 
-      </main>
+                        const user =
+                          tx.user ||
+                          tx.client ||
+                          tx.developer;
 
-      <Footer />
-    </div>
-  );
-};
+                        return (
+                          <tr
+                            key={tx._id}
+                            className="border-t border-[var(--border-color)] hover:bg-[var(--bg-primary)] transition"
+                          >
+
+                            <td className="px-4 py-4">
+
+                              <span className="px-2 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400">
+                                {tx.paymentType
+                                  ?.replace("_", " ")
+                                  .replace(/\b\w/g, (c) =>
+                                    c.toUpperCase()
+                                  ) || "Unknown"}
+                              </span>
+
+                            </td>
+
+                            <td className="px-4 py-4">
+
+                              <p className="font-semibold">
+                                {user?.username || "Unknown"}
+                              </p>
+
+                              <p className="text-xs text-[var(--text-secondary)]">
+                                {user?.email || ""}
+                              </p>
+
+                            </td>
+
+                            <td className="px-4 py-4">
+
+                              {tx.job?.title || "—"}
+
+                            </td>
+
+                            <td className="px-4 py-4 font-semibold">
+
+                              {formatMoney(tx.amount)}
+
+                            </td>
+
+                            <td className="px-4 py-4">
+
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                  tx.status === "completed"
+                                    ? "bg-green-500/20 text-green-400"
+                                    : tx.status === "failed"
+                                    ? "bg-red-500/20 text-red-400"
+                                    : tx.status === "cancelled"
+                                    ? "bg-gray-500/20 text-gray-400"
+                                    : "bg-yellow-500/20 text-yellow-400"
+                                }`}
+                              >
+                                {tx.status}
+                              </span>
+
+                            </td>
+
+                            <td className="px-4 py-4 font-mono text-sm">
+
+                              {tx.mpesaReceiptNumber || "—"}
+
+                            </td>
+
+                            <td className="px-4 py-4 text-sm">
+
+                              {tx.createdAt
+                                ? new Date(
+                                    tx.createdAt
+                                  ).toLocaleDateString()
+                                : "—"}
+
+                            </td>
+
+                          </tr>
+                        );
+
+                      })
+
+                    ) : (
+
+                      <tr>
+
+                        <td
+                          colSpan="7"
+                          className="px-6 py-10 text-center text-[var(--text-secondary)]"
+                        >
+                          No transactions found.
+                        </td>
+
+                      </tr>
+
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            </section>
+          )}
+            </main>
+
+                <Footer />
+              </div>
+            );
+          };
 
     // STAT CARD
 const StatCard = ({
