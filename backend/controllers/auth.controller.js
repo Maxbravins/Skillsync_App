@@ -18,6 +18,13 @@ export const registerUser = async (req, res) => {
       category,
     } = req.body;
 
+  if (role === "admin") {
+     return res.status(403).json({
+        success: false,
+        message: "Admin accounts cannot be created via registration.",
+      });
+    }
+
     const normalizedEmail = email?.trim().toLowerCase();
 
     // Check if user exists
