@@ -10,9 +10,7 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import errorHandler from "./middleware/error.middleware.js";
-import path from "path";
 import mpesaRoutes from "./routes/mpesa.routes.js";
-import { fileURLToPath } from "url";
 import pdfRoutes from "./routes/pdf.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import platformPaymentRoutes from "./routes/platformPayment.routes.js";
@@ -21,10 +19,6 @@ import contractRoutes from "./routes/contract.routes.js";
 import walletRoutes from "./routes/wallet.routes.js";
 import withdrawalRoutes from "./routes/withdrawal.routes.js";
 import adminWalletRoutes from "./routes/adminWallet.routes.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 
 const app = express();
 
@@ -68,7 +62,6 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/mpesa", mpesaRoutes);
 app.use("/api/pdf", pdfRoutes);
 app.use("/api/categories", categoryRoutes);

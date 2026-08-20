@@ -1,70 +1,54 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
+import multerCloudinary from "multer-storage-cloudinary";
+const CloudinaryStorage = multerCloudinary.CloudinaryStorage || multerCloudinary.default?.CloudinaryStorage || multerCloudinary;
 
-// Create upload folders
-["uploads", "uploads/profiles", "uploads/resumes"].forEach((folder) => {
-  if (!fs.existsSync(folder)) {
-    fs.mkdirSync(folder, { recursive: true });
-  }
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
+// Storage for profile pictures
+const avatarStorage = new CloudinaryStorage({
+  cloudinary,
+  params: (req, file) => {
     if (file.fieldname === "profilePicture") {
-      return cb(null, "uploads/profiles");
+      return {
+        folder: "skillsync/avatars",
+        allowed_formats: ["jpg", "jpeg", "png", "webp"],
+        transformation: [{ width: 400, height: 400, crop: "fill" }],
+      };
     }
-
     if (file.fieldname === "resume") {
-      return cb(null, "uploads/resumes");
+      return {
+        folder: "skillsync/resumes",
+        allowed_formats: ["pdf", "doc", "docx"],
+        resource_type: "raw",
+      };
     }
-
-    return cb(new Error("Invalid upload field."));
-  },
-
-  filename(req, file, cb) {
-    cb(
-      null,
-      Date.now() +
-        "-" +
-        Math.round(Math.random() * 1e9) +
-        path.extname(file.originalname)
-    );
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  if (file.fieldname === "profilePicture") {
-    if (file.mimetype.startsWith("image/")) {
-      return cb(null, true);
-    }
-
-    return cb(new Error("Only image files are allowed."));
-  }
-
-  if (file.fieldname === "resume") {
-    const allowed = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-
-    if (allowed.includes(file.mimetype)) {
-      return cb(null, true);
-    }
-
-    return cb(new Error("Resume must be PDF, DOC or DOCX."));
-  }
-
-  return cb(new Error("Invalid upload field."));
-};
-
+// Default export — handles both profilePicture and resume fields
 const upload = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
+  storage: avatarStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
 });
+
+// Named exports for individual use elsewhere
+export const handleAvatarUpload = upload.single("profilePicture");
+export const handleResumeUpload = upload.single("resume");
+export const uploadErrorHandler = (uploadFn) => (req, res, next) => {
+  uploadFn(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || "File upload failed",
+      });
+    }
+    next();
+  });
+};
 
 export default upload;
