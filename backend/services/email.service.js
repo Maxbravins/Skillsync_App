@@ -395,36 +395,24 @@ export const sendWithdrawalRejectedEmail = async ({
 };
 
     // Application Rejection Email
-export const sendRejectionEmail = async ({
-  email,
-  developerName,
-  jobTitle,
-}) => {
-  await transporter.sendMail({
-    from: `"SkillSync" <${process.env.EMAIL_USER}>`,
+  export const sendRejectionEmail = async ({
+    email,
+    developerName,
+    jobTitle,
+  }) => {
+  return sendEmail({
     to: email,
     subject: `Application Update - ${jobTitle}`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
-        <h2>Application Update</h2>
-
-        <p>Hello ${developerName},</p>
-
-        <p>
-          Thank you for applying for the <strong>${jobTitle}</strong> project
-          on SkillSync.
-        </p>
-
-        <p>
-          Unfortunately, your application was not selected for this project.
-        </p>
-
-        <p>
-          Don't be discouraged. Keep applying for other opportunities on
-          SkillSync.
-        </p>
-
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #ddd;border-radius:10px;">
+        <h2 style="color:#06b6d4;">SkillSync</h2>
+        <h3>Hello ${developerName},</h3>
+        <p>Thank you for applying for the <strong>${jobTitle}</strong> project on SkillSync.</p>
+        <p>Unfortunately, your application was not selected for this project.</p>
+        <p>Don't be discouraged — keep applying for other opportunities on SkillSync.</p>
         <p>Best regards,<br><strong>SkillSync Team</strong></p>
+        <hr>
+        <p style="font-size:12px;color:#888;text-align:center;">© 2026 SkillSync. All rights reserved.</p>
       </div>
     `,
   });
