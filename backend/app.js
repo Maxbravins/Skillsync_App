@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { apiLimiter } from "./middleware/rateLimiter.js";
+import helmet from "helmet";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import jobRoutes from "./routes/job.routes.js";
@@ -26,6 +27,8 @@ const __dirname = path.dirname(__filename);
 
 
 const app = express();
+
+app.use(helmet());
 
 // Middleware
 const allowedOrigins = [
