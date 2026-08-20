@@ -1,9 +1,6 @@
 import Job from "../models/job.model.js";
-import User from "../models/user.model.js";
-import Category from "../models/category.model.js";
-import { sendNewJobAlertEmail } from "../services/email.service.js";
 
-    // Create a new job
+// Create a new job
 export const createJob = async (req, res) => {
   try {
     const {
@@ -30,38 +27,9 @@ export const createJob = async (req, res) => {
       client: req.user.id,
     });
 
-    // Get client
-    const client = await User.findById(req.user.id);
-
-  // Get category details
-    const selectedCategory = await Category.findById(category);
-
-// Find developers matching category + skills
-    const developers = await User.find({
-      role: "developer",
-      category,
-      emailNotifications: true,
-      available: true,
-      skills: {
-        $in: skills,
-      },
-    });
-
-    // Send emails in the background
-    for (const developer of developers) {
-      await sendNewJobAlertEmail({
-        email: developer.email,
-        developerName: developer.username,
-        jobTitle: title,
-        category: selectedCategory.name,
-        budget,
-        clientName: client.username,
-      });
-    }
-
     res.status(201).json({
       success: true,
-      message: `Job created successfully. ${developers.length} developers notified.`,
+      message: "Job created successfully. Pay the platform fee to publish it.",
       job,
     });
   } catch (error) {
@@ -72,7 +40,7 @@ export const createJob = async (req, res) => {
   }
 };
 
-        // Get all jobs
+// Get all jobs
 export const getAllJobs = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -80,17 +48,17 @@ export const getAllJobs = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const total = await Job.countDocuments({
-        isPublished: true,
-      });
+      isPublished: true,
+    });
 
-      const jobs = await Job.find({
-        isPublished: true,
-      })
-        .populate("client", "username email")
-        .populate("category", "name")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit);
+    const jobs = await Job.find({
+      isPublished: true,
+    })
+      .populate("client", "username email")
+      .populate("category", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
@@ -100,8 +68,7 @@ export const getAllJobs = async (req, res) => {
       totalPages: Math.ceil(total / limit),
       jobs,
     });
-  } 
-  catch (error) {
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
@@ -109,12 +76,12 @@ export const getAllJobs = async (req, res) => {
   }
 };
 
-        // Get job by ID
+// Get job by ID
 export const getJobById = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id)
-  .populate("client", "username email")
-  .populate("category", "name");
+      .populate("client", "username email")
+      .populate("category", "name");
 
     if (!job) {
       return res.status(404).json({
@@ -127,8 +94,7 @@ export const getJobById = async (req, res) => {
       success: true,
       job,
     });
-  } 
-  catch (error) {
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
@@ -137,7 +103,6 @@ export const getJobById = async (req, res) => {
 };
 
 // Update job by ID (only by the job owner)
-
 export const updateJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
@@ -148,8 +113,6 @@ export const updateJob = async (req, res) => {
         message: "Job not found",
       });
     }
-
-    // Only the job owner can update
 
     if (job.client.toString() !== req.user.id) {
       return res.status(403).json({
@@ -172,8 +135,7 @@ export const updateJob = async (req, res) => {
       message: "Job updated successfully",
       job: updatedJob,
     });
-  } 
-  catch (error) {
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
@@ -181,7 +143,7 @@ export const updateJob = async (req, res) => {
   }
 };
 
-    // Delete job by ID
+// Delete job by ID
 export const deleteJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
@@ -193,7 +155,6 @@ export const deleteJob = async (req, res) => {
       });
     }
 
-    // Only the owner can delete
     if (job.client.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -207,8 +168,7 @@ export const deleteJob = async (req, res) => {
       success: true,
       message: "Job deleted successfully",
     });
-  } 
-  catch (error) {
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
@@ -227,7 +187,7 @@ export const getMyJobs = async (req, res) => {
 
     const jobs = await Job.find({
       client: req.user.id,
-      })
+    })
       .populate("category", "name")
       .sort({ createdAt: -1 })
       .skip(skip)
