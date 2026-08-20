@@ -22,6 +22,8 @@ import adminWalletRoutes from "./routes/adminWallet.routes.js";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(helmet());
 
 // Middleware
