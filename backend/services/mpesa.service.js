@@ -71,6 +71,7 @@ export const initiateSTKPush = async ({
   amount,
   accountReference,
   transactionDesc,
+  callbackUrl,
 }) => {
   if (!process.env.MPESA_SHORTCODE || !process.env.MPESA_PASSKEY) {
     throw new Error(
@@ -78,7 +79,7 @@ export const initiateSTKPush = async ({
     );
   }
 
-  if (!process.env.MPESA_CALLBACK_URL) {
+  if (!process.env.MPESA_CALLBACK_URL && !callbackUrl) {
     throw new Error(
       "M-Pesa callback URL is not configured. Set MPESA_CALLBACK_URL.",
     );
@@ -102,7 +103,7 @@ export const initiateSTKPush = async ({
     PartyA: formattedPhone,
     PartyB: process.env.MPESA_SHORTCODE,
     PhoneNumber: formattedPhone,
-    CallBackURL: process.env.MPESA_CALLBACK_URL,
+    CallBackURL: callbackUrl || process.env.MPESA_CALLBACK_URL,
     AccountReference: accountReference?.slice(0, 12) || "SkillSync",
     TransactionDesc: transactionDesc?.slice(0, 20) || "Payment",
   };

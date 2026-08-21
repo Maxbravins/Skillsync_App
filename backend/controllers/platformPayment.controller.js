@@ -93,6 +93,7 @@ export const payPlatformFee = async (req, res) => {
       amount: fee,
       accountReference: `JOB-${job._id}`,
       transactionDesc: `Platform Fee for ${job.title}`,
+      callbackUrl: `${process.env.BACKEND_URL}/api/platform-payment/callback`,
     });
 
     // Validate STK response
