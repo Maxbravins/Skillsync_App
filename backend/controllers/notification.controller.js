@@ -1,32 +1,48 @@
 import Notification from "../models/notification.model.js";
 
-export const getNotifications =
-  async (req, res) => {
-    try {
-      const notifications =
-        await Notification.find({
-          user: req.user.id,
-        }).sort({
-          createdAt: -1,
-        });
+// Get my notifications
+export const getNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.find({
+      recipient: req.user.id,
+    }).sort({
+      createdAt: -1,
+    });
 
-      res.status(200).json({
-        success: true,
-        count:
-          notifications.length,
-        notifications,
-      });
-    }
-     catch (error) {
-      res.status(500).json({
-        success: false,
-        message:
-          error.message,
-      });
-    }
-  };
-  
-    // Mark a notification as read
+    res.status(200).json({
+      success: true,
+      count: notifications.length,
+      notifications,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Get unread notification count
+export const getUnreadNotificationCount = async (req, res) => {
+  try {
+    const count = await Notification.countDocuments({
+      recipient: req.user.id,
+      isRead: false,
+    });
+
+    res.status(200).json({
+      success: true,
+      count,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Mark one notification as read
 export const markAsRead = async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id);
@@ -38,8 +54,7 @@ export const markAsRead = async (req, res) => {
       });
     }
 
-    // Ownership check — only the owner can mark it read
-    if (notification.user.toString() !== req.user.id) {
+    if (notification.recipient.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: "Not authorized",
@@ -47,23 +62,37 @@ export const markAsRead = async (req, res) => {
     }
 
     notification.isRead = true;
+    notification.readAt = new Date();
+
     await notification.save();
 
     res.status(200).json({
       success: true,
       message: "Notification marked as read",
+      notification,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-    // Mark all notifications as read
+// Mark all notifications as read
 export const markAllAsRead = async (req, res) => {
   try {
     await Notification.updateMany(
-      { user: req.user.id, isRead: false },
-      { isRead: true }
+      {
+        recipient: req.user.id,
+        isRead: false,
+      },
+      {
+        $set: {
+          isRead: true,
+          readAt: new Date(),
+        },
+      }
     );
 
     res.status(200).json({
@@ -71,11 +100,14 @@ export const markAllAsRead = async (req, res) => {
       message: "All notifications marked as read",
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-    // Delete a notification
+// Delete a notification
 export const deleteNotification = async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id);
@@ -87,7 +119,7 @@ export const deleteNotification = async (req, res) => {
       });
     }
 
-    if (notification.user.toString() !== req.user.id) {
+    if (notification.recipient.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: "Not authorized",
@@ -101,6 +133,9 @@ export const deleteNotification = async (req, res) => {
       message: "Notification deleted",
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

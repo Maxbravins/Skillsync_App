@@ -1,109 +1,176 @@
 import Contract from "../models/contract.model.js";
 import Application from "../models/application.model.js";
 import Job from "../models/job.model.js";
+import Transaction from "../models/transaction.model.js";
 import Notification from "../models/notification.model.js";
-import { generatePDFContract } from "../services/pdf.service.js";
 
-// ============================================
-// 1. CREATE CONTRACT (After accepting application)
-// ============================================
+import paymentService from "../services/payment.service.js";
+import { generatePDFContract } from "../services/pdf.service.js";
+import {
+  calculateCommission,
+  calculateDeveloperAmount,
+} from "../services/platformFee.service.js";
+
+// ============================================================
+// HELPER
+// ============================================================
+
+const createNotification = async (user, message) => {
+  if (!user || !message) return;
+
+  await Notification.create({
+    user,
+    message,
+  });
+};
+
+// ============================================================
+// 1. CREATE CONTRACT
+// ============================================================
+// Contract is normally created after an application is accepted.
+//
+// IMPORTANT:
+// application.controller.js also creates contracts.
+// Therefore this endpoint checks for an existing contract first.
+// ============================================================
+
 export const createContract = async (req, res) => {
   try {
     const { applicationId } = req.params;
     const { terms, milestones } = req.body;
 
-    // --- Find application ---
     const application = await Application.findById(applicationId)
-      .populate("job", "title budget client")
+      .populate("job", "title description budget platformFeeAmount client")
       .populate("developer", "username email");
 
     if (!application) {
-      return res.status(404).json({ success: false, message: "Application not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
     }
 
-    if (application.status !== "accepted") {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Application must be accepted before creating a contract" 
+    if (!application.job) {
+      return res.status(404).json({
+        success: false,
+        message: "The job associated with this application no longer exists",
       });
     }
 
     const job = application.job;
 
-    // --- Check if contract already exists ---
-    const existingContract = await Contract.findOne({ application: applicationId });
-    if (existingContract) {
+    // Only the client who owns the job can create the contract.
+    if (
+      job.client.toString() !== req.user.id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to create this contract",
+      });
+    }
+
+    if (application.status !== "accepted") {
       return res.status(400).json({
         success: false,
-        message: "Contract already exists for this application",
+        message:
+          "Application must be accepted before creating a contract",
+      });
+    }
+
+    // Prevent duplicate contracts.
+    const existingContract = await Contract.findOne({
+      application: application._id,
+    });
+
+    if (existingContract) {
+      return res.status(200).json({
+        success: true,
+        message: "Contract already exists",
         contract: existingContract,
       });
     }
 
-    // --- Calculate amounts ---
-    const amount = job.budget;
-    const commission = amount * 0.10; // 10%
-    const developerAmount = amount - commission;
+    // ----------------------------------------------------------
+    // CALCULATE FINANCIAL VALUES
+    // ----------------------------------------------------------
 
-    // --- Create contract ---
+    const amount = job.budget;
+
+    const commission =
+      job.platformFeeAmount ??
+      calculateCommission(amount);
+
+    const developerAmount =
+      calculateDeveloperAmount(amount);
+
+    // ----------------------------------------------------------
+    // CREATE CONTRACT
+    // ----------------------------------------------------------
+
     const contract = await Contract.create({
       job: job._id,
       application: application._id,
+
       client: job.client,
       developer: application.developer._id,
+
       amount,
       commission,
       developerAmount,
-      terms: terms || "",
-      milestones: milestones || [],
+
+      paymentStatus: "unpaid",
+      transaction: null,
+
+      terms: terms || undefined,
+      milestones: milestones || undefined,
+
       status: "pending",
-      clientSigned: false, // ← Client must sign
-      developerSigned: false, // ← Developer must sign
+
+      clientSigned: false,
+      developerSigned: false,
     });
 
-    // --- Generate PDF contract ---
-    const pdfUrl = await generatePDFContract(contract);
-    contract.pdfUrl = pdfUrl;
-    await contract.save();
+    // Link contract to application.
+    application.contract = contract._id;
+    await application.save();
 
-    // --- Notifications ---
-    await Notification.create({
-      user: application.developer._id,
-      title: "Contract Ready",
-      message: `A contract for "${job.title}" is ready for your review and signature.`,
-    });
+    // ----------------------------------------------------------
+    // NOTIFICATIONS
+    // ----------------------------------------------------------
 
-    await Notification.create({
-      user: job.client,
-      title: "Contract Created",
-      message: `Contract for "${job.title}" has been created. Please review and sign.`,
-    });
+    await createNotification(
+      application.developer._id,
+      `A contract for "${job.title}" has been created and is ready for your review and signature.`
+    );
 
-    res.status(201).json({
+    await createNotification(
+      job.client,
+      `Contract for "${job.title}" has been created. Please review and sign.`
+    );
+
+    return res.status(201).json({
       success: true,
       message: "Contract created successfully",
-      contract: {
-        id: contract._id,
-        amount: contract.amount,
-        developerAmount: contract.developerAmount,
-        status: contract.status,
-        pdfUrl: contract.pdfUrl,
-      },
+      contract,
     });
-
   } catch (error) {
-    console.error("Contract creation error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Create contract error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-// ============================================
-// 2. SIGN CONTRACT (Client or Developer)
-// ============================================
+// ============================================================
+// 2. SIGN CONTRACT
+// ============================================================
+
 export const signContract = async (req, res) => {
   try {
     const { contractId } = req.params;
-    const { signature } = req.body; // Could be digital signature or checkbox
 
     const contract = await Contract.findById(contractId)
       .populate("job", "title")
@@ -111,179 +178,277 @@ export const signContract = async (req, res) => {
       .populate("developer", "username email");
 
     if (!contract) {
-      return res.status(404).json({ success: false, message: "Contract not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Contract not found",
+      });
     }
 
-    // Determine who is signing
-    let isClient = contract.client._id.toString() === req.user.id;
-    let isDeveloper = contract.developer._id.toString() === req.user.id;
+    const userId = req.user.id.toString();
 
-    if (!isClient && !isDeveloper && req.user.role !== "admin") {
-      return res.status(403).json({ success: false, message: "Not authorized to sign this contract" });
+    const isClient =
+      contract.client._id.toString() === userId;
+
+    const isDeveloper =
+      contract.developer._id.toString() === userId;
+
+    const isAdmin = req.user.role === "admin";
+
+    if (!isClient && !isDeveloper && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to sign this contract",
+      });
     }
 
-    // Update signature status
-    if (isClient || req.user.role === "admin") {
-      contract.clientSigned = true;
-      contract.clientSignedAt = new Date();
+    // ----------------------------------------------------------
+    // PREVENT SIGNING CANCELLED/COMPLETED CONTRACT
+    // ----------------------------------------------------------
+
+    if (
+      ["cancelled", "completed"].includes(contract.status)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot sign a ${contract.status} contract`,
+      });
     }
 
-    if (isDeveloper || req.user.role === "admin") {
-      contract.developerSigned = true;
-      contract.developerSignedAt = new Date();
+    // ----------------------------------------------------------
+    // RECORD SIGNATURE
+    // ----------------------------------------------------------
+
+    if (isClient || isAdmin) {
+      if (!contract.clientSigned) {
+        contract.clientSigned = true;
+      }
     }
 
-    // If both signed, activate contract
-    if (contract.clientSigned && contract.developerSigned) {
+    if (isDeveloper || isAdmin) {
+      if (!contract.developerSigned) {
+        contract.developerSigned = true;
+      }
+    }
+
+    // ----------------------------------------------------------
+    // ACTIVATE WHEN BOTH HAVE SIGNED
+    // ----------------------------------------------------------
+
+    let activated = false;
+
+    if (
+      contract.clientSigned &&
+      contract.developerSigned &&
+      contract.status === "pending"
+    ) {
       contract.status = "active";
       contract.startedAt = new Date();
-      
-      // Update application
-      const application = await Application.findById(contract.application);
-      if (application) {
-        application.status = "accepted"; // Already should be
-      }
 
-      // Update job
-      const job = await Job.findById(contract.job);
+      activated = true;
+
+      const job = await Job.findById(contract.job._id);
+
       if (job) {
-        job.status = "In Progress";
-        job.hiredDeveloper = contract.developer;
+        job.hiredDeveloper = contract.developer._id;
+
+        if (job.status !== "Completed") {
+          job.status = "In Progress";
+        }
+
         await job.save();
       }
 
-      // Notify both parties
-      await Notification.create({
-        user: contract.client._id,
-        title: "Contract Signed",
-        message: `Contract for "${contract.job.title}" has been signed by both parties. Work can now begin!`,
-      });
+      await createNotification(
+        contract.client._id,
+        `Contract for "${contract.job.title}" has been signed by both parties.`
+      );
 
-      await Notification.create({
-        user: contract.developer._id,
-        title: "Contract Signed",
-        message: `Contract for "${contract.job.title}" has been signed by both parties. You can now start working!`,
-      });
+      await createNotification(
+        contract.developer._id,
+        `Contract for "${contract.job.title}" has been signed by both parties.`
+      );
     }
 
     await contract.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "Contract signed successfully",
+      message: activated
+        ? "Contract signed and activated successfully"
+        : "Contract signed successfully",
       contract: {
+        id: contract._id,
         clientSigned: contract.clientSigned,
         developerSigned: contract.developerSigned,
         status: contract.status,
+        startedAt: contract.startedAt,
       },
     });
-
   } catch (error) {
-    console.error("Contract signing error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Sign contract error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-// ============================================
-// 3. GET CONTRACT DETAILS
-// ============================================
+// ============================================================
+// 3. GET CONTRACT
+// ============================================================
+
 export const getContract = async (req, res) => {
   try {
     const { contractId } = req.params;
 
     const contract = await Contract.findById(contractId)
-      .populate("job", "title description budget category")
-      .populate("client", "username email profilePicture")
-      .populate("developer", "username email profilePicture skills")
-      .populate("application", "coverLetter status");
+      .populate(
+        "job",
+        "title description budget category status paymentStatus"
+      )
+      .populate(
+        "client",
+        "username email profilePicture"
+      )
+      .populate(
+        "developer",
+        "username email profilePicture skills"
+      )
+      .populate(
+        "application",
+        "coverLetter proposedBudget proposedTimeline status"
+      )
+      .populate(
+        "transaction",
+        "transactionId type amount platformFee developerAmount totalAmount currency status escrowStatus"
+      );
 
     if (!contract) {
-      return res.status(404).json({ success: false, message: "Contract not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Contract not found",
+      });
     }
 
-    // Authorization
-    if (
-      contract.client._id.toString() !== req.user.id &&
-      contract.developer._id.toString() !== req.user.id &&
-      req.user.role !== "admin"
-    ) {
-      return res.status(403).json({ success: false, message: "Not authorized" });
+    const userId = req.user.id.toString();
+
+    const authorized =
+      contract.client._id.toString() === userId ||
+      contract.developer._id.toString() === userId ||
+      req.user.role === "admin";
+
+    if (!authorized) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to view this contract",
+      });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      contract: {
-        id: contract._id,
-        job: contract.job,
-        amount: contract.amount,
-        developerAmount: contract.developerAmount,
-        commission: contract.commission,
-        status: contract.status,
-        clientSigned: contract.clientSigned,
-        developerSigned: contract.developerSigned,
-        startedAt: contract.startedAt,
-        completedAt: contract.completedAt,
-        pdfUrl: contract.pdfUrl,
-        milestones: contract.milestones,
-        createdAt: contract.createdAt,
-      },
+      contract,
     });
-
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Get contract error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-// ============================================
+// ============================================================
 // 4. GET MY CONTRACTS
-// ============================================
+// ============================================================
+
 export const getMyContracts = async (req, res) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
-    const skip = (page - 1) * limit;
+    const {
+      status,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    // Build filter
+    const parsedPage = Math.max(
+      1,
+      parseInt(page, 10) || 1
+    );
+
+    const parsedLimit = Math.min(
+      100,
+      Math.max(
+        1,
+        parseInt(limit, 10) || 10
+      )
+    );
+
+    const skip =
+      (parsedPage - 1) * parsedLimit;
+
     const filter = {};
+
     if (req.user.role === "client") {
       filter.client = req.user.id;
     } else if (req.user.role === "developer") {
       filter.developer = req.user.id;
-    } else {
-      return res.status(403).json({ success: false, message: "Not authorized" });
+    } else if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized",
+      });
     }
 
-    if (status) filter.status = status;
+    if (status) {
+      filter.status = status;
+    }
 
-    const [contracts, total] = await Promise.all([
-      Contract.find(filter)
-        .populate("job", "title budget")
-        .populate("client", "username profilePicture")
-        .populate("developer", "username profilePicture")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit)),
-      Contract.countDocuments(filter),
-    ]);
+    const [contracts, total] =
+      await Promise.all([
+        Contract.find(filter)
+          .populate("job", "title budget status")
+          .populate(
+            "client",
+            "username profilePicture"
+          )
+          .populate(
+            "developer",
+            "username profilePicture"
+          )
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(parsedLimit),
 
-    res.status(200).json({
+        Contract.countDocuments(filter),
+      ]);
+
+    return res.status(200).json({
       success: true,
       data: contracts,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: parsedPage,
+        limit: parsedLimit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(
+          total / parsedLimit
+        ),
       },
     });
-
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Get my contracts error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-// ============================================
+// ============================================================
 // 5. COMPLETE CONTRACT
-// ============================================
+// ============================================================
+
 export const completeContract = async (req, res) => {
   try {
     const { contractId } = req.params;
@@ -294,66 +459,74 @@ export const completeContract = async (req, res) => {
       .populate("developer", "username");
 
     if (!contract) {
-      return res.status(404).json({ success: false, message: "Contract not found" });
-    }
-
-    if (contract.status !== "active") {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Only active contracts can be completed" 
+      return res.status(404).json({
+        success: false,
+        message: "Contract not found",
       });
     }
 
-    // Only client or admin can complete
-    if (
-      contract.client._id.toString() !== req.user.id &&
-      req.user.role !== "admin"
-    ) {
-      return res.status(403).json({ success: false, message: "Not authorized" });
+    if (contract.status !== "active") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Only active contracts can be completed",
+      });
+    }
+
+    const isClient =
+      contract.client._id.toString() ===
+      req.user.id.toString();
+
+    const isAdmin =
+      req.user.role === "admin";
+
+    if (!isClient && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only the client or admin can complete this contract",
+      });
     }
 
     contract.status = "completed";
     contract.completedAt = new Date();
 
-    // Update job
-    const job = await Job.findById(contract.job);
+    await contract.save();
+
+    const job = await Job.findById(contract.job._id);
+
     if (job) {
       job.status = "Completed";
       await job.save();
     }
 
-    // Update application
-    const application = await Application.findById(contract.application);
-    if (application) {
-      application.status = "completed";
-      await application.save();
-    }
+    await createNotification(
+      contract.developer._id,
+      `Contract for "${contract.job.title}" has been marked as completed.`
+    );
 
-    await contract.save();
-
-    await Notification.create({
-      user: contract.developer._id,
-      title: "Contract Completed",
-      message: `Contract for "${contract.job.title}" has been marked as completed.`,
-    });
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Contract completed successfully",
       contract,
     });
-
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Complete contract error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-// backend/controllers/contract.controller.js
-// ... (your existing code above)
+// ============================================================
+// 6. FUND CONTRACT
+// ============================================================
+// Uses the EXISTING PaymentService.
+// We do NOT create another Transaction here.
+// ============================================================
 
-// ============================================
-// 6. FUND CONTRACT (Client deposits money into escrow)
-// ============================================
 export const fundContract = async (req, res) => {
   try {
     const { contractId } = req.params;
@@ -366,10 +539,18 @@ export const fundContract = async (req, res) => {
       });
     }
 
-    const contract = await Contract.findById(contractId)
-      .populate("job", "title")
-      .populate("client", "username email")
-      .populate("developer", "username email");
+    const contract = await Contract.findById(
+      contractId
+    )
+      .populate("job", "title status")
+      .populate(
+        "client",
+        "username email"
+      )
+      .populate(
+        "developer",
+        "username email"
+      );
 
     if (!contract) {
       return res.status(404).json({
@@ -378,329 +559,562 @@ export const fundContract = async (req, res) => {
       });
     }
 
-    // Check if user is the client
-    if (contract.client._id.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: "Only the client can fund this contract",
-      });
-    }
-
-    // Check if already funded
-    if (contract.paymentStatus === "paid" || contract.paymentStatus === "escrow") {
-      return res.status(400).json({
-        success: false,
-        message: "Contract already funded",
-      });
-    }
-
-    // Create transaction record
-    const Transaction = mongoose.model("Transaction");
-    const transaction = await Transaction.create({
-      transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      type: "project_payment",
-      job: contract.job._id,
-      client: req.user.id,
-      developer: contract.developer._id,
-      amount: contract.amount + contract.commission,
-      projectAmount: contract.amount,
-      platformFee: contract.commission,
-      developerAmount: contract.developerAmount,
-      totalAmount: contract.amount + contract.commission,
-      paymentMethod: "mpesa",
-      status: "pending",
-      escrowStatus: "held",
-      mpesa: {
-        phoneNumber,
-      },
-      description: `Contract funding for ${contract.job.title}`,
-    });
-
-    // Update contract
-    contract.transaction = transaction._id;
-    contract.paymentStatus = "pending";
-    await contract.save();
-
-    // Here you would call your M-Pesa STK Push service
-    // const mpesaResponse = await initiateSTKPush({
-    //   phoneNumber,
-    //   amount: transaction.totalAmount,
-    //   accountReference: `Contract-${contract._id.toString().slice(-6)}`,
-    //   transactionDesc: `Contract funding: ${contract.job.title}`,
-    // });
-    //
-    // transaction.mpesa.checkoutRequestID = mpesaResponse.CheckoutRequestID;
-    // await transaction.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Contract funding initiated. Please complete payment on your phone.",
-      transaction: {
-        id: transaction.transactionId,
-        amount: transaction.totalAmount,
-        status: transaction.status,
-      },
-      contract: {
-        id: contract._id,
-        paymentStatus: contract.paymentStatus,
-      },
-    });
-
-  } catch (error) {
-    console.error("Fund contract error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to fund contract",
-    });
-  }
-};
-
-// ============================================
-// 7. CONTRACT CALLBACK (M-Pesa webhook for contract funding)
-// ============================================
-export const contractCallback = async (req, res) => {
-  try {
-    const callback = req.body?.Body?.stkCallback;
-
-    if (!callback) {
-      return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
-    }
-
-    const { CheckoutRequestID, ResultCode, ResultDesc, CallbackMetadata } = callback;
-
-    // Find transaction by CheckoutRequestID
-    const Transaction = mongoose.model("Transaction");
-    const transaction = await Transaction.findOne({
-      "mpesa.checkoutRequestID": CheckoutRequestID,
-    });
-
-    if (!transaction) {
-      console.log(`Transaction not found for CheckoutRequestID: ${CheckoutRequestID}`);
-      return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
-    }
-
-    // Update transaction with callback data
-    transaction.mpesa.resultCode = ResultCode;
-    transaction.mpesa.resultDesc = ResultDesc;
-
-    if (ResultCode === 0) {
-      // Payment successful
-      const metadata = CallbackMetadata?.Item || [];
-      const receipt = metadata.find(item => item.Name === "MpesaReceiptNumber");
-      
-      transaction.status = "completed";
-      transaction.mpesa.mpesaReceiptNumber = receipt?.Value || "";
-      transaction.paidAt = new Date();
-      await transaction.save();
-
-      // Update contract
-      const contract = await Contract.findOne({ 
-        transaction: transaction._id 
-      }).populate("job", "title");
-
-      if (contract) {
-        contract.paymentStatus = "escrow";
-        contract.status = "active";
-        contract.startedAt = new Date();
-        await contract.save();
-
-        // Update job
-        const job = await Job.findById(contract.job);
-        if (job) {
-          job.paymentStatus = "escrow";
-          job.escrowAmount = transaction.projectAmount;
-          await job.save();
-        }
-
-        // Add to developer's pending balance
-        const Wallet = mongoose.model("Wallet");
-        const wallet = await Wallet.findOne({ developer: contract.developer });
-        if (wallet) {
-          wallet.pendingBalance += transaction.developerAmount;
-          wallet.totalEarned += transaction.developerAmount;
-          await wallet.save();
-        }
-
-        // Notifications
-        await Notification.create({
-          user: contract.client,
-          title: "Contract Funded",
-          message: `Contract for "${contract.job.title}" has been funded. Funds are held in escrow.`,
-        });
-
-        await Notification.create({
-          user: contract.developer,
-          title: "Contract Funded",
-          message: `Contract for "${contract.job.title}" has been funded. You can now start working.`,
-        });
-      }
-
-    } else {
-      // Payment failed
-      transaction.status = "failed";
-      await transaction.save();
-
-      // Update contract
-      const contract = await Contract.findOne({ 
-        transaction: transaction._id 
-      });
-
-      if (contract) {
-        contract.paymentStatus = "unpaid";
-        await contract.save();
-      }
-
-      await Notification.create({
-        user: transaction.client,
-        title: "Contract Funding Failed",
-        message: `Payment failed: ${ResultDesc}. Please try again.`,
-      });
-    }
-
-    return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
-
-  } catch (error) {
-    console.error("Contract callback error:", error);
-    return res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
-  }
-};
-
-// ============================================
-// 8. RELEASE PAYMENT (Milestone release)
-// ============================================
-export const releasePayment = async (req, res) => {
-  try {
-    const { contractId } = req.params;
-    const { amount, milestoneId } = req.body;
-
-    const contract = await Contract.findById(contractId)
-      .populate("job", "title")
-      .populate("client", "username email")
-      .populate("developer", "username email");
-
-    if (!contract) {
-      return res.status(404).json({
-        success: false,
-        message: "Contract not found",
-      });
-    }
-
-    // Check if user is the client or admin
     if (
-      contract.client._id.toString() !== req.user.id &&
-      req.user.role !== "admin"
+      contract.client._id.toString() !==
+      req.user.id.toString()
     ) {
       return res.status(403).json({
         success: false,
-        message: "Only the client or admin can release payment",
+        message:
+          "Only the client can fund this contract",
       });
     }
 
-    // Check if contract is active
+    if (
+      contract.paymentStatus === "paid"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This contract has already been funded",
+      });
+    }
+
+    if (
+      contract.paymentStatus === "pending"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A payment for this contract is already being processed",
+      });
+    }
+
+    if (!contract.job) {
+      return res.status(404).json({
+        success: false,
+        message: "Associated job not found",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // PAYMENT SERVICE EXPECTS A JOB
+    // ----------------------------------------------------------
+
+    const result =
+      await paymentService.initiateJobPayment({
+        jobId: contract.job._id,
+        clientId: req.user.id,
+        phoneNumber,
+      });
+
+    const transaction =
+      result.transaction;
+
+    // Link transaction to contract.
+    contract.transaction =
+      transaction._id;
+
+    contract.paymentStatus =
+      "pending";
+
+    await contract.save();
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Contract funding initiated. Please complete the M-Pesa payment on your phone.",
+      transaction: {
+        id: transaction._id,
+        transactionId:
+          transaction.transactionId,
+        amount:
+          transaction.amount,
+        platformFee:
+          transaction.platformFee,
+        totalAmount:
+          transaction.totalAmount,
+        status:
+          transaction.status,
+      },
+      contract: {
+        id: contract._id,
+        paymentStatus:
+          contract.paymentStatus,
+      },
+      providerResponse:
+        result.providerResponse || null,
+    });
+  } catch (error) {
+    console.error("Fund contract error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to fund contract",
+    });
+  }
+};
+
+// ============================================================
+// 7. CONTRACT PAYMENT CALLBACK
+// ============================================================
+// Prefer the central payment callback/service.
+// This controller remains as a compatibility endpoint.
+//
+// The actual payment processing belongs in PaymentService.
+// ============================================================
+
+export const contractCallback = async (
+  req,
+  res
+) => {
+  try {
+    const callback =
+      req.body?.Body?.stkCallback;
+
+    if (!callback) {
+      return res.status(200).json({
+        ResultCode: 0,
+        ResultDesc: "Accepted",
+      });
+    }
+
+    const {
+      MerchantRequestID,
+      CheckoutRequestID,
+      ResultCode,
+      ResultDesc,
+      CallbackMetadata,
+    } = callback;
+
+    const items =
+      CallbackMetadata?.Item || [];
+
+    const callbackMetadata = {};
+
+    for (const item of items) {
+      if (item?.Name) {
+        callbackMetadata[item.Name] =
+          item.Value;
+      }
+    }
+
+    await paymentService.processMpesaCallback(
+      {
+        merchantRequestID:
+          MerchantRequestID,
+        checkoutRequestID:
+          CheckoutRequestID,
+        resultCode: ResultCode,
+        resultDesc: ResultDesc,
+        callbackMetadata,
+      }
+    );
+
+    // ----------------------------------------------------------
+    // SYNC CONTRACT AFTER PAYMENT SERVICE PROCESSES PAYMENT
+    // ----------------------------------------------------------
+
+    const transaction =
+      await Transaction.findOne({
+        "mpesa.checkoutRequestID":
+          CheckoutRequestID,
+      });
+
+    if (transaction) {
+      const contract =
+        await Contract.findOne({
+          transaction:
+            transaction._id,
+        }).populate(
+          "job",
+          "title"
+        );
+
+      if (contract) {
+        if (
+          transaction.status ===
+          "completed"
+        ) {
+          contract.paymentStatus =
+            "paid";
+
+          await contract.save();
+
+          await createNotification(
+            contract.client,
+            `Payment for "${contract.job.title}" was received successfully.`
+          );
+
+          await createNotification(
+            contract.developer,
+            `Payment for "${contract.job.title}" has been received and placed into escrow.`
+          );
+        }
+
+        if (
+          transaction.status ===
+          "failed"
+        ) {
+          contract.paymentStatus =
+            "unpaid";
+
+          await contract.save();
+
+          await createNotification(
+            contract.client,
+            `Payment for "${contract.job.title}" failed. Please try again.`
+          );
+        }
+      }
+    }
+
+    return res.status(200).json({
+      ResultCode: 0,
+      ResultDesc: "Accepted",
+    });
+  } catch (error) {
+    /*
+     * Safaricom should still receive a successful
+     * acknowledgement so it does not endlessly retry
+     * the callback.
+     */
+    console.error(
+      "Contract callback error:",
+      error
+    );
+
+    return res.status(200).json({
+      ResultCode: 0,
+      ResultDesc: "Accepted",
+    });
+  }
+};
+
+// ============================================================
+// 8. RELEASE PAYMENT
+// ============================================================
+// NOTE:
+// Actual escrow release should eventually live entirely inside
+// escrowService. This controller only validates the request.
+// ============================================================
+
+export const releasePayment = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      contractId,
+    } = req.params;
+
+    const {
+      amount,
+      milestoneId,
+    } = req.body;
+
+    const contract =
+      await Contract.findById(
+        contractId
+      )
+        .populate(
+          "job",
+          "title escrowAmount releasedAmount paymentStatus budget"
+        )
+        .populate(
+          "client",
+          "username email"
+        )
+        .populate(
+          "developer",
+          "username email"
+        );
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        message: "Contract not found",
+      });
+    }
+
+    const isClient =
+      contract.client._id.toString() ===
+      req.user.id.toString();
+
+    const isAdmin =
+      req.user.role === "admin";
+
+    if (!isClient && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only the client or admin can release payment",
+      });
+    }
+
     if (contract.status !== "active") {
       return res.status(400).json({
         success: false,
-        message: "Contract must be active to release payment",
+        message:
+          "Contract must be active to release payment",
       });
     }
 
-    // Check if funds are in escrow
-    if (contract.paymentStatus !== "escrow") {
+    if (
+      contract.paymentStatus !==
+      "paid"
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Funds must be in escrow before releasing payment",
+        message:
+          "Contract payment must be completed before releasing funds",
       });
     }
 
-    // Determine release amount
-    let releaseAmount = amount || contract.developerAmount;
+    if (!contract.job) {
+      return res.status(404).json({
+        success: false,
+        message: "Associated job not found",
+      });
+    }
 
-    // Check if there's enough in escrow
-    const job = await Job.findById(contract.job);
-    if (job && releaseAmount > job.escrowAmount) {
+    const releaseAmount =
+      Number(amount) ||
+      contract.developerAmount;
+
+    if (
+      !Number.isFinite(
+        releaseAmount
+      ) ||
+      releaseAmount <= 0
+    ) {
       return res.status(400).json({
         success: false,
-        message: `Amount exceeds escrow balance. Available: ${job.escrowAmount}`,
+        message:
+          "Release amount must be greater than zero",
       });
     }
 
-    // Create release transaction
-    const Transaction = mongoose.model("Transaction");
-    const releaseTransaction = await Transaction.create({
-      transactionId: `REL-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      type: "milestone_release",
-      job: contract.job._id,
-      client: contract.client._id,
-      developer: contract.developer._id,
-      amount: releaseAmount,
-      projectAmount: releaseAmount,
-      developerAmount: releaseAmount,
-      totalAmount: releaseAmount,
-      paymentMethod: "wallet",
-      status: "completed",
-      escrowStatus: "released",
-      releasedAt: new Date(),
-      description: `Milestone release for ${contract.job.title}`,
-    });
-
-    // Update wallet
-    const Wallet = mongoose.model("Wallet");
-    const wallet = await Wallet.findOne({ developer: contract.developer._id });
-    if (wallet) {
-      wallet.pendingBalance -= releaseAmount;
-      wallet.availableBalance += releaseAmount;
-      await wallet.save();
+    if (
+      releaseAmount >
+      contract.job.escrowAmount
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Amount exceeds escrow balance. Available: ${contract.job.escrowAmount}`,
+      });
     }
 
-    // Update job escrow
-    if (job) {
-      job.escrowAmount -= releaseAmount;
-      job.releasedAmount += releaseAmount;
-      
-      if (job.escrowAmount <= 0) {
-        job.paymentStatus = "paid";
-        job.status = "Completed";
-      }
-      await job.save();
-    }
+    // ----------------------------------------------------------
+    // MILESTONE VALIDATION
+    // ----------------------------------------------------------
 
-    // Update contract
+    let milestone = null;
+
     if (milestoneId) {
-      const milestone = contract.milestones?.id(milestoneId);
-      if (milestone) {
-        milestone.status = "approved";
-        milestone.approvedAt = new Date();
+      milestone =
+        contract.job.milestones?.id(
+          milestoneId
+        ) ||
+        contract.milestones?.id(
+          milestoneId
+        );
+
+      if (
+        contract.milestones?.length &&
+        !contract.milestones.id(
+          milestoneId
+        )
+      ) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Milestone not found",
+        });
       }
     }
 
-    contract.paymentStatus = job?.escrowAmount <= 0 ? "released" : "escrow";
-    contract.releasedAt = new Date();
-    contract.releasedBy = req.user.id;
+    // ----------------------------------------------------------
+    // CREATE RELEASE TRANSACTION
+    // ----------------------------------------------------------
+
+    const releaseTransaction =
+      await Transaction.create({
+        type: "milestone_release",
+
+        job: contract.job._id,
+
+        client:
+          contract.client._id,
+
+        developer:
+          contract.developer._id,
+
+        milestone:
+          milestoneId || null,
+
+        amount:
+          releaseAmount,
+
+        platformFee: 0,
+
+        developerAmount:
+          releaseAmount,
+
+        totalAmount:
+          releaseAmount,
+
+        currency:
+          "KES",
+
+        paymentMethod:
+          "wallet",
+
+        status:
+          "completed",
+
+        escrowStatus:
+          "released",
+
+        releasedAt:
+          new Date(),
+
+        description:
+          `Payment release for ${contract.job.title}`,
+
+        metadata: {
+          source:
+            "contract_payment_release",
+
+          contractId:
+            contract._id.toString(),
+        },
+      });
+
+    // ----------------------------------------------------------
+    // UPDATE JOB ESCROW
+    // ----------------------------------------------------------
+
+    const job =
+      await Job.findById(
+        contract.job._id
+      );
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+      });
+    }
+
+    job.escrowAmount = Math.max(
+      0,
+      (job.escrowAmount || 0) -
+        releaseAmount
+    );
+
+    job.releasedAmount =
+      (job.releasedAmount || 0) +
+      releaseAmount;
+
+    if (
+      job.escrowAmount <= 0
+    ) {
+      job.paymentStatus =
+        "paid";
+    } else {
+      job.paymentStatus =
+        "partially_released";
+    }
+
+    await job.save();
+
+    // ----------------------------------------------------------
+    // UPDATE CONTRACT
+    // ----------------------------------------------------------
+
+    if (milestoneId) {
+      const contractMilestone =
+        contract.milestones?.id(
+          milestoneId
+        );
+
+      if (contractMilestone) {
+        contractMilestone.status =
+          "released";
+
+        contractMilestone.releasedAt =
+          new Date();
+      }
+    }
+
+    contract.releasedAt =
+      new Date();
+
+    contract.releasedBy =
+      req.user.id;
+
+    if (
+      job.escrowAmount <= 0
+    ) {
+      contract.paymentStatus =
+        "released";
+    }
+
     await contract.save();
 
-    // Notifications
-    await Notification.create({
-      user: contract.developer._id,
-      title: "Payment Released",
-      message: `Payment of ${releaseAmount} has been released for "${contract.job.title}".`,
-    });
+    // ----------------------------------------------------------
+    // NOTIFY DEVELOPER
+    // ----------------------------------------------------------
 
-    res.status(200).json({
+    await createNotification(
+      contract.developer._id,
+      `Payment of ${releaseAmount} has been released for "${contract.job.title}".`
+    );
+
+    return res.status(200).json({
       success: true,
-      message: "Payment released successfully",
-      releaseAmount,
-      remainingEscrow: job?.escrowAmount || 0,
-      wallet: {
-        availableBalance: wallet?.availableBalance || 0,
-        pendingBalance: wallet?.pendingBalance || 0,
-      },
-    });
+      message:
+        "Payment released successfully",
 
+      releaseTransaction: {
+        id:
+          releaseTransaction._id,
+
+        transactionId:
+          releaseTransaction.transactionId,
+
+        amount:
+          releaseTransaction.amount,
+
+        status:
+          releaseTransaction.status,
+      },
+
+      releaseAmount,
+
+      remainingEscrow:
+        job.escrowAmount,
+
+      contractPaymentStatus:
+        contract.paymentStatus,
+
+      jobPaymentStatus:
+        job.paymentStatus,
+    });
   } catch (error) {
-    console.error("Release payment error:", error);
-    res.status(500).json({
+    console.error(
+      "Release payment error:",
+      error
+    );
+
+    return res.status(500).json({
       success: false,
-      message: error.message || "Failed to release payment",
+      message:
+        error.message ||
+        "Failed to release payment",
     });
   }
 };
