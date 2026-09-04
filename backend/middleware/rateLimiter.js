@@ -1,3 +1,4 @@
+// backend/middleware/rateLimiter.js
 import rateLimit from "express-rate-limit";
 
 // General API limiter — all routes
@@ -33,5 +34,19 @@ export const otpLimiter = rateLimit({
   message: {
     success: false,
     message: "Too many OTP requests, please try again in 1 hour.",
+  },
+});
+
+// Webhook limiter — M-Pesa callbacks (very permissive)
+export const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 1000, // Very high limit for webhooks
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true, // Don't count successful webhooks
+  skipFailedRequests: true, // Don't count failed webhooks
+  message: {
+    success: false,
+    message: "Webhook rate limit exceeded.",
   },
 });

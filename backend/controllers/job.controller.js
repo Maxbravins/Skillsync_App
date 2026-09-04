@@ -208,3 +208,135 @@ export const getMyJobs = async (req, res) => {
     });
   }
 };
+
+  //  GET JOB STATS (NEW)
+export const getJobStats = async (req, res) => {
+  try {
+    const stats = await Job.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          averageBudget: { $avg: "$budget" },
+        },
+      },
+    ]);
+
+    const totalJobs = await Job.countDocuments();
+    const openJobs = await Job.countDocuments({ status: "Open" });
+    const totalBudget = await Job.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$budget" },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        total: totalJobs,
+        open: openJobs,
+        byStatus: stats,
+        totalBudget: totalBudget[0]?.total || 0,
+      },
+    });
+  } catch (error) {
+    console.error("Get job stats error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get job stats",
+    });
+  }
+};
+
+
+// SEARCH JOBS
+
+export const searchJobs = async (req, res) => {
+  try {
+    const {
+      q,
+      category,
+      minBudget,
+      maxBudget,
+      skills,
+      experienceLevel,
+      projectType,
+      workMode,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const filter = { status: "Open", isPublished: true };
+
+    // Text search
+    if (q) {
+      filter.$text = { $search: q };
+    }
+
+    // Category filter
+    if (category) {
+      filter.category = category;
+    }
+
+    // Budget range
+    if (minBudget || maxBudget) {
+      filter.budget = {};
+      if (minBudget) filter.budget.$gte = parseInt(minBudget);
+      if (maxBudget) filter.budget.$lte = parseInt(maxBudget);
+    }
+
+    // Skills filter
+    if (skills) {
+      const skillsArray = skills.split(",").map(s => s.trim());
+      filter.skills = { $in: skillsArray };
+    }
+
+    // Experience level
+    if (experienceLevel) {
+      filter.experienceLevel = experienceLevel;
+    }
+
+    // Project type
+    if (projectType) {
+      filter.projectType = projectType;
+    }
+
+    // Work mode
+    if (workMode) {
+      filter.workMode = workMode;
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [jobs, total] = await Promise.all([
+      Job.find(filter)
+        .populate("client", "username email profilePicture company")
+        .populate("category", "name")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Job.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: jobs,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Search jobs error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to search jobs",
+    });
+  }
+};
+

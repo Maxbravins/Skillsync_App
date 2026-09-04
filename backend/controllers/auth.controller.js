@@ -341,3 +341,65 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+// Change password
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Get user with password
+    const user = await User.findById(req.user.id).select("+password");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to change password",
+    });
+  }
+};
+
+// 9. REFRESH TOKEN
+export const refreshToken = async (req, res) => {
+  try {
+    // Generate new JWT
+    const token = jwt.sign(
+      { id: req.user.id, role: req.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({
+      success: true,
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to refresh token",
+    });
+  }
+};

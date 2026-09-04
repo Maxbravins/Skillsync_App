@@ -21,6 +21,12 @@ const walletSchema = new mongoose.Schema(
       min: 0,
     },
 
+    pendingWithdrawal: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     totalEarned: {
       type: Number,
       default: 0,

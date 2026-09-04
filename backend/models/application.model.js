@@ -1,49 +1,87 @@
+// backend/models/application.model.js
 import mongoose from "mongoose";
 
 const applicationSchema = new mongoose.Schema(
   {
     developer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    default: null,
-   },
-
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     job: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Job",
       required: true,
+      index: true,
     },
-
     coverLetter: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 2000,
     },
-
+    proposedBudget: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    proposedTimeline: {
+      type: String,
+      default: "",
+    },
+    attachments: [{
+      type: String, // URLs to uploaded files
+    }],
+    
+    // === STATUSES ===
     status: {
       type: String,
-      enum: ["pending", "accepted", "rejected"],
+      enum: ["pending", "reviewed", "shortlisted", "accepted", "rejected", "withdrawn"],
       default: "pending",
+      index: true,
     },
-
-    // PAYMENT STATUS
     paymentStatus: {
       type: String,
-      enum: ["unpaid", "pending", "paid"],
+      enum: ["unpaid", "pending", "escrow", "released", "refunded"],
       default: "unpaid",
+      index: true,
     },
 
-    // Reference to transaction
+    // === REFERENCES ===
     transaction: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Transaction",
       default: null,
     },
+    contract: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Contract",
+      default: null,
+    },
 
-    // Payment date
+    // === TIMESTAMPS ===
+    reviewedAt: {
+      type: Date,
+      default: null,
+    },
+    acceptedAt: {
+      type: Date,
+      default: null,
+    },
     paidAt: {
       type: Date,
       default: null,
+    },
+    releasedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // === CLIENT FEEDBACK ===
+    clientFeedback: {
+      type: String,
+      default: "",
     },
   },
   {
@@ -51,8 +89,8 @@ const applicationSchema = new mongoose.Schema(
   }
 );
 
-const Application =
-  mongoose.models.Application ||
-  mongoose.model("Application", applicationSchema);
+// === INDEXES ===
+applicationSchema.index({ job: 1, developer: 1 }, { unique: true });
+applicationSchema.index({ status: 1, createdAt: -1 });
 
-export default Application;
+export default mongoose.model("Application", applicationSchema);
