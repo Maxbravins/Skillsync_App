@@ -47,7 +47,7 @@ const MyApplications = () => {
       <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
         <div className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
           <div className="mb-10">
-            <h1 className="text-4xl font-bold">{t("applications")}</h1>
+            <h1 className="text-4xl font-bold">Applications</h1>
             <p className="text-[var(--text-secondary)] mt-2">
               {status
                 ? `Showing ${status} applications`
@@ -57,7 +57,7 @@ const MyApplications = () => {
 
           {loading ? (
             <div className="text-center text-[var(--text-secondary)] py-20">
-              {t("loading")}
+              Loading...
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-10 text-center">
@@ -81,7 +81,7 @@ const MyApplications = () => {
                           {application.job?.title}
                         </h2>
                         <p className="text-[var(--text-secondary)]">
-                          {t("budget")}: KES {application.job?.budget}
+                          Budget: KES {application.job?.budget}
                         </p>
                       </div>
                     </div>
@@ -89,21 +89,21 @@ const MyApplications = () => {
                     {application.status === "pending" && (
                       <span className="flex items-center gap-2 bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-full font-medium">
                         <Clock3 size={18} />
-                        {t("pending")}
+                        Pending
                       </span>
                     )}
 
                     {application.status === "accepted" && (
                       <span className="flex items-center gap-2 bg-green-500/20 text-green-400 px-4 py-2 rounded-full font-medium">
                         <CheckCircle size={18} />
-                        {t("accepted")}
+                        Accepted
                       </span>
                     )}
 
                     {application.status === "rejected" && (
                       <span className="flex items-center gap-2 bg-red-500/20 text-red-400 px-4 py-2 rounded-full font-medium">
                         <XCircle size={18} />
-                        {t("rejected")}
+                        Rejected
                       </span>
                     )}
                   </div>

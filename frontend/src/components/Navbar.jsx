@@ -72,7 +72,7 @@ const Navbar = () => {
         className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-cyan-400 transition"
       >
         <Search size={17} />
-        {t("browseJobs")}
+        Browse Jobs
       </Link>
 
       <Link
@@ -131,21 +131,21 @@ const Navbar = () => {
                   className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-cyan-400 transition"
                 >
                   <Search size={17} />
-                  {t("browseJobs")}
+                  Browse Jobs
                 </Link>
 
                 <Link
                   to="/developer-dashboard"
                   className="text-[var(--text-secondary)] hover:text-cyan-400 transition"
                 >
-                  {t("dashboard")}
+                  Dashboard
                 </Link>
 
                 <Link
                   to="/my-applications"
                   className="text-[var(--text-secondary)] hover:text-cyan-400 transition"
                 >
-                  {t("applications")}
+                  Applications
                 </Link>
 
                 <Link
@@ -170,14 +170,14 @@ const Navbar = () => {
                   to="/client-dashboard"
                   className="text-[var(--text-secondary)] hover:text-cyan-400 transition"
                 >
-                  {t("dashboard")}
+                  Dashboard
                 </Link>
 
                 <Link
                   to="/my-jobs"
                   className="text-[var(--text-secondary)] hover:text-cyan-400 transition"
                 >
-                  {t("myJobs")}
+                  My Jobs
                 </Link>
 
                 <Link
@@ -185,7 +185,7 @@ const Navbar = () => {
                   className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 font-semibold transition"
                 >
                   <PlusCircle size={17} />
-                  {t("createJob")}
+                  Post a Job
                 </Link>
 
                 <Link
@@ -203,14 +203,14 @@ const Navbar = () => {
                   to="/admin-dashboard"
                   className="text-[var(--text-secondary)] hover:text-cyan-400 transition"
                 >
-                  {t("dashboard")}
+                  Dashboard
                 </Link>
 
                 <Link
                   to="/jobs"
                   className="text-[var(--text-secondary)] hover:text-cyan-400 transition"
                 >
-                  {t("browseJobs")}
+                  Browse Jobs
                 </Link>
 
                 <Link
@@ -336,7 +336,7 @@ const Navbar = () => {
                   className="hidden sm:inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm font-medium"
                 >
                   <LogIn size={16} />
-                  {t("login")}
+                  Login
                 </Link>
 
                 {/* Desktop Register */}
@@ -345,7 +345,7 @@ const Navbar = () => {
                   className="hidden sm:inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-400 hover:to-indigo-400 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition"
                 >
                   <UserPlus size={16} />
-                  {t("register")}
+                  Register
                 </Link>
               </>
             )}
@@ -382,7 +382,7 @@ const Navbar = () => {
                     onClick={closeMobileMenu}
                   >
                     <Search size={18} />
-                    {t("browseJobs")}
+                    Browse Jobs
                   </Link>
 
                   <Link
@@ -402,7 +402,7 @@ const Navbar = () => {
                     onClick={closeMobileMenu}
                   >
                     <LogIn size={18} />
-                    {t("login")}
+                    Login
                   </Link>
 
                   <Link
@@ -411,7 +411,7 @@ const Navbar = () => {
                     onClick={closeMobileMenu}
                   >
                     <UserPlus size={18} />
-                    {t("register")}
+                    Register
                   </Link>
                 </>
               )}
@@ -424,7 +424,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("dashboard")}
+                    Dashboard
                   </Link>
 
                   <Link
@@ -432,7 +432,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("browseJobs")}
+                    Browse Jobs
                   </Link>
 
                   <Link
@@ -440,7 +440,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("applications")}
+                    Applications
                   </Link>
 
                   <Link
@@ -456,7 +456,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("profile")}
+                    Profile
                   </Link>
 
                   <Link
@@ -464,7 +464,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("notifications")}
+                    Notifications
                   </Link>
 
                   <button
@@ -473,7 +473,7 @@ const Navbar = () => {
                     className="mt-2 flex items-center gap-3 rounded-lg bg-red-600 px-3 py-3 text-left text-sm font-medium text-white"
                   >
                     <LogOut size={18} />
-                    {t("logout") || "Logout"}
+                    {"Logout" || "Logout"}
                   </button>
                 </>
               )}
@@ -486,7 +486,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("dashboard")}
+                    Dashboard
                   </Link>
 
                   <Link
@@ -502,7 +502,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("myJobs")}
+                    My Jobs
                   </Link>
 
                   <Link
@@ -510,7 +510,7 @@ const Navbar = () => {
                     className="mobile-nav-link text-cyan-400"
                     onClick={closeMobileMenu}
                   >
-                    {t("createJob")}
+                    Post a Job
                   </Link>
 
                   <Link
@@ -526,7 +526,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("profile")}
+                    Profile
                   </Link>
 
                   <Link
@@ -534,7 +534,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("notifications")}
+                    Notifications
                   </Link>
 
                   <button
@@ -543,7 +543,7 @@ const Navbar = () => {
                     className="mt-2 flex items-center gap-3 rounded-lg bg-red-600 px-3 py-3 text-left text-sm font-medium text-white"
                   >
                     <LogOut size={18} />
-                    {t("logout") || "Logout"}
+                    {"Logout" || "Logout"}
                   </button>
                 </>
               )}
@@ -556,7 +556,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("dashboard")}
+                    Dashboard
                   </Link>
 
                   <Link
@@ -564,7 +564,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("browseJobs")}
+                    Browse Jobs
                   </Link>
 
                   <Link
@@ -580,7 +580,7 @@ const Navbar = () => {
                     className="mobile-nav-link"
                     onClick={closeMobileMenu}
                   >
-                    {t("profile")}
+                    Profile
                   </Link>
 
                   <button
@@ -589,7 +589,7 @@ const Navbar = () => {
                     className="mt-2 flex items-center gap-3 rounded-lg bg-red-600 px-3 py-3 text-left text-sm font-medium text-white"
                   >
                     <LogOut size={18} />
-                    {t("logout") || "Logout"}
+                    {"Logout" || "Logout"}
                   </button>
                 </>
               )}

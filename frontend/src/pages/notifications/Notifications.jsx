@@ -49,7 +49,7 @@ const Notifications = () => {
       <main className="flex-1 max-w-3xl mx-auto px-6 py-10 w-full">
         <div className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight">
-            {t("notifications")}
+            Notifications
           </h1>
           <p className="text-[var(--text-secondary)] text-sm mt-1">
             {t("stayUpdated")}
@@ -58,7 +58,7 @@ const Notifications = () => {
 
         {loading ? (
           <div className="text-center py-20 text-[var(--text-secondary)]">
-            {t("loading")}
+            Loading...
           </div>
         ) : notifications.length === 0 ? (
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-12 text-center">

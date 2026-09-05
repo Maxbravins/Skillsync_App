@@ -10,8 +10,7 @@ import { initiatePayment } from "../../services/mpesa.service";
 
 const JobApplicants = () => {
   const { jobId } = useParams();
-  // const { t } = useLanguage();
-  const [applications, setApplications] = useState([]);
+  //   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentModal, setPaymentModal] = useState({

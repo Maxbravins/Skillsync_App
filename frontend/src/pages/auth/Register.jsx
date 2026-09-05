@@ -6,7 +6,7 @@ import { registerUser } from "../../services/auth.service";
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  // const { t } = useLanguage();
+  // 
 
   const searchParams = new URLSearchParams(location.search);
 

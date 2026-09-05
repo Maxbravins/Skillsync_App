@@ -6,8 +6,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
 const DeveloperDashboard = () => {
-  // const { t } = useLanguage();
-  const [stats, setStats] = useState(null);
+  //   const [stats, setStats] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -42,7 +41,7 @@ const DeveloperDashboard = () => {
             to="/jobs"
             className="bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-3 rounded-lg font-semibold"
           >
-            {t("browseJobs")}
+            Browse Jobs
           </Link>
         </div>
 
@@ -64,7 +63,7 @@ const DeveloperDashboard = () => {
               className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-color)] hover:border-yellow-500 transition"
             >
               <Clock3 className="text-yellow-400 mb-4" size={34} />
-              <p className="text-[var(--text-secondary)]">{t("pending")}</p>
+              <p className="text-[var(--text-secondary)]">Pending</p>
               <h2 className="text-4xl font-bold mt-2">
                 {stats.pendingApplications}
               </h2>
@@ -75,7 +74,7 @@ const DeveloperDashboard = () => {
               className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-color)] hover:border-green-500 transition"
             >
               <CheckCircle className="text-green-400 mb-4" size={34} />
-              <p className="text-[var(--text-secondary)]">{t("accepted")}</p>
+              <p className="text-[var(--text-secondary)]">Accepted</p>
               <h2 className="text-4xl font-bold mt-2">
                 {stats.acceptedApplications}
               </h2>
@@ -86,7 +85,7 @@ const DeveloperDashboard = () => {
               className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-color)] hover:border-red-500 transition"
             >
               <XCircle className="text-red-400 mb-4" size={34} />
-              <p className="text-[var(--text-secondary)]">{t("rejected")}</p>
+              <p className="text-[var(--text-secondary)]">Rejected</p>
               <h2 className="text-4xl font-bold mt-2">
                 {stats.rejectedApplications}
               </h2>
@@ -101,7 +100,7 @@ const DeveloperDashboard = () => {
             to="/jobs"
             className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 transition"
           >
-            <h3 className="font-bold text-lg">{t("browseJobs")}</h3>
+            <h3 className="font-bold text-lg">Browse Jobs</h3>
             <p className="text-[var(--text-secondary)] mt-3">
               Find freelance projects that match your skills.
             </p>
@@ -111,7 +110,7 @@ const DeveloperDashboard = () => {
             to="/my-applications"
             className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 transition"
           >
-            <h3 className="font-bold text-lg">{t("applications")}</h3>
+            <h3 className="font-bold text-lg">Applications</h3>
             <p className="text-[var(--text-secondary)] mt-3">
               Track every application you've submitted.
             </p>
@@ -121,7 +120,7 @@ const DeveloperDashboard = () => {
             to="/profile"
             className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 transition"
           >
-            <h3 className="font-bold text-lg">{t("profile")}</h3>
+            <h3 className="font-bold text-lg">Profile</h3>
             <p className="text-[var(--text-secondary)] mt-3">
               Update your developer profile and skills.
             </p>
@@ -131,7 +130,7 @@ const DeveloperDashboard = () => {
             to="/notifications"
             className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 transition"
           >
-            <h3 className="font-bold text-lg">{t("notifications")}</h3>
+            <h3 className="font-bold text-lg">Notifications</h3>
             <p className="text-[var(--text-secondary)] mt-3">
               View job updates and client responses.
             </p>

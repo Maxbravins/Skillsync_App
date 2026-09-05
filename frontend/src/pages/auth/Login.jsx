@@ -7,7 +7,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useLanguage();
+  
 
   const [formData, setFormData] = useState({
     email: "",
@@ -181,7 +181,7 @@ const Login = () => {
               className="block text-slate-300 text-sm font-semibold mb-2"
               htmlFor="password"
             >
-              {t("password")}
+              Password
             </label>
 
             <input
@@ -203,7 +203,7 @@ const Login = () => {
               to="/forgot-password"
               className="text-sm text-cyan-400 hover:text-cyan-300 transition"
             >
-              {t("forgotPassword")}
+              Forgot Password
             </Link>
           </div>
 
@@ -216,7 +216,7 @@ const Login = () => {
             {loading ? (
               <span className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
             ) : (
-              t("signIn")
+              "Sign In"
             )}
           </button>
         </form>
@@ -236,7 +236,7 @@ const Login = () => {
               }
               className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
             >
-              {t("signUp")}
+              Sign Up
             </Link>
           </p>
         </div>

@@ -14,8 +14,7 @@ const MyJobs = () => {
   const [payingJobId, setPayingJobId] = useState(null);
   const [phoneNumbers, setPhoneNumbers] = useState({});
 
-  // const { t } = useLanguage();
-    // Fetch jobs on component mount
+  //     // Fetch jobs on component mount
   const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
@@ -420,7 +419,7 @@ const handlePlatformPayment = async (job) => {
                         to={`/edit-job/${job._id}`}
                         className="w-full text-center text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-color)] px-4 py-2.5 rounded-lg text-sm font-medium transition"
                       >
-                        {t("edit") || "Edit"}
+                        {"Edit" || "Edit"}
                       </Link>
 
                       <button
@@ -430,7 +429,7 @@ const handlePlatformPayment = async (job) => {
                       >
                         {deletingId === job._id
                           ? "Deleting..."
-                          : t("delete") || "Delete"}
+                          : "Delete" || "Delete"}
                       </button>
                     </div>
                   </div>

@@ -5,8 +5,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
 const ClientDashboard = () => {
-  // const { t } = useLanguage();
-
+  // 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -77,7 +76,7 @@ const ClientDashboard = () => {
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 hover:scale-105 transition"
                 >
                   <p className="text-cyan-400 uppercase text-sm font-semibold">
-                    {t("applications")}
+                    Applications
                   </p>
 
                   <h3 className="text-4xl font-bold mt-4">
@@ -90,7 +89,7 @@ const ClientDashboard = () => {
                     className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-yellow-500 hover:scale-105 transition"
                   >
                     <p className="text-yellow-400 uppercase text-sm font-semibold">
-                      {t("pending")}
+                      Pending
                     </p>
 
                     <h3 className="text-4xl font-bold mt-4">
@@ -103,7 +102,7 @@ const ClientDashboard = () => {
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-green-500 hover:scale-105 transition"
                 >
                   <p className="text-green-400 uppercase text-sm font-semibold">
-                    {t("accepted")}
+                    Accepted
                   </p>
 
                   <h3 className="text-4xl font-bold mt-4">
@@ -116,7 +115,7 @@ const ClientDashboard = () => {
                 className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-red-500 hover:scale-105 transition"
               >
                 <p className="text-red-400 uppercase text-sm font-semibold">
-                  {t("rejected")}
+                  Rejected
                 </p>
 
                 <h3 className="text-4xl font-bold mt-4">
@@ -136,7 +135,7 @@ const ClientDashboard = () => {
                   to="/create-job"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 transition"
                 >
-                  <h3 className="font-bold text-lg">{t("createJob")}</h3>
+                  <h3 className="font-bold text-lg">Post a Job</h3>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">
                     {t("createJobDesc")}
                   </p>
@@ -146,7 +145,7 @@ const ClientDashboard = () => {
                   to="/my-jobs"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 transition"
                 >
-                  <h3 className="font-bold text-lg">{t("myJobs")}</h3>
+                  <h3 className="font-bold text-lg">My Jobs</h3>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">
                     {t("myJobsDesc")}
                   </p>
@@ -156,7 +155,7 @@ const ClientDashboard = () => {
                   to="/profile"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 transition"
                 >
-                  <h3 className="font-bold text-lg">{t("profile")}</h3>
+                  <h3 className="font-bold text-lg">Profile</h3>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">
                     {t("profileDesc")}
                   </p>
@@ -166,7 +165,7 @@ const ClientDashboard = () => {
                   to="/notifications"
                   className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 hover:border-cyan-500 transition"
                 >
-                  <h3 className="font-bold text-lg">{t("notifications")}</h3>
+                  <h3 className="font-bold text-lg">Notifications</h3>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">
                     {t("notificationsDesc")}
                   </p>

@@ -77,7 +77,7 @@ const JobDetails = () => {
 
       const data = await applyForJob(job._id, coverLetter);
 
-      alert(data.message || t("applicationSubmitted"));
+      alert(data.message || "Application submitted successfully");
 
       navigate("/my-applications");
     } catch (err) {
@@ -224,7 +224,7 @@ const JobDetails = () => {
                       />
 
                       <h2 className="text-xl font-bold">
-                        {t("requiredSkills")}
+                        Required Skills
                       </h2>
                     </div>
 
@@ -285,7 +285,7 @@ const JobDetails = () => {
                     />
 
                     <h2 className="text-xl font-bold">
-                      {t("applyForThisJob")}
+                      Apply for this Job
                     </h2>
                   </div>
 
@@ -297,7 +297,7 @@ const JobDetails = () => {
                     rows={8}
                     value={coverLetter}
                     onChange={(e) => setCoverLetter(e.target.value)}
-                    placeholder={t("coverLetterPlaceholder")}
+                    placeholder="Tell the client why you're a good fit..."
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-xl p-4 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10 resize-y"
                   />
 
@@ -310,8 +310,8 @@ const JobDetails = () => {
                     <Send size={18} />
 
                     {applying
-                      ? t("submitting")
-                      : t("applyNow")}
+                      ? "Submitting..."
+                      : "Apply Now"}
                   </button>
                 </div>
               ) : user?.role === "client" ? (

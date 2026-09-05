@@ -1,8 +1,8 @@
-import { useLanguage } from "../../context/LanguageContext";
+
 import { FaGlobe } from "react-icons/fa";
 
 const LanguageSwitcher = () => {
-  const { language, setLanguage } = useLanguage();
+  
 
   const languages = [
     { code: "en", label: "English" },

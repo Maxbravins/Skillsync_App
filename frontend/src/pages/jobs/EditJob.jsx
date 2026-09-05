@@ -7,8 +7,7 @@ import { getJobById, updateJob } from "../../services/job.service";
 const EditJob = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  // const { t } = useLanguage();
-
+  // 
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -65,7 +64,7 @@ const EditJob = () => {
       <Navbar />
       <div className="max-w-3xl mx-auto p-6 py-10">
         <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] shadow rounded-xl p-8">
-          <h1 className="text-2xl font-bold mb-6">{t("editJob")}</h1>
+          <h1 className="text-2xl font-bold mb-6">Edit Job</h1>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -84,13 +83,13 @@ const EditJob = () => {
 
             <div>
               <label className="block text-sm font-medium mb-1">
-                {t("description")}
+                Description
               </label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder={t("description")}
+                placeholder="Description"
                 rows="5"
                 className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] p-3 rounded-lg outline-none focus:border-cyan-500"
               />
@@ -98,21 +97,21 @@ const EditJob = () => {
 
             <div>
               <label className="block text-sm font-medium mb-1">
-                {t("budget")} (KES)
+                Budget (KES)
               </label>
               <input
                 type="number"
                 name="budget"
                 value={formData.budget}
                 onChange={handleChange}
-                placeholder={t("budget")}
+                placeholder="Budget"
                 className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] p-3 rounded-lg outline-none focus:border-cyan-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
-                {t("requiredSkills")}
+                Required Skills
               </label>
               <input
                 type="text"

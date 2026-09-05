@@ -320,7 +320,7 @@ const BrowseJobs = () => {
                       />
 
                       <span className="text-sm text-[var(--text-secondary)]">
-                        {t("budget")}
+                        Budget
                       </span>
                     </div>
 
@@ -339,7 +339,7 @@ const BrowseJobs = () => {
                         />
 
                         <span className="text-sm font-semibold">
-                          {t("skills")}
+                          Skills
                         </span>
                       </div>
 
