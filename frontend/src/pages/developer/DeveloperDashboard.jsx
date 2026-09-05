@@ -4,10 +4,9 @@ import { Briefcase, Clock3, CheckCircle, XCircle } from "lucide-react";
 import { getDeveloperDashboard } from "../../services/dashboard.service";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import { useLanguage } from "../../context/LanguageContext";
 
 const DeveloperDashboard = () => {
-  const { t } = useLanguage();
+  // const { t } = useLanguage();
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
@@ -33,7 +32,7 @@ const DeveloperDashboard = () => {
       <div className="flex-1 max-w-7xl mx-auto px-6 py-10 w-full">
         <div className="flex justify-between items-center mb-10">
           <div>
-            <h1 className="text-4xl font-bold">Developer {t("dashboard")}</h1>
+            <h1 className="text-4xl font-bold">Developer Dashboard</h1>
             <p className="text-[var(--text-secondary)] mt-2">
               Track your applications and discover new freelance opportunities.
             </p>

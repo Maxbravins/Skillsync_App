@@ -2,7 +2,6 @@ import { CheckCircle, FileText, Mail, User, XCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-import { useLanguage } from "../../context/LanguageContext";
 import {
   getJobApplications,
   updateApplicationStatus,
@@ -11,7 +10,7 @@ import { initiatePayment } from "../../services/mpesa.service";
 
 const JobApplicants = () => {
   const { jobId } = useParams();
-  const { t } = useLanguage();
+  // const { t } = useLanguage();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");

@@ -1,26 +1,33 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
-const ProtectedRoute = ({
-  children,
-  role,
-}) => {
-  const {
-    user,
-    loading,
-    isAuthenticated,
-  } = useAuth();
+const ProtectedRoute = ({ children, role }) => {
+  const { user, loading, isAuthenticated } = useAuth();
+  const location = useLocation();
 
   if (loading) {
-    return <h2>Loading...</h2>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-[var(--text-secondary)]">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname + location.search }}
+      />
+    );
   }
 
-  if (role && user.role !== role) {
-    return <Navigate to="/login" />;
+  if (role && user?.role !== role) {
+    return <Navigate to="/" replace />;
   }
 
   return children;

@@ -4,12 +4,10 @@ import { useNavigate } from "react-router-dom";
 
 import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
-import { useLanguage } from "../../context/LanguageContext";
 import { createJob } from "../../services/job.service";
 
 const CreateJob = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
 
   const [categories, setCategories] = useState([]);
 

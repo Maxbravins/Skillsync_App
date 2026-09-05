@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
-import { useLanguage } from "../../context/LanguageContext";
 import useAuth from "../../hooks/useAuth";
 import {
   getClientApplications,
@@ -11,7 +10,6 @@ import {
 } from "../../services/application.service";
 
 const MyApplications = () => {
-  const { t } = useLanguage();
   const { user } = useAuth();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);

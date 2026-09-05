@@ -3,10 +3,9 @@ import { useEffect, useState } from "react";
 import { getClientDashboard } from "../../services/dashboard.service";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import { useLanguage } from "../../context/LanguageContext";
 
 const ClientDashboard = () => {
-  const { t } = useLanguage();
+  // const { t } = useLanguage();
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -45,11 +44,11 @@ const ClientDashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
           <div>
             <h1 className="text-4xl font-bold">
-              Client {t("dashboard")}
+              Client Dashboard
             </h1>
 
             <p className="mt-2 text-[var(--text-secondary)]">
-              {t("clientDashboardSubtitle")}
+              Track your job postings and manage applications.
             </p>
           </div>
 
@@ -57,7 +56,7 @@ const ClientDashboard = () => {
             to="/create-job"
             className="bg-gradient-to-r from-cyan-500 to-indigo-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition"
           >
-            + {t("createJob")}
+            + Create Job
           </Link>
         </div>
 

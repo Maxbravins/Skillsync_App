@@ -2,14 +2,12 @@ import { Bell, BellOff } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
-import { useLanguage } from "../../context/LanguageContext";
 import {
   getNotifications,
   markAsRead,
 } from "../../services/notification.service";
 
 const Notifications = () => {
-  const { t } = useLanguage();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 

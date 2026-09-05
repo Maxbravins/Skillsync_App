@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Footer from "../../components/Footer";
-import { useLanguage } from "../../context/LanguageContext";
 import { deleteJob, getMyJobs } from "../../services/job.service";
 import { payPlatformFee } from "../../services/platformPayment.service";
 import api from "../../services/api";
@@ -15,7 +14,7 @@ const MyJobs = () => {
   const [payingJobId, setPayingJobId] = useState(null);
   const [phoneNumbers, setPhoneNumbers] = useState({});
 
-  const { t } = useLanguage();
+  // const { t } = useLanguage();
     // Fetch jobs on component mount
   const fetchJobs = useCallback(async () => {
     try {
@@ -43,7 +42,7 @@ const MyJobs = () => {
     // Handle job deletion
   const handleDelete = async (jobId) => {
     const confirmDelete = window.confirm(
-      t("confirmDelete") ||
+      ("confirmDelete") ||
         "Are you sure you want to delete this job listing?"
     );
 

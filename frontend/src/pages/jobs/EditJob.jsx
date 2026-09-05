@@ -2,13 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
-import { useLanguage } from "../../context/LanguageContext";
 import { getJobById, updateJob } from "../../services/job.service";
 
 const EditJob = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  // const { t } = useLanguage();
 
   const [formData, setFormData] = useState({
     title: "",

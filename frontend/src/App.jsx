@@ -1,12 +1,15 @@
 import AppRoutes from "./routes/AppRoutes";
-import { ThemeProvider } from "./context/ThemeContext";
-import { LanguageProvider } from "./context/LanguageContext";
 
+import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 function App() {
-  return  (
-         
-        <AppRoutes />   
+  return (
+    <AuthProvider>
+      <ThemeProvider>
+        <AppRoutes />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 

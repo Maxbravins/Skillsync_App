@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-
 import ProtectedRoute from "../components/ProtectedRoute";
+import Home from "../pages/Home";
+
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminReports from "../pages/admin/AdminReports";
 import JobApplicants from "../pages/applications/JobApplicants";
@@ -24,23 +25,54 @@ import EditProfile from "../pages/profile/EditProfile";
 import Profile from "../pages/profile/Profile";
 import Premium from "../pages/premium/Premium";
 
-
-
 const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        
+        {/* Public Marketplace */}
+        <Route path="/" element={<Home />} />
 
-        {/* Public Auth Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/jobs" element={<BrowseJobs />} />
 
-        {/* Protected Routes */}
+        <Route
+          path="/jobs/:id"
+          element={<JobDetails />}
+        />
+
+        {/* =====================================================
+            PUBLIC AUTH ROUTES
+        ====================================================== */}
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/verify-otp"
+          element={<VerifyOTP />}
+        />
+
+        <Route
+          path="/reset-password"
+          element={<ResetPassword />}
+        />
+
+        {/* =====================================================
+            AUTHENTICATED USER ROUTES
+        ====================================================== */}
+
         <Route
           path="/profile"
           element={
@@ -60,22 +92,6 @@ const AppRoutes = () => {
         />
 
         <Route
-          path="/jobs"
-          element={
-            <ProtectedRoute>
-              <BrowseJobs />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/jobs/:id"
-          element={
-            <ProtectedRoute>
-              <JobDetails />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/notifications"
           element={
             <ProtectedRoute>
@@ -84,7 +100,10 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Developer Routes */}
+        {/* =====================================================
+            DEVELOPER ROUTES
+        ====================================================== */}
+
         <Route
           path="/developer-dashboard"
           element={
@@ -93,16 +112,20 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/my-applications"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="developer">
               <MyApplications />
             </ProtectedRoute>
           }
         />
 
-        {/* Client Routes */}
+        {/* =====================================================
+            CLIENT ROUTES
+        ====================================================== */}
+
         <Route
           path="/client-dashboard"
           element={
@@ -111,6 +134,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/create-job"
           element={
@@ -120,7 +144,7 @@ const AppRoutes = () => {
           }
         />
 
-         <Route
+        <Route
           path="/applications"
           element={
             <ProtectedRoute role="client">
@@ -128,7 +152,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        
+
         <Route
           path="/my-jobs"
           element={
@@ -137,6 +161,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/edit-job/:id"
           element={
@@ -145,6 +170,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/job-applicants/:jobId/:status?"
           element={
@@ -154,7 +180,10 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Admin Routes */}
+        {/* =====================================================
+            ADMIN ROUTES
+        ====================================================== */}
+
         <Route
           path="/admin-dashboard"
           element={
@@ -173,19 +202,37 @@ const AppRoutes = () => {
           }
         />
 
-            <Route
-              path="/premium"
-              element={
-                <ProtectedRoute>
-                  <Premium />
-                </ProtectedRoute>
-              }
-            />
+        {/* =====================================================
+            PREMIUM
+        ====================================================== */}
 
-        <Route path="/payment/:applicationId" element={<Payment />} />
+        <Route
+          path="/premium"
+          element={
+            <ProtectedRoute>
+              <Premium />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Fallback route - MUST be last */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Payment should eventually be protected as well. */}
+        <Route
+          path="/payment/:applicationId"
+          element={
+            <ProtectedRoute>
+              <Payment />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* =====================================================
+            FALLBACK
+        ====================================================== */}
+
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
+        />
       </Routes>
     </BrowserRouter>
   );
