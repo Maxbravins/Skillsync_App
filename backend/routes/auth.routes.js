@@ -8,8 +8,8 @@ import {
   forgotPassword,
   verifyOTP,
   resetPassword,
-  changePassword, // ← ADD
-  refreshToken,    // ← ADD
+  changePassword, 
+  refreshToken,    
 } from "../controllers/auth.controller.js";
 import auth from "../middleware/auth.middleware.js";
 import { authLimiter, otpLimiter } from "../middleware/rateLimiter.js";

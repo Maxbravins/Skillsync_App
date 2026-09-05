@@ -78,3 +78,23 @@ export const getClientApplications = async () => {
 
   return response.data;
 };
+
+export const acceptApplication = async (applicationId) => {
+  const res = await updateApplicationStatus(applicationId, "accepted");
+  return res;
+};
+
+export const rejectApplication = async (applicationId) => {
+  const res = await updateApplicationStatus(applicationId, "rejected");
+  return res;
+};
+
+export const reviewApplication = async (applicationId) => {
+  const res = await updateApplicationStatus(applicationId, "reviewed");
+  return res;
+};
+
+export const shortlistApplication = async (applicationId) => {
+  const res = await updateApplicationStatus(applicationId, "shortlisted");
+  return res;
+};

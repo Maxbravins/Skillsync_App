@@ -1265,31 +1265,8 @@ class ApplicationService {
       return null;
     }
   }
-
-  // ============================================================
-  // USER INFO
-  //
-  // Kept isolated so the service does not need to know the
-  // complete User schema.
-  // ============================================================
-
-  async getUserInfo(userId) {
-    /*
-     * Dynamically importing User prevents this service from
-     * assuming a particular User model filename.
-     *
-     * If your project already uses User.js consistently,
-     * replace this with:
-     *
-     * import User from "../models/User.js";
-     *
-     * and simply:
-     *
-     * return User.findById(userId)
-     *   .select("username email profileImage")
-     *   .lean();
-     */
-
+async getUserInfo(userId) {
+  
     try {
       const { default: User } =
         await import(

@@ -67,7 +67,7 @@ app.use(
 // BODY PARSER
 app.use(express.json({ limit: "10mb" }));
 // Webhooks FIRST (must be processed before rate limiting)
-// Webhooks  rate limiting
+
 app.use("/api/mpesa", mpesaRoutes);
 
 // RATE LIMITING (applied to API routes AFTER webhooks)

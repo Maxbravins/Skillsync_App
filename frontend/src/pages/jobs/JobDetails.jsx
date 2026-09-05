@@ -28,8 +28,8 @@ const JobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-
   const { user } = useAuth();
+
   const [job, setJob] = useState(null);
   const [coverLetter, setCoverLetter] = useState("");
   const [applying, setApplying] = useState(false);
@@ -45,9 +45,10 @@ const JobDetails = () => {
       setJob(data?.job || null);
     } catch (err) {
       console.error("Failed to fetch job:", err);
+
       setError(
         err.response?.data?.message ||
-          "We couldn't load this job. Please try again."
+          "We couldn't load this job. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -59,36 +60,57 @@ const JobDetails = () => {
   }, [fetchJob]);
 
   const handleApply = async () => {
+    // User is not logged in.
     if (!user) {
       navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
       return;
     }
 
+    // Only developers can apply.
     if (user.role !== "developer") {
       return;
     }
 
-    if (!coverLetter.trim()) {
-      return alert("Please write a cover letter before applying.");
+    const trimmedCoverLetter = coverLetter.trim();
+
+    if (!trimmedCoverLetter) {
+      alert("Please write a cover letter before applying.");
+      return;
+    }
+
+    if (!job?._id) {
+      alert("This job is no longer available.");
+      return;
     }
 
     try {
       setApplying(true);
 
-      const data = await applyForJob(job._id, coverLetter);
+      const data = await applyForJob(job._id, trimmedCoverLetter);
 
-      alert(data.message || "Application submitted successfully");
+      alert(data.message || "Application submitted successfully.");
 
       navigate("/my-applications");
     } catch (err) {
+      console.error("Failed to apply for job:", err);
+
       alert(
         err.response?.data?.message ||
-          "Failed to submit application. Please try again."
+          "Failed to submit application. Please try again.",
       );
     } finally {
       setApplying(false);
     }
   };
+
+  const postedDate = job?.createdAt
+    ? new Date(job.createdAt).toLocaleDateString()
+    : "Recently";
+
+  const categoryName =
+    typeof job?.category === "object"
+      ? job.category?.name
+      : job?.category;
 
   if (loading) {
     return (
@@ -125,7 +147,7 @@ const JobDetails = () => {
               Job unavailable
             </h1>
 
-            <p className="text-[var(--text-secondary)] mt-3">
+            <p className="text-[var(--text-secondary)] mt-3 leading-6">
               {error || "This job could not be found."}
             </p>
 
@@ -144,10 +166,6 @@ const JobDetails = () => {
       </div>
     );
   }
-
-  const postedDate = job.createdAt
-    ? new Date(job.createdAt).toLocaleDateString()
-    : "Recently";
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans transition-colors">
@@ -178,16 +196,16 @@ const JobDetails = () => {
                     />
                   </div>
 
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-cyan-400 mb-2">
                       FREELANCE PROJECT
                     </p>
 
-                    <h1 className="text-3xl sm:text-4xl font-bold leading-tight">
+                    <h1 className="text-3xl sm:text-4xl font-bold leading-tight break-words">
                       {job.title}
                     </h1>
 
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-sm text-[var(--text-secondary)]">
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-3 mt-5 text-sm text-[var(--text-secondary)]">
                       <span className="inline-flex items-center gap-2">
                         <Calendar size={16} />
                         Posted: {postedDate}
@@ -197,6 +215,13 @@ const JobDetails = () => {
                         <User size={16} />
                         {job.client?.username || "Client"}
                       </span>
+
+                      {categoryName && (
+                        <span className="inline-flex items-center gap-2">
+                          <Briefcase size={16} />
+                          {categoryName}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -275,9 +300,9 @@ const JobDetails = () => {
                 </div>
               </div>
 
-              {/* Application / CTA */}
-              {user?.role === "developer" ? (
-                <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
+              {/* Developer Application */}
+              {user?.role === "developer" && (
+                <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 p-6">
                   <div className="flex items-center gap-2 mb-2">
                     <Send
                       size={19}
@@ -290,31 +315,44 @@ const JobDetails = () => {
                   </div>
 
                   <p className="text-sm text-[var(--text-secondary)] leading-6 mb-5">
-                    Tell the client why you're a good fit for this project.
+                    Introduce yourself and explain why you're a good fit
+                    for this project.
                   </p>
 
                   <textarea
                     rows={8}
                     value={coverLetter}
                     onChange={(e) => setCoverLetter(e.target.value)}
-                    placeholder="Tell the client why you're a good fit..."
-                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-xl p-4 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10 resize-y"
+                    placeholder="Tell the client about your experience, relevant skills, and why you're a good fit..."
+                    disabled={applying}
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-xl p-4 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10 resize-y disabled:opacity-60"
                   />
+
+                  <div className="flex items-center justify-between mt-2 text-xs text-[var(--text-secondary)]">
+                    <span>
+                      {coverLetter.trim().length} characters
+                    </span>
+
+                    <span>
+                      Cover letter required
+                    </span>
+                  </div>
 
                   <button
                     type="button"
                     onClick={handleApply}
-                    disabled={applying}
+                    disabled={applying || !coverLetter.trim()}
                     className="w-full mt-4 inline-flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-3.5 rounded-xl font-bold transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send size={18} />
 
-                    {applying
-                      ? "Submitting..."
-                      : "Apply Now"}
+                    {applying ? "Submitting..." : "Apply Now"}
                   </button>
                 </div>
-              ) : user?.role === "client" ? (
+              )}
+
+              {/* Client */}
+              {user?.role === "client" && (
                 <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
                   <div className="w-11 h-11 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
                     <Briefcase
@@ -328,8 +366,8 @@ const JobDetails = () => {
                   </h2>
 
                   <p className="text-sm text-[var(--text-secondary)] leading-6 mt-2">
-                    Clients can post projects and review applications from
-                    their dashboard.
+                    Clients can post projects and review applications
+                    from their dashboard.
                   </p>
 
                   <Link
@@ -340,7 +378,10 @@ const JobDetails = () => {
                     Post a Job
                   </Link>
                 </div>
-              ) : (
+              )}
+
+              {/* Logged Out */}
+              {!user && (
                 <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 p-6">
                   <div className="w-11 h-11 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-4">
                     <Send
@@ -354,7 +395,8 @@ const JobDetails = () => {
                   </h2>
 
                   <p className="text-sm text-[var(--text-secondary)] leading-6 mt-2">
-                    Create a free account or sign in to apply for this job.
+                    Sign in or create a free developer account to apply
+                    for this job.
                   </p>
 
                   <div className="space-y-3 mt-5">
@@ -369,7 +411,7 @@ const JobDetails = () => {
 
                     <Link
                       to={`/register?redirect=${encodeURIComponent(
-                        location.pathname
+                        location.pathname,
                       )}`}
                       className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--border-color)] hover:border-cyan-500 text-[var(--text-primary)] px-5 py-3 font-semibold transition"
                     >
@@ -416,8 +458,8 @@ const JobDetails = () => {
                     />
 
                     <p className="text-sm text-[var(--text-secondary)]">
-                      Build your professional reputation through successful
-                      projects.
+                      Build your professional reputation through
+                      successful projects.
                     </p>
                   </div>
                 </div>
