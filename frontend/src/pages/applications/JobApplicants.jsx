@@ -68,12 +68,12 @@ const JobApplicants = () => {
         paymentModal.applicationId,
         paymentPhoneNumber.trim(),
       );
-      alert(res.message || t("paymentSuccess"));
+      alert(res.message || "Payment successful!");
       setPaymentModal({ open: false, applicationId: null });
       setPaymentPhoneNumber("");
       fetchApplications();
     } catch (error) {
-      alert(error.response?.data?.message || t("paymentFailed"));
+      alert(error.response?.data?.message || "Payment failed. Please try again.");
     } finally {
       setPaymentLoading(false);
     }
@@ -91,7 +91,7 @@ const JobApplicants = () => {
       <>
         <Navbar />
         <div className="min-h-screen bg-[var(--bg-primary)] flex justify-center items-center text-[var(--text-primary)] text-xl">
-          {t("loadingApplicants")}
+          Loading applicants...
         </div>
       </>
     );
@@ -104,9 +104,9 @@ const JobApplicants = () => {
       <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
         <div className="max-w-6xl mx-auto px-6 py-10">
           <div className="mb-10">
-            <h1 className="text-4xl font-bold">{t("jobApplicantsTitle")}</h1>
+            <h1 className="text-4xl font-bold">Job Applicants</h1>
             <p className="text-[var(--text-secondary)] mt-2">
-              {t("reviewApplications")}
+              Review applications for this job.
             </p>
           </div>
 
@@ -157,7 +157,7 @@ const JobApplicants = () => {
           ? "No accepted applications"
           : statusFilter === "rejected"
             ? "No rejected applications"
-            : t("noApplicationsYet")}
+            : "No applications yet"}
     </h2>
 
     <p className="text-[var(--text-secondary)]">
@@ -167,7 +167,7 @@ const JobApplicants = () => {
           ? "No developer has been accepted for this job yet."
           : statusFilter === "rejected"
             ? "There are currently no rejected applications."
-            : t("noApplicationsYetDesc")}
+            : "No developers have applied for this job yet."}
     </p>
   </div>
 ) : (
@@ -211,7 +211,7 @@ const JobApplicants = () => {
             <FileText className="w-5 h-5 text-cyan-400" />
 
             <h3 className="font-semibold">
-              {t("coverLetter")}
+              Cover Letter
             </h3>
           </div>
 
@@ -230,7 +230,7 @@ const JobApplicants = () => {
               className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition font-medium"
             >
               <CheckCircle size={18} />
-              {t("accept")}
+              Accept
             </button>
 
             <button
@@ -240,7 +240,7 @@ const JobApplicants = () => {
               className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg transition font-medium"
             >
               <XCircle size={18} />
-              {t("reject")}
+              Reject
             </button>
           </div>
         )}
@@ -257,19 +257,19 @@ const JobApplicants = () => {
               }
               className="mt-6 bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2 rounded-lg transition font-medium"
             >
-              {t("payDeveloper")}
+              Pay Developer
             </button>
           )}
 
         {application.paymentStatus === "paid" && (
           <div className="mt-6 text-green-400 font-semibold">
-            {t("developerPaid")}
+            Developer Paid
           </div>
         )}
 
         {application.paymentStatus === "pending" && (
           <div className="mt-6 text-yellow-400 font-semibold">
-            {t("paymentPendingApproval")}
+            Payment Pending Approval
           </div>
         )}
       </div>
@@ -281,10 +281,10 @@ const JobApplicants = () => {
             <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
               <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-6 w-full max-w-md">
                 <h2 className="text-xl font-semibold mb-2">
-                  {t("payDeveloperTitle")}
+                  Pay Developer
                 </h2>
                 <p className="text-sm text-[var(--text-secondary)] mb-4">
-                  {t("payDeveloperDescription")}
+                  Send payment to the developer via M-Pesa.
                 </p>
 
                 <form onSubmit={handlePayment} className="space-y-4">
@@ -304,7 +304,7 @@ const JobApplicants = () => {
                       disabled={paymentLoading}
                       className="flex-1 rounded-lg bg-cyan-600 px-4 py-2 font-semibold hover:bg-cyan-700 disabled:opacity-60"
                     >
-                      {paymentLoading ? t("paymentLoading") : t("sendSTKPush")}
+                      {paymentLoading ? "Processing..." : "Send M-Pesa Payment"}
                     </button>
                     <button
                       type="button"
@@ -314,7 +314,7 @@ const JobApplicants = () => {
                       }}
                       className="flex-1 rounded-lg border border-[var(--border-color)] px-4 py-2 font-semibold"
                     >
-                      {t("cancelButton")}
+                      Cancel
                     </button>
                   </div>
                 </form>

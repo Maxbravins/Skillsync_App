@@ -101,7 +101,7 @@ const Login = () => {
     } catch (error) {
       setErrorMsg(
         error.response?.data?.message ||
-          t("loginFailed")
+          "Login failed. Please check your credentials."
       );
     } finally {
       setLoading(false);
@@ -126,11 +126,11 @@ const Login = () => {
           />
 
           <h1 className="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent tracking-wide">
-            {t("welcomeBack")}
+            Welcome back
           </h1>
 
           <p className="text-slate-400 text-sm mt-2">
-            {t("welcomeSubtitle")}
+            Sign in to your SkillSync account
           </p>
         </div>
 
@@ -159,7 +159,7 @@ const Login = () => {
               className="block text-slate-300 text-sm font-semibold mb-2"
               htmlFor="email"
             >
-              {t("emailAddress")}
+              Email address
             </label>
 
             <input
@@ -224,7 +224,7 @@ const Login = () => {
         {/* Register */}
         <div className="mt-8 text-center border-t border-slate-800/80 pt-6">
           <p className="text-slate-400 text-sm">
-            {t("dontHaveAccount")}{" "}
+            Don't have an account?{" "}
 
             <Link
               to={

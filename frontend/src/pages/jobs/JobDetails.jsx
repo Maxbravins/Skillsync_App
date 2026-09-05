@@ -69,7 +69,7 @@ const JobDetails = () => {
     }
 
     if (!coverLetter.trim()) {
-      return alert(t("pleaseWriteCoverLetter"));
+      return alert("Please write a cover letter before applying.");
     }
 
     try {
@@ -83,7 +83,7 @@ const JobDetails = () => {
     } catch (err) {
       alert(
         err.response?.data?.message ||
-          t("applicationFailed")
+          "Failed to submit application. Please try again."
       );
     } finally {
       setApplying(false);
@@ -100,7 +100,7 @@ const JobDetails = () => {
             <div className="w-12 h-12 mx-auto rounded-full border-4 border-cyan-500/20 border-t-cyan-500 animate-spin" />
 
             <p className="mt-5 text-[var(--text-secondary)]">
-              {t("loadingJob")}
+              Loading job...
             </p>
           </div>
         </main>
@@ -135,7 +135,7 @@ const JobDetails = () => {
               className="mt-6 inline-flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-3 rounded-lg font-semibold transition"
             >
               <ArrowLeft size={18} />
-              {t("backToJobs")}
+              Back to Jobs
             </button>
           </div>
         </main>
@@ -162,7 +162,7 @@ const JobDetails = () => {
             className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--text-secondary)] hover:text-cyan-400 transition mb-7"
           >
             <ArrowLeft size={17} />
-            {t("backToJobs")}
+            Back to Jobs
           </button>
 
           <div className="grid lg:grid-cols-[1fr_380px] gap-7 items-start">
@@ -190,7 +190,7 @@ const JobDetails = () => {
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-sm text-[var(--text-secondary)]">
                       <span className="inline-flex items-center gap-2">
                         <Calendar size={16} />
-                        {t("posted")}: {postedDate}
+                        Posted: {postedDate}
                       </span>
 
                       <span className="inline-flex items-center gap-2">

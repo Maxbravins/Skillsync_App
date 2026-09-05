@@ -61,7 +61,7 @@ const MyApplications = () => {
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-10 text-center">
-              <h2 className="text-2xl font-bold">{t("noData")}</h2>
+              <h2 className="text-2xl font-bold">No data found</h2>
               <p className="text-[var(--text-secondary)] mt-3">
                 No applications match this category.
               </p>
@@ -109,7 +109,7 @@ const MyApplications = () => {
                   </div>
 
                   <div className="mt-6">
-                    <h3 className="font-semibold mb-2">{t("coverLetter")}</h3>
+                    <h3 className="font-semibold mb-2">Cover Letter</h3>
                     <p className="text-[var(--text-primary)] leading-7 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-4">
                       {application.coverLetter}
                     </p>

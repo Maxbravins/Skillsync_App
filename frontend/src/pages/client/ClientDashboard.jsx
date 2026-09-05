@@ -61,13 +61,13 @@ const ClientDashboard = () => {
 
         {loading ? (
           <div className="text-center py-20 text-lg text-[var(--text-secondary)]">
-            {t("loadingDashboard")}
+            Loading dashboard...
           </div>
         ) : (
           <>
             <section className="mb-10">
               <h2 className="text-xl font-semibold mb-6">
-                {t("dashboardStatistics")}
+                Dashboard Statistics
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -127,7 +127,7 @@ const ClientDashboard = () => {
 
             <section>
               <h2 className="text-xl font-semibold mb-6">
-                {t("quickActions")}
+                Quick Actions
               </h2>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -137,7 +137,7 @@ const ClientDashboard = () => {
                 >
                   <h3 className="font-bold text-lg">Post a Job</h3>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                    {t("createJobDesc")}
+                    Post a new job and find the right developer.
                   </p>
                 </Link>
 
@@ -147,7 +147,7 @@ const ClientDashboard = () => {
                 >
                   <h3 className="font-bold text-lg">My Jobs</h3>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                    {t("myJobsDesc")}
+                    View and manage all your posted jobs.
                   </p>
                 </Link>
 
@@ -157,7 +157,7 @@ const ClientDashboard = () => {
                 >
                   <h3 className="font-bold text-lg">Profile</h3>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                    {t("profileDesc")}
+                    Update your profile and company details.
                   </p>
                 </Link>
 
@@ -167,7 +167,7 @@ const ClientDashboard = () => {
                 >
                   <h3 className="font-bold text-lg">Notifications</h3>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                    {t("notificationsDesc")}
+                    View job updates and developer responses.
                   </p>
                 </Link>
               </div>

@@ -52,7 +52,7 @@ const Notifications = () => {
             Notifications
           </h1>
           <p className="text-[var(--text-secondary)] text-sm mt-1">
-            {t("stayUpdated")}
+            Stay updated with your latest notifications.
           </p>
         </div>
 
@@ -66,9 +66,9 @@ const Notifications = () => {
               size={48}
               className="mx-auto text-[var(--text-secondary)] mb-4"
             />
-            <h2 className="text-xl font-bold">{t("noData")}</h2>
+            <h2 className="text-xl font-bold">No data found</h2>
             <p className="text-[var(--text-secondary)] mt-2">
-              {t("allCaughtUp")}
+              You're all caught up! No new notifications.
             </p>
           </div>
         ) : (
@@ -113,7 +113,7 @@ const Notifications = () => {
                     onClick={() => handleRead(notification._id)}
                     className="shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white text-sm px-4 py-2 rounded-lg font-medium transition"
                   >
-                    {t("markAsRead")}
+                    Mark as read
                   </button>
                 )}
               </div>

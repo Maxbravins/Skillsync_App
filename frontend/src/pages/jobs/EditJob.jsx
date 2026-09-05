@@ -51,11 +51,11 @@ const EditJob = () => {
         skills: formData.skills.split(",").map((s) => s.trim()),
       });
 
-      alert(t("jobUpdatedSuccessfully"));
+      alert("Job updated successfully!");
       navigate("/my-jobs");
     } catch (error) {
       console.log(error);
-      alert(t("jobUpdateFailed"));
+      alert("Failed to update job. Please try again.");
     }
   };
 
@@ -69,14 +69,14 @@ const EditJob = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium mb-1">
-                {t("jobTitle")}
+                Job Title
               </label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder={t("jobTitle")}
+                placeholder="Job Title"
                 className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] p-3 rounded-lg outline-none focus:border-cyan-500"
               />
             </div>
@@ -127,7 +127,7 @@ const EditJob = () => {
               type="submit"
               className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 font-semibold transition"
             >
-              {t("updateJob")}
+              Update Job
             </button>
           </form>
         </div>
