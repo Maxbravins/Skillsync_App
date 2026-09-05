@@ -223,9 +223,9 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Right Controls */}
+          {/* Right Controls
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            {/* Language */}
+            {/* Language *
             <div className="hidden sm:flex items-center gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 py-1.5 text-xs">
               <Globe className="w-4 h-4 text-cyan-400" />
 
@@ -256,7 +256,7 @@ const Navbar = () => {
                   FR
                 </option>
               </select>
-            </div>
+            </div> */}
 
             {/* Theme */}
             <button
@@ -366,7 +366,6 @@ const Navbar = () => {
             </button>
           </div>
         </div>
-      </div>
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
