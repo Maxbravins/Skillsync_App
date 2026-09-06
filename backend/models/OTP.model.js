@@ -1,12 +1,44 @@
 import mongoose from "mongoose";
 
-const OTPSchema = new mongoose.Schema({
-  email: { type: String, required: true },
-  otp: { type: String, required: true },
-  expiresAt: { type: Date, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
+const OTPSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
 
-OTPSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    otp: {
+      type: String,
+      required: true,
+    },
+
+    expiresAt: {
+      type: Date,
+      required: true,
+    },
+
+    attempts: {
+      type: Number,
+      default: 0,
+    },
+
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: false,
+  }
+);
+
+// Automatically remove expired OTP documents
+OTPSchema.index(
+  { expiresAt: 1 },
+  { expireAfterSeconds: 0 }
+);
 
 export default mongoose.model("OTP", OTPSchema);
