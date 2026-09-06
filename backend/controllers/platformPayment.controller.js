@@ -1,18 +1,29 @@
 import Job from "../models/job.model.js";
 import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
-import { initiateSTKPush } from "../services/mpesa.service.js";
-import { calculatePlatformFee } from "../services/platformFee.service.js";
 import Notification from "../models/notification.model.js";
+
+import {
+  initiateSTKPush,
+  formatPhoneNumber,
+} from "../services/mpesa.service.js";
+
+import { calculatePlatformFee } from "../services/platformFee.service.js";
 import { sendNewJobAlertEmail } from "../services/email.service.js";
 
-    // PAY PLATFORM FEE
+// ============================================================
+// PAY PLATFORM FEE
+// ============================================================
+
 export const payPlatformFee = async (req, res) => {
   try {
     const { jobId } = req.params;
     const { phoneNumber } = req.body;
 
+    // ----------------------------------------------------------
     // Validate phone number
+    // ----------------------------------------------------------
+
     if (!phoneNumber) {
       return res.status(400).json({
         success: false,
@@ -20,7 +31,12 @@ export const payPlatformFee = async (req, res) => {
       });
     }
 
+    const formattedPhone = formatPhoneNumber(phoneNumber);
+
+    // ----------------------------------------------------------
     // Find job
+    // ----------------------------------------------------------
+
     const job = await Job.findById(jobId);
 
     if (!job) {
@@ -30,29 +46,42 @@ export const payPlatformFee = async (req, res) => {
       });
     }
 
-    
-    // Make sure current user owns the job
+    // ----------------------------------------------------------
+    // Verify ownership
+    // ----------------------------------------------------------
+
     if (job.client.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to pay for this job.",
+        message:
+          "You are not authorized to pay for this job.",
       });
     }
 
-    // Prevent duplicate payment
+    // ----------------------------------------------------------
+    // Prevent duplicate successful payment
+    // ----------------------------------------------------------
+
     if (job.platformFeePaid === true) {
       return res.status(400).json({
         success: false,
-        message: "Platform fee has already been paid.",
+        message:
+          "Platform fee has already been paid.",
       });
     }
 
-    // Prevent another pending payment
-    const existingPendingTransaction = await Transaction.findOne({
-      job: job._id,
-      paymentType: "platform_fee",
-      status: "pending",
-    });
+    // ----------------------------------------------------------
+    // Prevent duplicate pending payment
+    // ----------------------------------------------------------
+
+    const existingPendingTransaction =
+      await Transaction.findOne({
+        job: job._id,
+        paymentType: "platform_fee",
+        status: {
+          $in: ["pending", "processing"],
+        },
+      }).sort({ createdAt: -1 });
 
     if (existingPendingTransaction) {
       return res.status(400).json({
@@ -63,81 +92,122 @@ export const payPlatformFee = async (req, res) => {
       });
     }
 
+    // ----------------------------------------------------------
     // Calculate platform fee
+    // ----------------------------------------------------------
+
     const fee = calculatePlatformFee(job.budget);
 
     if (!fee || fee <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Unable to calculate platform fee.",
+        message:
+          "Unable to calculate platform fee.",
       });
     }
 
-    // Save platform fee to job
-    job.platformFee = fee;
+    // ----------------------------------------------------------
+    // Keep job unpublished until payment succeeds
+    // ----------------------------------------------------------
 
-    // Job MUST remain unpublished until payment succeeds.
+    job.platformFeeAmount = fee;
     job.platformFeePaid = false;
     job.isPublished = false;
 
-   // Set job status to "Open" if not already set
-    if (!job.status) {
-      job.status = "Open";
+    if (!job.status || job.status === "Draft") {
+      job.status = "Draft";
     }
 
     await job.save();
- 
-    //Initiate M-Pesa STK Push
+
+    // ----------------------------------------------------------
+    // Initiate M-Pesa STK Push
+    // ----------------------------------------------------------
+
+    const callbackUrl =
+      `${process.env.BACKEND_URL}/api/platform-payment/callback`;
+
     const stkResponse = await initiateSTKPush({
-      phoneNumber,
+      phoneNumber: formattedPhone,
       amount: fee,
       accountReference: `JOB-${job._id}`,
-      transactionDesc: `Platform Fee for ${job.title}`,
-      callbackUrl: `${process.env.BACKEND_URL}/api/platform-payment/callback`,
+      transactionDesc:
+        `Platform Fee for ${job.title}`,
+      callbackUrl,
     });
 
+    // ----------------------------------------------------------
     // Validate STK response
+    // ----------------------------------------------------------
+
     if (
       !stkResponse ||
       !stkResponse.CheckoutRequestID
     ) {
-      return res.status(500).json({
+      return res.status(502).json({
         success: false,
         message:
           "M-Pesa payment could not be initiated. Please try again.",
       });
     }
 
+    // ----------------------------------------------------------
     // Create pending transaction
-    const transaction = await Transaction.create({
-      job: job._id,
-      client: req.user.id,
+    // ----------------------------------------------------------
 
-      // Platform fee payment
-      amount: fee,
+    const transaction =
+      await Transaction.create({
+        type: "platform_fee",
+        paymentType: "platform_fee",
 
-      // Required transaction fields
-      projectAmount: job.budget,
-      platformFee: fee,
+        job: job._id,
+        client: req.user.id,
 
-      // For this transaction the client is only paying
-      // the platform fee.
-      totalAmount: fee,
+        amount: fee,
 
-      phoneNumber,
+        projectAmount: job.budget,
 
-      paymentType: "platform_fee",
+        platformFee: fee,
 
-      status: "pending",
+        developerAmount: 0,
 
-      merchantRequestID:
-        stkResponse.MerchantRequestID || "",
+        totalAmount: fee,
 
-      checkoutRequestID:
-        stkResponse.CheckoutRequestID,
-    });
+        currency: job.currency || "KES",
 
-    // Response
+        phoneNumber: formattedPhone,
+
+        paymentMethod: "mpesa",
+
+        description:
+          `Platform fee for job ${job._id}`,
+
+        paymentProviderData: {
+          provider: "mpesa",
+          accountReference: `JOB-${job._id}`,
+        },
+
+        mpesa: {
+          merchantRequestID:
+            stkResponse.MerchantRequestID || "",
+
+          checkoutRequestID:
+            stkResponse.CheckoutRequestID,
+
+          phoneNumber: formattedPhone,
+
+          resultCode: null,
+
+          resultDesc: "",
+        },
+
+        status: "pending",
+      });
+
+    // ----------------------------------------------------------
+    // Return success
+    // ----------------------------------------------------------
+
     return res.status(200).json({
       success: true,
       message:
@@ -159,8 +229,14 @@ export const payPlatformFee = async (req, res) => {
   }
 };
 
-    // M-PESA PLATFORM FEE CALLBACK
-export const platformCallback = async (req, res) => {
+// ============================================================
+// M-PESA PLATFORM FEE CALLBACK
+// ============================================================
+
+export const platformCallback = async (
+  req,
+  res
+) => {
   try {
     console.log(
       "========== M-PESA PLATFORM CALLBACK =========="
@@ -173,10 +249,13 @@ export const platformCallback = async (req, res) => {
     const callback =
       req.body?.Body?.stkCallback;
 
-        // Validate callback
+    // ----------------------------------------------------------
+    // Validate callback
+    // ----------------------------------------------------------
+
     if (!callback) {
-      console.log(
-        "Invalid M-Pesa callback received."
+      console.error(
+        "Invalid M-Pesa platform callback."
       );
 
       return res.json({
@@ -188,16 +267,37 @@ export const platformCallback = async (req, res) => {
     const checkoutRequestID =
       callback.CheckoutRequestID;
 
+    const merchantRequestID =
+      callback.MerchantRequestID;
+
+    // ----------------------------------------------------------
     // Find transaction
-    const transaction =
+    // ----------------------------------------------------------
+
+    let transaction =
       await Transaction.findOne({
-        checkoutRequestID,
+        "mpesa.checkoutRequestID":
+          checkoutRequestID,
+        type: "platform_fee",
       });
 
+    // Fallback using merchant request ID.
+    if (!transaction && merchantRequestID) {
+      transaction =
+        await Transaction.findOne({
+          "mpesa.merchantRequestID":
+            merchantRequestID,
+          type: "platform_fee",
+        }).sort({ createdAt: -1 });
+    }
+
     if (!transaction) {
-      console.log(
-        "Transaction not found:",
-        checkoutRequestID
+      console.error(
+        "Platform transaction not found:",
+        {
+          checkoutRequestID,
+          merchantRequestID,
+        }
       );
 
       return res.json({
@@ -206,11 +306,14 @@ export const platformCallback = async (req, res) => {
       });
     }
 
-        //Prevent duplicate callback processing
+    // ----------------------------------------------------------
+    // Prevent duplicate callback processing
+    // ----------------------------------------------------------
+
     if (transaction.status === "completed") {
       console.log(
-        "Transaction already completed:",
-        transaction._id
+        "Platform transaction already completed:",
+        transaction.transactionId
       );
 
       return res.json({
@@ -219,58 +322,73 @@ export const platformCallback = async (req, res) => {
       });
     }
 
-    // Save M-Pesa result
-    transaction.resultCode =
+    // ----------------------------------------------------------
+    // Save callback result
+    // ----------------------------------------------------------
+
+    transaction.mpesa.resultCode =
       callback.ResultCode;
 
-    transaction.resultDesc =
+    transaction.mpesa.resultDesc =
       callback.ResultDesc || "";
 
+    // ----------------------------------------------------------
     // SUCCESSFUL PAYMENT
-    if (callback.ResultCode === 0) {
+    // ----------------------------------------------------------
+
+    if (Number(callback.ResultCode) === 0) {
       console.log(
-        "Platform fee payment SUCCESSFUL"
+        "Platform fee payment SUCCESSFUL:",
+        transaction.transactionId
       );
 
-      // Extract M-Pesa receipt number     
+      // --------------------------------------------------------
+      // Extract receipt
+      // --------------------------------------------------------
+
       const metadata =
         callback.CallbackMetadata?.Item || [];
 
-      const receiptItem = metadata.find(
-        (item) =>
-          item.Name === "MpesaReceiptNumber"
-      );
+      const receiptItem =
+        metadata.find(
+          (item) =>
+            item.Name ===
+            "MpesaReceiptNumber"
+        );
 
-      if (receiptItem) {
-        transaction.mpesaReceiptNumber =
-          receiptItem.Value;
+      if (receiptItem?.Value) {
+        transaction.mpesa.mpesaReceiptNumber =
+          String(receiptItem.Value);
       }
 
+      // --------------------------------------------------------
       // Mark transaction completed
+      // --------------------------------------------------------
+
       transaction.status = "completed";
+      transaction.completedAt = new Date();
       transaction.paidAt = new Date();
 
       await transaction.save();
 
       console.log(
-        "Transaction marked completed:",
-        transaction._id
+        "Platform transaction completed:",
+        transaction.transactionId
       );
 
+      // --------------------------------------------------------
       // Find job
-      const job = await Job.findById(
-        transaction.job
-      )
-        .populate("category")
-        .populate(
-          "client",
-          "username email"
-        );
+      // --------------------------------------------------------
+
+      const job =
+        await Job.findById(
+          transaction.job
+        ).populate("category");
 
       if (!job) {
         console.error(
           "Job not found for transaction:",
-          transaction._id
+          transaction.transactionId
         );
 
         return res.json({
@@ -279,14 +397,35 @@ export const platformCallback = async (req, res) => {
         });
       }
 
-      // Publish the job AFTER successful payment    
+      // --------------------------------------------------------
+      // Get client
+      // --------------------------------------------------------
+
+      const client =
+        await User.findById(
+          transaction.client
+        ).select(
+          "username email"
+        );
+
+      // --------------------------------------------------------
+      // Publish job
+      // --------------------------------------------------------
+
       job.platformFeePaid = true;
+
+      job.platformFeeAmount =
+        transaction.platformFee ||
+        job.platformFeeAmount ||
+        transaction.amount;
 
       job.isPublished = true;
 
-      job.paymentStatus = "paid";
+      // IMPORTANT:
+      // Job schema uses "Open", not "published".
+      job.status = "Open";
 
-      job.status = "published";
+      job.paymentStatus = "paid";
 
       job.publishedAt = new Date();
 
@@ -297,48 +436,51 @@ export const platformCallback = async (req, res) => {
         job._id
       );
 
-      // Get client
-      const client = await User.findById(
-        transaction.client
-      ).select("username email");
+      // --------------------------------------------------------
+      // Category information
+      // --------------------------------------------------------
 
-      
-      // Prepare category
       const categoryId =
-        job.category?._id || job.category;
+        job.category?._id ||
+        job.category;
 
       const categoryName =
         job.category?.name ||
         "Software Development";
 
-        //Normalize job skills
-      let jobSkills = [];
+      // --------------------------------------------------------
+      // Normalize skills
+      // --------------------------------------------------------
 
-      if (Array.isArray(job.skills)) {
-        jobSkills = job.skills
-          .flatMap((skill) =>
-            typeof skill === "string"
-              ? skill
-                  .split(/[,\n]+/)
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-              : []
-          );
-      } else if (
-        typeof job.skills === "string"
-      ) {
-        jobSkills = job.skills
-          .split(/[,\n]+/)
-          .map((skill) => skill.trim())
-          .filter(Boolean);
-      }
+      const jobSkills = [
+        ...(Array.isArray(job.requiredSkills)
+          ? job.requiredSkills
+          : []),
+
+        ...(Array.isArray(job.preferredSkills)
+          ? job.preferredSkills
+          : []),
+      ]
+        .flatMap((skill) =>
+          typeof skill === "string"
+            ? skill
+                .split(/[,\\n]+/)
+                .map((item) =>
+                  item.trim()
+                )
+                .filter(Boolean)
+            : []
+        );
 
       console.log(
         "Job skills:",
         jobSkills
       );
 
-      // Find developers to notify based on category and availability
+      // --------------------------------------------------------
+      // Find developers to notify
+      // --------------------------------------------------------
+
       const developers =
         await User.find({
           role: "developer",
@@ -353,17 +495,24 @@ export const platformCallback = async (req, res) => {
             $exists: true,
             $ne: "",
           },
-        });
+        }).select(
+          "username email"
+        );
 
       console.log(
         `Found ${developers.length} developers to notify.`
       );
 
-      // Notify developers     
+      // --------------------------------------------------------
+      // Notify developers
+      // --------------------------------------------------------
+
       for (const developer of developers) {
+        // ------------------------------------------------------
+        // Email
+        // ------------------------------------------------------
+
         try {
-         
-          // Send email        
           await sendNewJobAlertEmail({
             email: developer.email,
 
@@ -391,19 +540,24 @@ export const platformCallback = async (req, res) => {
           );
         }
 
+        // ------------------------------------------------------
+        // In-app notification
+        // ------------------------------------------------------
+
         try {
-          
-          // Create in-app notification
           await Notification.create({
             user: developer._id,
 
-            message: `A new "${job.title}" project has been posted.`,
+            message:
+              `A new "${job.title}" project has been posted.`,
           });
 
           console.log(
             `Notification created for ${developer.username}`
           );
-        } catch (notificationError) {
+        } catch (
+          notificationError
+        ) {
           console.error(
             `Failed to create notification for ${developer.username}:`,
             notificationError.message
@@ -415,8 +569,10 @@ export const platformCallback = async (req, res) => {
         "========== PLATFORM PAYMENT COMPLETE =========="
       );
     } else {
-      
+      // --------------------------------------------------------
       // PAYMENT FAILED / CANCELLED
+      // --------------------------------------------------------
+
       console.log(
         "Platform fee payment FAILED:",
         callback.ResultCode,
@@ -427,23 +583,24 @@ export const platformCallback = async (req, res) => {
 
       await transaction.save();
 
-      // Make sure job remains unpublished    
-      const job = await Job.findById(
-        transaction.job
-      );
+      const job =
+        await Job.findById(
+          transaction.job
+        );
 
       if (job) {
         job.platformFeePaid = false;
-
         job.isPublished = false;
-
         job.paymentStatus = "pending";
 
         await job.save();
       }
     }
-  
+
+    // ----------------------------------------------------------
     // Always acknowledge M-Pesa
+    // ----------------------------------------------------------
+
     return res.json({
       ResultCode: 0,
       ResultDesc: "Accepted",
@@ -454,10 +611,11 @@ export const platformCallback = async (req, res) => {
       error
     );
 
-    
+    // Safaricom expects a response.
     return res.json({
       ResultCode: 0,
       ResultDesc: "Accepted",
     });
   }
 };
+

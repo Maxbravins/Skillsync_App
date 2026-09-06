@@ -114,7 +114,7 @@ const jobSchema = new mongoose.Schema(
     // BUDGET & PRICING
     // ============================================================
 
-    // Developer/project amount before platform fee
+    // Amount intended for the developer/project.
     budget: {
       type: Number,
       required: true,
@@ -151,13 +151,21 @@ const jobSchema = new mongoose.Schema(
       default: 10,
     },
 
+    // Calculated platform fee.
     platformFeeAmount: {
       type: Number,
       min: 0,
       default: 0,
     },
 
-    // Amount actually charged to client
+    // True only after successful platform-fee payment.
+    platformFeePaid: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    // Amount client pays for project + platform fee.
     clientTotalAmount: {
       type: Number,
       min: 0,
@@ -269,9 +277,18 @@ const jobSchema = new mongoose.Schema(
       index: true,
     },
 
+    // Controls whether developers can see the job.
     isPublished: {
       type: Boolean,
       default: false,
+      index: true,
+    },
+
+    // Set when the platform fee has been successfully paid
+    // and the job becomes publicly available.
+    publishedAt: {
+      type: Date,
+      default: null,
       index: true,
     },
 
@@ -304,9 +321,6 @@ const jobSchema = new mongoose.Schema(
 
     // ============================================================
     // ESCROW AGGREGATES
-    //
-    // These are cached/aggregate values.
-    // Transactions remain the financial source of truth.
     // ============================================================
 
     escrowAmount: {
@@ -444,7 +458,6 @@ jobSchema.index({
 // ============================================================
 
 jobSchema.pre("validate", function (next) {
-  // Budget range validation
   if (
     this.minBudget !== null &&
     this.minBudget !== undefined &&
@@ -457,7 +470,6 @@ jobSchema.pre("validate", function (next) {
     );
   }
 
-  // If min/max are provided, budget should fall within range.
   if (
     this.minBudget !== null &&
     this.minBudget !== undefined &&
@@ -478,10 +490,10 @@ jobSchema.pre("validate", function (next) {
     );
   }
 
-  // Milestone total cannot exceed project budget.
   if (this.milestones?.length) {
     const milestoneTotal = this.milestones.reduce(
-      (total, milestone) => total + (milestone.amount || 0),
+      (total, milestone) =>
+        total + (milestone.amount || 0),
       0
     );
 
@@ -494,14 +506,15 @@ jobSchema.pre("validate", function (next) {
     }
   }
 
-  // Application deadline should not be in the past for new jobs.
   if (
     this.isNew &&
     this.applicationDeadline &&
     this.applicationDeadline <= new Date()
   ) {
     return next(
-      new Error("Application deadline must be in the future")
+      new Error(
+        "Application deadline must be in the future"
+      )
     );
   }
 
@@ -518,7 +531,8 @@ jobSchema.pre("save", function (next) {
     this.isModified("budget") ||
     this.isModified("platformFeePercentage")
   ) {
-    const feePercentage = this.platformFeePercentage || 0;
+    const feePercentage =
+      this.platformFeePercentage || 0;
 
     this.platformFeeAmount =
       Math.round(
@@ -588,7 +602,8 @@ jobSchema.methods.approveMilestone = async function (
 
 jobSchema.methods.getMilestoneTotal = function () {
   return this.milestones.reduce(
-    (total, milestone) => total + milestone.amount,
+    (total, milestone) =>
+      total + milestone.amount,
     0
   );
 };
@@ -601,3 +616,4 @@ jobSchema.methods.getRemainingAmount = function () {
 };
 
 export default mongoose.model("Job", jobSchema);
+
