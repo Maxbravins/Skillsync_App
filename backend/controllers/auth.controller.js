@@ -353,12 +353,6 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    /*
-     * Find OTP by email first.
-     * We cannot search by email + OTP because
-     * we need to increment failed attempts when
-     * the OTP is incorrect.
-     */
     const otpRecord = await OTP.findOne({
       email: normalizedEmail,
     });
@@ -472,25 +466,20 @@ export const verifyOTP = async (req, res) => {
 // Reset password
 export const resetPassword = async (req, res) => {
   try {
-    const {
-      resetToken,
-      newPassword,
-    } = req.body;
+    const { resetToken, newPassword } = req.body;
 
+    // Validate input
     if (!resetToken || !newPassword) {
       return res.status(400).json({
         success: false,
-        message:
-          "Reset token and new password are required.",
+        message: "Reset token and new password are required",
       });
     }
 
-    // Basic password validation
     if (newPassword.length < 8) {
       return res.status(400).json({
         success: false,
-        message:
-          "Password must be at least 8 characters long.",
+        message: "Password must be at least 8 characters long",
       });
     }
 
@@ -500,46 +489,38 @@ export const resetPassword = async (req, res) => {
       .update(resetToken)
       .digest("hex");
 
-    // Find user with valid reset token
+    // Find user with a valid reset token
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
-      resetPasswordExpires: {
-        $gt: Date.now(),
-      },
+      resetPasswordExpires: { $gt: new Date() },
     });
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired reset token.",
+        message: "Invalid or expired reset token",
       });
     }
 
-    // Prevent using the same password
-    const isSamePassword = await bcrypt.compare(
-      newPassword,
-      user.password
-    );
-
-    if (isSamePassword) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "New password must be different from your current password.",
-      });
-    }
-
-    // Hash new password
-    user.password = await bcrypt.hash(
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(
       newPassword,
       10
     );
 
-    // Invalidate reset token immediately
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
-
-    await user.save();
+    // Update only password and reset-token fields
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          password: hashedPassword,
+        },
+        $unset: {
+          resetPasswordToken: 1,
+          resetPasswordExpires: 1,
+        },
+      }
+    );
 
     // Send confirmation email
     const emailResult =
@@ -552,16 +533,21 @@ export const resetPassword = async (req, res) => {
       );
     }
 
-    return res.json({
+    return res.status(200).json({
       success: true,
-      message: "Password reset successfully.",
+      message: "Password reset successfully",
     });
   } catch (error) {
-    console.error("Reset password error:", error);
+    console.error(
+      "Reset password error:",
+      error
+    );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Unable to reset password.",
+      message:
+        error.message ||
+        "Failed to reset password",
     });
   }
 };
