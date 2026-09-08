@@ -46,6 +46,7 @@ router.post("/upload", auth, upload.single("file"), uploadToCloudinary);
 router.delete("/delete", auth, deleteFromCloudinary);
 
 // Get a short-lived signed link to a private resume (self, or admin)
-router.get("/resume-url/:userId?", auth, getResumeSignedUrl);
+router.get("/resume-url", auth, getResumeSignedUrl);
+router.get("/resume-url/:userId", auth, getResumeSignedUrl);
 
 export default router;

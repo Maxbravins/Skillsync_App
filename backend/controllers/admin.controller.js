@@ -302,7 +302,6 @@ export const getRecentTransactions = async (req, res) => {
     const transactions = await Transaction.find()
       .populate("client", "username email")
       .populate("developer", "username email")
-      .populate("user", "username email")
       .populate("job", "title")
       .sort({ createdAt: -1 })
       .limit(20);
