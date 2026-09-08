@@ -14,7 +14,18 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
   timeout: 15000,
+  // Required so the HttpOnly refresh-token cookie is sent to /auth/*
+  // endpoints and so the backend's CORS `credentials: true` config
+  withCredentials: true,
 });
+
+let accessToken = null;
+
+export const setAccessToken = (token) => {
+  accessToken = token || null;
+};
+
+export const getAccessToken = () => accessToken;
 
 const clearAuth = () => {
   accessToken = null;
@@ -57,11 +68,53 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle authentication errors globally.
+let refreshPromise = null;
+
+const refreshAccessToken = () => {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(
+        `${API_URL}/auth/refresh-token`,
+        {},
+        { withCredentials: true }
+      )
+      .then((res) => {
+        const newToken = res.data?.token;
+        setAccessToken(newToken);
+        return newToken;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+};
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+    const status = error.response?.status;
+
+    const isRefreshEndpoint = originalRequest?.url?.includes(
+      "/auth/refresh-token"
+    );
+
+    if (status === 401 && !originalRequest?._retry && !isRefreshEndpoint) {
+      originalRequest._retry = true;
+
+      try {
+        const newToken = await refreshAccessToken();
+
+        if (newToken) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        // fall through to logout below
+      }
+
       clearAuth();
       redirectToLogin();
     }
