@@ -4,7 +4,7 @@ import auth from "../middleware/auth.middleware.js";
 import authorizeRoles from "../middleware/role.middleware.js";
 import { validateObjectId } from "../middleware/validate.js";
 import { validateMpesaWebhook } from "../middleware/webhook.middleware.js";
-import { webhookLimiter } from "../middleware/rateLimiter.js";
+import { webhookLimiter, financialLimiter } from "../middleware/rateLimiter.js";
 import validate from "../middleware/validate.js";
 
 import {
@@ -53,6 +53,7 @@ router.post(
   "/pay/:applicationId",
   auth,
   authorizeRoles("client"),
+  financialLimiter,
   validateObjectId("applicationId"),
   validate(paymentSchema), // ← ADD: Validate phone number
   initiatePayment

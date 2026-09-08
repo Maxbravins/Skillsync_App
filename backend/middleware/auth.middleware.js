@@ -15,6 +15,16 @@ const auth = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    // Reject anything that isn't a short-lived access token — in
+    // particular, guards against a refresh token (or any other JWT
+    // signed with the same secret) being replayed as an access token.
+    if (decoded.type !== "access") {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token",
+      });
+    }
+
     req.user = decoded;
 
     next();

@@ -8,8 +8,8 @@ import {
   forgotPassword,
   verifyOTP,
   resetPassword,
-  changePassword, 
-  refreshToken,    
+  changePassword,
+  refreshAccessToken,
 } from "../controllers/auth.controller.js";
 import auth from "../middleware/auth.middleware.js";
 import { authLimiter, otpLimiter } from "../middleware/rateLimiter.js";
@@ -32,10 +32,14 @@ router.post("/forgot-password", otpLimiter, validate(forgotPasswordSchema), forg
 router.post("/verify-otp", otpLimiter, validate(verifyOTPSchema), verifyOTP);
 router.post("/reset-password", otpLimiter, validate(resetPasswordSchema), resetPassword);
 
+// Refresh token exchange — deliberately NOT behind `auth`, since its
+// whole purpose is to mint a new access token once the old one has
+// expired. It authenticates itself via the HttpOnly refresh cookie.
+router.post("/refresh-token", authLimiter, refreshAccessToken);
+
 // Protected routes (require authentication)
 router.get("/me", auth, getMe);
 router.post("/logout", auth, logout);
-router.post("/refresh-token", auth, refreshToken); // ← ADD
-router.put("/change-password", auth, validate(changePasswordSchema), changePassword); // ← ADD
+router.put("/change-password", auth, validate(changePasswordSchema), changePassword);
 
 export default router;
