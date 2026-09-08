@@ -242,8 +242,12 @@ export const updateProfile = async (req, res) => {
     ) {
       const file = req.files.resume[0];
 
+      // Private ("authenticated") Cloudinary delivery — store the
+      // public_id, not a directly-fetchable URL. Use
+      // getResumeSignedUrl() to hand out a short-lived link.
       updates.resume =
-        file.path || file.secure_url || file.url;
+        file.filename || file.public_id || file.path;
+      updates.resumeFormat = file.format || "pdf";
     }
 
     // ----------------------------------------------------------

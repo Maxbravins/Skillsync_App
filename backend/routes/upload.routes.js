@@ -5,6 +5,7 @@ import {
   generateUploadSignature,
   uploadToCloudinary,
   deleteFromCloudinary,
+  getResumeSignedUrl,
 } from "../controllers/upload.controller.js";
 
 const router = express.Router();
@@ -43,5 +44,8 @@ router.post("/upload", auth, upload.single("file"), uploadToCloudinary);
 
 // Delete file
 router.delete("/delete", auth, deleteFromCloudinary);
+
+// Get a short-lived signed link to a private resume (self, or admin)
+router.get("/resume-url/:userId?", auth, getResumeSignedUrl);
 
 export default router;

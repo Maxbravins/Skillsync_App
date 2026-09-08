@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { apiLimiter, webhookLimiter } from "./middleware/rateLimiter.js";
 import helmet from "helmet";
 import authRoutes from "./routes/auth.routes.js";
@@ -63,6 +64,9 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
+
+// COOKIE PARSER (needed to read the HttpOnly refresh-token cookie)
+app.use(cookieParser());
 
 // BODY PARSER
 app.use(express.json({ limit: "10mb" }));

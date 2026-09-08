@@ -25,6 +25,11 @@ const avatarStorage = new CloudinaryStorage({
         folder: "skillsync/resumes",
         allowed_formats: ["pdf", "doc", "docx"],
         resource_type: "raw",
+        // Private delivery: the resulting resource can NOT be
+        // fetched by URL alone. A signed, short-lived link must be
+        // generated server-side (see upload.controller.js ->
+        // getResumeSignedUrl) after an ownership check.
+        type: "authenticated",
       };
     }
   },
