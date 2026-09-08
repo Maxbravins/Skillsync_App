@@ -1,4 +1,5 @@
 import cloudinary from "../config/cloudinary.js";
+import User from "../models/user.model.js";
 // GENERATE UPLOAD SIGNATURE (For direct frontend upload)
 export const generateUploadSignature = async (req, res) => {
   try {
@@ -77,7 +78,67 @@ export const uploadToCloudinary = async (req, res) => {
   }
 };
 
-// DELETE FILE FROM CLOUDINARY
+// GENERATE A SHORT-LIVED SIGNED URL FOR A PRIVATE RESUME
+//
+// Resumes are stored with Cloudinary's "authenticated" delivery
+// type, so `user.resume` is a public_id, not a fetchable link.
+// Only the resume's owner or an admin may request a signed link,
+// and it expires in 5 minutes.
+export const getResumeSignedUrl = async (req, res) => {
+  try {
+    const targetUserId = req.params.userId || req.user.id;
+
+    const isSelf = targetUserId === req.user.id;
+    const isAdmin = req.user.role === "admin";
+
+    if (!isSelf && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view this resume.",
+      });
+    }
+
+    const targetUser = await User.findById(targetUserId).select(
+      "resume resumeFormat role"
+    );
+
+    if (!targetUser?.resume) {
+      return res.status(404).json({
+        success: false,
+        message: "No resume on file.",
+      });
+    }
+
+    const expiresAt =
+      Math.floor(Date.now() / 1000) + 5 * 60; // 5 minutes
+
+    const url = cloudinary.utils.private_download_link(
+      targetUser.resume,
+      targetUser.resumeFormat || "pdf",
+      {
+        resource_type: "raw",
+        type: "authenticated",
+        expires_at: expiresAt,
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        url,
+        expiresAt,
+      },
+    });
+  } catch (error) {
+    console.error("Resume signed URL error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to generate resume link",
+    });
+  }
+};
+
+
 export const deleteFromCloudinary = async (req, res) => {
   try {
     const { publicId } = req.body;

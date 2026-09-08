@@ -362,11 +362,13 @@ export const updateProfile = async (req, res) => {
     if (req.files?.resume?.length) {
       const file = req.files.resume[0];
 
-      updates.resume =
-        file.path ||
-        file.secure_url ||
-        file.url ||
-        `/uploads/resumes/${file.filename}`;
+      // Resumes are uploaded with Cloudinary's private ("authenticated")
+      // delivery type, so `file.path`/`file.secure_url` are NOT directly
+      // fetchable — only the public_id (`file.filename`) is useful,
+      // paired with getResumeSignedUrl() to generate a short-lived link
+      // on demand.
+      updates.resume = file.filename || file.public_id || file.path;
+      updates.resumeFormat = file.format || "pdf";
     }
 
     // ==========================================================

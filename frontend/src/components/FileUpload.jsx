@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 const FileUpload = () => {
   const [uploading, setUploading] = useState(false);
@@ -9,10 +9,9 @@ const FileUpload = () => {
     setUploading(true);
 
     try {
-      // Get upload signature from backend
-      const { data } = await axios.get("/api/upload/signature", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      // Get upload signature from backend (api.js attaches the
+      // current in-memory access token automatically).
+      const { data } = await api.get("/upload/signature");
 
       //  Upload directly to Cloudinary
       const formData = new FormData();
@@ -36,7 +35,7 @@ const FileUpload = () => {
       if (result.secure_url) {
         setFileUrl(result.secure_url);
         // Save this URL to your database via your API
-        await axios.post("/api/users/profile", {
+        await api.post("/users/profile", {
           profilePicture: result.secure_url,
         });
       }

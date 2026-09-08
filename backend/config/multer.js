@@ -20,13 +20,15 @@ const avatarStorage = new CloudinaryStorage({
   },
 });
 
-// Resume / document uploads
+// Resume / document uploads — private delivery (see note in
+// upload.middleware.js's resume config for why).
 const resumeStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "skillsync/resumes",
     allowed_formats: ["pdf", "doc", "docx"],
     resource_type: "raw",
+    type: "authenticated",
   },
 });
 

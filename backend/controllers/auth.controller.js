@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import jwt from "jsonwebtoken";
 import OTP from "../models/OTP.model.js";
 import User from "../models/user.model.js";
 import Category from "../models/category.model.js";
@@ -10,6 +9,32 @@ import {
   sendPasswordChangedEmail,
 } from "../services/email.service.js";
 import Wallet from "../models/wallet.model.js";
+import {
+  signAccessToken,
+  issueRefreshToken,
+  consumeRefreshToken,
+  revokeAllRefreshTokens,
+  revokeRefreshToken,
+  refreshCookieOptions,
+  REFRESH_COOKIE_NAME,
+} from "../utils/token.js";
+
+// Issue an access token + rotate/set a refresh-token cookie for a user.
+const issueSession = async (req, res, user) => {
+  const accessToken = signAccessToken(user);
+  const rawRefreshToken = await issueRefreshToken(
+    user,
+    req.headers["user-agent"]
+  );
+
+  res.cookie(
+    REFRESH_COOKIE_NAME,
+    rawRefreshToken,
+    refreshCookieOptions()
+  );
+
+  return accessToken;
+};
 
 // Register user
 export const registerUser = async (req, res) => {
@@ -90,22 +115,12 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // JWT
-    const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+    const accessToken = await issueSession(req, res, user);
 
     res.status(201).json({
       success: true,
       message: "User registered successfully",
-      token,
+      token: accessToken,
       user: {
         id: user._id,
         username: user.username,
@@ -158,21 +173,12 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+    const accessToken = await issueSession(req, res, user);
 
     res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
+      token: accessToken,
       user: {
         id: user._id,
         username: user.username,
@@ -194,10 +200,19 @@ export const loginUser = async (req, res) => {
 // Logout user
 export const logout = async (req, res) => {
   try {
-    res.cookie("token", "", {
-      httpOnly: true,
-      expires: new Date(0),
-    });
+    const rawRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+
+    if (rawRefreshToken && req.user?.id) {
+      const user = await User.findById(req.user.id).select(
+        "+refreshTokens"
+      );
+
+      if (user) {
+        await revokeRefreshToken(user, rawRefreshToken);
+      }
+    }
+
+    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
 
     res.json({
       success: true,
@@ -508,12 +523,16 @@ export const resetPassword = async (req, res) => {
       10
     );
 
-    // Update only password and reset-token fields
+    // Update only password and reset-token fields, and revoke every
+    // existing session — a reset password is a strong signal the
+    // account may have been compromised, so all devices should be
+    // forced to log in again with the new password.
     await User.updateOne(
       { _id: user._id },
       {
         $set: {
           password: hashedPassword,
+          refreshTokens: [],
         },
         $unset: {
           resetPasswordToken: 1,
@@ -617,11 +636,14 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // Hash new password
+    // Hash new password and revoke every existing session so a
+    // stolen access/refresh token from before the change stops
+    // working immediately.
     user.password = await bcrypt.hash(
       newPassword,
       10
     );
+    user.refreshTokens = [];
 
     await user.save();
 
@@ -663,23 +685,63 @@ export const changePassword = async (req, res) => {
   }
 };
 
-// Refresh token
-export const refreshToken = async (req, res) => {
+// Exchange a refresh-token cookie for a new access token, rotating
+// the refresh token itself (single use — old value stops working).
+export const refreshAccessToken = async (req, res) => {
   try {
-    const token = jwt.sign(
-      {
-        id: req.user.id,
-        role: req.user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+    const rawRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+
+    if (!rawRefreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "No refresh token provided",
+      });
+    }
+
+    // We don't know the user id yet (the cookie is opaque), so we
+    // have to search. This is a small, infrequent, indexed-by-hash
+    // lookup — acceptable at this scale.
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(rawRefreshToken)
+      .digest("hex");
+
+    const user = await User.findOne({
+      "refreshTokens.tokenHash": tokenHash,
+    }).select("+refreshTokens");
+
+    if (!user) {
+      // Unknown token: either expired/rotated-away already, or
+      // never valid. Clear the cookie either way.
+      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
+
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired session. Please log in again.",
+      });
+    }
+
+    const isValid = await consumeRefreshToken(user, rawRefreshToken);
+
+    if (!isValid) {
+      // Token existed on the user but was expired, or (more
+      // seriously) has already been used once before — that's a
+      // sign of token theft/replay. Revoke every session for this
+      // user as a precaution and force re-login everywhere.
+      await revokeAllRefreshTokens(user);
+      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
+
+      return res.status(401).json({
+        success: false,
+        message: "Session invalid. Please log in again.",
+      });
+    }
+
+    const accessToken = await issueSession(req, res, user);
 
     res.status(200).json({
       success: true,
-      token,
+      token: accessToken,
     });
   } catch (error) {
     console.error(

@@ -14,10 +14,32 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
   timeout: 15000,
+  // Required so the HttpOnly refresh-token cookie is sent to /auth/*
+  // endpoints and so the backend's CORS `credentials: true` config
+  // actually takes effect.
+  withCredentials: true,
 });
 
+// ============================================================
+// ACCESS TOKEN — kept in memory only.
+//
+// It used to live in localStorage, which meant it (and its 7-day
+// lifetime) was readable by any script on the page — a serious
+// XSS blast-radius problem for an app that touches money. Now it's
+// short-lived (15 min) and never persisted; a page reload silently
+// re-derives it from the HttpOnly refresh-token cookie instead.
+// ============================================================
+
+let accessToken = null;
+
+export const setAccessToken = (token) => {
+  accessToken = token || null;
+};
+
+export const getAccessToken = () => accessToken;
+
 const clearAuth = () => {
-  localStorage.removeItem("token");
+  accessToken = null;
   localStorage.removeItem("user");
 };
 
@@ -45,13 +67,11 @@ const redirectToLogin = () => {
   window.location.href = `/login?redirect=${redirect}`;
 };
 
-// Attach authentication token to every request.
+// Attach the in-memory access token to every request.
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
     return config;
@@ -59,11 +79,66 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle authentication errors globally.
+// ============================================================
+// SILENT REFRESH
+//
+// A single in-flight refresh is shared across every request that
+// hits a 401 at the same time, so a page with several concurrent
+// API calls doesn't fire several parallel refresh attempts (which
+// would race to rotate the same one-time-use refresh token and
+// fail each other).
+// ============================================================
+
+let refreshPromise = null;
+
+const refreshAccessToken = () => {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(
+        `${API_URL}/auth/refresh-token`,
+        {},
+        { withCredentials: true }
+      )
+      .then((res) => {
+        const newToken = res.data?.token;
+        setAccessToken(newToken);
+        return newToken;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+};
+
+// Handle authentication errors globally, retrying once via a
+// silent refresh before giving up and sending the user to /login.
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+    const status = error.response?.status;
+
+    const isAuthEndpoint = originalRequest?.url?.includes("/auth/");
+
+    if (status === 401 && !originalRequest?._retry && !isAuthEndpoint) {
+      originalRequest._retry = true;
+
+      try {
+        const newToken = await refreshAccessToken();
+
+        if (newToken) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        // fall through to logout below
+      }
+
+      clearAuth();
+      redirectToLogin();
+    } else if (status === 401 && isAuthEndpoint) {
       clearAuth();
       redirectToLogin();
     }

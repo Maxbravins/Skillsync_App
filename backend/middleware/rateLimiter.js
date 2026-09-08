@@ -37,6 +37,21 @@ export const otpLimiter = rateLimit({
   },
 });
 
+// Financial limiter — withdrawals and payment initiation.
+// Tighter than the general API limiter: these endpoints move real
+// money, so we want to slow down automated abuse/spam attempts even
+// from an authenticated, otherwise-legitimate-looking session.
+export const financialLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many payment/withdrawal requests, please slow down and try again shortly.",
+  },
+});
+
 // Webhook limiter — M-Pesa callbacks (very permissive)
 export const webhookLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute

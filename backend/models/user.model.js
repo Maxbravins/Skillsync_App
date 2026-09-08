@@ -107,8 +107,12 @@ const userSchema = new mongoose.Schema(
 
     // === RESUME ===
     resume: {
-      type: String, // URL to uploaded file
+      type: String, // Cloudinary public_id (private/authenticated delivery)
       default: "",
+    },
+    resumeFormat: {
+      type: String, // e.g. "pdf", "doc", "docx" — needed to build signed download links
+      default: "pdf",
     },
 
     // === AVAILABILITY ===
@@ -235,6 +239,22 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+
+    // === REFRESH TOKENS (rotation + multi-device sessions) ===
+    // Only a SHA-256 hash of each refresh token is ever stored.
+    // One entry per active device/session.
+    refreshTokens: {
+      type: [
+        {
+          tokenHash: { type: String, required: true },
+          expiresAt: { type: Date, required: true },
+          createdAt: { type: Date, default: Date.now },
+          userAgent: { type: String, default: "" },
+        },
+      ],
+      default: [],
+      select: false,
+    },
   },
   {
     timestamps: true,
@@ -259,6 +279,7 @@ userSchema.methods.toJSON = function() {
   delete obj.password;
   delete obj.resetPasswordToken;
   delete obj.resetPasswordExpires;
+  delete obj.refreshTokens;
   return obj;
 };
 
