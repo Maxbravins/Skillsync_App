@@ -159,12 +159,6 @@ const Navbar = () => {
 
             {user?.role === "client" && (
               <>
-                <Link
-                  to="/jobs"
-                  className="text-[var(--text-secondary)] hover:text-cyan-400 transition"
-                >
-                  Browse Jobs
-                </Link>
 
                 <Link
                   to="/client-dashboard"
@@ -486,14 +480,6 @@ const Navbar = () => {
                     onClick={closeMobileMenu}
                   >
                     Dashboard
-                  </Link>
-
-                  <Link
-                    to="/jobs"
-                    className="mobile-nav-link"
-                    onClick={closeMobileMenu}
-                  >
-                    Browse Jobs
                   </Link>
 
                   <Link

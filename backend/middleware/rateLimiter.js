@@ -65,3 +65,17 @@ export const webhookLimiter = rateLimit({
     message: "Webhook rate limit exceeded.",
   },
 });
+
+// Refresh-token limiter — separate from login/register.
+// This fires automatically on every page load and on 401 retries,
+// so it needs a much higher ceiling than login attempts.
+export const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many session refresh attempts, please try again shortly.",
+  },
+});

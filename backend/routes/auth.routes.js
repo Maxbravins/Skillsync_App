@@ -12,7 +12,7 @@ import {
   refreshAccessToken,
 } from "../controllers/auth.controller.js";
 import auth from "../middleware/auth.middleware.js";
-import { authLimiter, otpLimiter } from "../middleware/rateLimiter.js";
+import { authLimiter, otpLimiter, refreshLimiter } from "../middleware/rateLimiter.js";
 import validate from "../middleware/validate.js";
 import {
   registerSchema,
@@ -36,6 +36,7 @@ router.post("/reset-password", otpLimiter, validate(resetPasswordSchema), resetP
 // whole purpose is to mint a new access token once the old one has
 // expired. It authenticates itself via the HttpOnly refresh cookie.
 router.post("/refresh-token", authLimiter, refreshAccessToken);
+router.post("/refresh-token", refreshLimiter, refreshAccessToken);
 
 // Protected routes (require authentication)
 router.get("/me", auth, getMe);

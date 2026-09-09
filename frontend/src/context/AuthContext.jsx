@@ -32,17 +32,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Restore authentication state when the app starts.
-  //
-  // The access token is never persisted (see services/api.js), so on
-  // a fresh page load we don't have one yet. Instead we try a silent
-  // refresh: if the browser still has a valid HttpOnly refresh-token
-  // cookie, the backend hands back a new access token and we're
-  // logged back in without the user re-entering credentials. If that
-  // fails (cookie expired/missing), we fall back to logged-out.
   useEffect(() => {
     let cancelled = false;
+    let started = false;
 
     const restoreSession = async () => {
+      if (started) return;
+      started = true;
+      
       const cachedUser = getStoredUser();
 
       try {
