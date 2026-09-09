@@ -144,7 +144,7 @@ export const payPremium = async (req, res) => {
           `SkillSync ${selectedPlan.name}`,
 
         callbackUrl:
-          `${process.env.BACKEND_URL}/api/premium-payment/callback`,
+          `${process.env.BACKEND_URL}/api/premium/callback`,
       });
     } catch (error) {
       console.error(

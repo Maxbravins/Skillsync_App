@@ -22,6 +22,7 @@ import {
 // Issue an access token + rotate/set a refresh-token cookie for a user.
 const issueSession = async (req, res, user) => {
   const accessToken = signAccessToken(user);
+
   const rawRefreshToken = await issueRefreshToken(
     user,
     req.headers["user-agent"]
@@ -63,7 +64,6 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // Check if user exists
     const existingUser = await User.findOne({
       email: normalizedEmail,
     });
@@ -75,7 +75,6 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // Developers must choose a category
     let selectedCategory = null;
 
     if (role === "developer") {
@@ -96,10 +95,8 @@ export const registerUser = async (req, res) => {
       }
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await User.create({
       username,
       email: normalizedEmail,
@@ -108,7 +105,6 @@ export const registerUser = async (req, res) => {
       category: selectedCategory?._id || null,
     });
 
-    // Create wallet for developers
     if (user.role === "developer") {
       await Wallet.create({
         developer: user._id,
@@ -212,7 +208,10 @@ export const logout = async (req, res) => {
       }
     }
 
-    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
+    res.clearCookie(
+      REFRESH_COOKIE_NAME,
+      refreshCookieOptions()
+    );
 
     res.json({
       success: true,
@@ -272,10 +271,6 @@ export const forgotPassword = async (req, res) => {
       email: normalizedEmail,
     });
 
-    /*
-     * Do not reveal whether the account exists.
-     * This prevents account enumeration.
-     */
     if (!user) {
       return res.json({
         success: true,
@@ -284,18 +279,16 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    // Generate secure 6-digit OTP
     const otp = crypto.randomInt(100000, 1000000).toString();
 
-    // OTP expires after 10 minutes
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
 
-    // Remove previous OTPs for this email
     await OTP.deleteMany({
       email: normalizedEmail,
     });
 
-    // Save new OTP
     await OTP.create({
       email: normalizedEmail,
       otp,
@@ -303,17 +296,11 @@ export const forgotPassword = async (req, res) => {
       attempts: 0,
     });
 
-    // Send OTP email
     const emailResult = await sendOTP(
       normalizedEmail,
       otp
     );
 
-    /*
-     * If email delivery fails, remove the OTP.
-     * Otherwise the user would have a valid OTP
-     * that they never received.
-     */
     if (!emailResult?.success) {
       await OTP.deleteMany({
         email: normalizedEmail,
@@ -379,7 +366,6 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    // Check expiry
     if (otpRecord.expiresAt < new Date()) {
       await OTP.deleteOne({
         _id: otpRecord._id,
@@ -391,7 +377,6 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    // Maximum failed attempts
     const MAX_OTP_ATTEMPTS = 5;
 
     if (otpRecord.attempts >= MAX_OTP_ATTEMPTS) {
@@ -406,7 +391,6 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    // Compare submitted OTP
     if (otpRecord.otp !== normalizedOTP) {
       otpRecord.attempts += 1;
 
@@ -435,18 +419,12 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    /*
-     * OTP is correct.
-     * Delete it immediately so it cannot be reused.
-     */
     await OTP.deleteOne({
       _id: otpRecord._id,
     });
 
-    // Generate secure reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
 
-    // Store only the hash in the database
     const hashedToken = crypto
       .createHash("sha256")
       .update(resetToken)
@@ -483,7 +461,6 @@ export const resetPassword = async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;
 
-    // Validate input
     if (!resetToken || !newPassword) {
       return res.status(400).json({
         success: false,
@@ -498,13 +475,11 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // Hash reset token
     const hashedToken = crypto
       .createHash("sha256")
       .update(resetToken)
       .digest("hex");
 
-    // Find user with a valid reset token
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
       resetPasswordExpires: { $gt: new Date() },
@@ -517,16 +492,11 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // Hash the new password
     const hashedPassword = await bcrypt.hash(
       newPassword,
       10
     );
 
-    // Update only password and reset-token fields, and revoke every
-    // existing session — a reset password is a strong signal the
-    // account may have been compromised, so all devices should be
-    // forced to log in again with the new password.
     await User.updateOne(
       { _id: user._id },
       {
@@ -541,7 +511,6 @@ export const resetPassword = async (req, res) => {
       }
     );
 
-    // Send confirmation email
     const emailResult =
       await sendResetSuccessEmail(user.email);
 
@@ -595,7 +564,6 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // Get user with password
     const user = await User.findById(
       req.user.id
     ).select("+password");
@@ -607,7 +575,6 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // Verify current password
     const isMatch = await bcrypt.compare(
       currentPassword,
       user.password
@@ -621,7 +588,6 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // Prevent reusing current password
     const isSamePassword =
       await bcrypt.compare(
         newPassword,
@@ -636,22 +602,15 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // Hash new password and revoke every existing session so a
-    // stolen access/refresh token from before the change stops
-    // working immediately.
     user.password = await bcrypt.hash(
       newPassword,
       10
     );
+
     user.refreshTokens = [];
 
     await user.save();
 
-    /*
-     * Security notification.
-     * Email failure should NOT make the password
-     * change itself fail.
-     */
     if (sendPasswordChangedEmail) {
       const emailResult =
         await sendPasswordChangedEmail(
@@ -685,11 +644,12 @@ export const changePassword = async (req, res) => {
   }
 };
 
-// Exchange a refresh-token cookie for a new access token, rotating
-// the refresh token itself (single use — old value stops working).
+// Exchange a refresh-token cookie for a new access token.
+// The refresh token is single-use and is rotated on success.
 export const refreshAccessToken = async (req, res) => {
   try {
-    const rawRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+    const rawRefreshToken =
+      req.cookies?.[REFRESH_COOKIE_NAME];
 
     if (!rawRefreshToken) {
       return res.status(401).json({
@@ -698,9 +658,6 @@ export const refreshAccessToken = async (req, res) => {
       });
     }
 
-    // We don't know the user id yet (the cookie is opaque), so we
-    // have to search. This is a small, infrequent, indexed-by-hash
-    // lookup — acceptable at this scale.
     const tokenHash = crypto
       .createHash("sha256")
       .update(rawRefreshToken)
@@ -711,49 +668,67 @@ export const refreshAccessToken = async (req, res) => {
     }).select("+refreshTokens");
 
     if (!user) {
-      // Unknown token: either expired/rotated-away already, or
-      // never valid. Clear the cookie either way.
-      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
+      res.clearCookie(
+        REFRESH_COOKIE_NAME,
+        refreshCookieOptions()
+      );
 
       return res.status(401).json({
         success: false,
-        message: "Invalid or expired session. Please log in again.",
+        message:
+          "Invalid or expired session. Please log in again.",
       });
     }
 
-    const isValid = await consumeRefreshToken(user, rawRefreshToken);
+    const isValid = await consumeRefreshToken(
+      user,
+      rawRefreshToken
+    );
 
     if (!isValid) {
-      // Token existed on the user but was expired, or (more
-      // seriously) has already been used once before — that's a
-      // sign of token theft/replay. Revoke every session for this
-      // user as a precaution and force re-login everywhere.
       await revokeAllRefreshTokens(user);
-      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
+
+      res.clearCookie(
+        REFRESH_COOKIE_NAME,
+        refreshCookieOptions()
+      );
 
       return res.status(401).json({
         success: false,
-        message: "Session invalid. Please log in again.",
+        message:
+          "Session invalid. Please log in again.",
       });
     }
 
-    const accessToken = await issueSession(req, res, user);
+    /*
+     * issueSession() creates a NEW refresh token and saves
+     * the user. The old refresh token was removed above.
+     */
+    const accessToken = await issueSession(
+      req,
+      res,
+      user
+    );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       token: accessToken,
     });
   } catch (error) {
     console.error(
-      "Refresh token error:",
-      error
+      "========== REFRESH TOKEN ERROR =========="
+    );
+    console.error("Name:", error?.name);
+    console.error("Message:", error?.message);
+    console.error("Stack:", error?.stack);
+    console.error(
+      "=========================================="
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message:
-        error.message ||
-        "Failed to refresh token",
+        "Failed to refresh authentication session",
     });
   }
 };

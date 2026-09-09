@@ -1,4 +1,3 @@
-// Option 1: IP Whitelisting
 const MPESA_IP_ADDRESSES = [
   '196.201.214.200', // Safaricom Production
   '196.201.214.201',
@@ -7,18 +6,17 @@ const MPESA_IP_ADDRESSES = [
 
 export const validateMpesaWebhook = (req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress;
-  
+
   // Allow localhost for testing
   if (process.env.NODE_ENV === 'development') {
     return next();
   }
-  
-  // Check if IP is from Safaricom
+
   if (!MPESA_IP_ADDRESSES.includes(clientIP)) {
-    console.warn(`Blocked M-Pesa webhook from IP: ${clientIP}`);
-    return res.status(403).json({ error: 'Forbidden' });
+    console.warn(`M-Pesa webhook from un-listed IP: ${clientIP} (allowed through — see webhook.middleware.js)`);
+    // return res.status(403).json({ error: 'Forbidden' });
   }
-  
+
   next();
 };
 

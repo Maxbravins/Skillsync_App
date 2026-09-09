@@ -2,125 +2,230 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
 // ============================================================
-// ACCESS TOKEN (short-lived, sent in the JSON body, kept
-// in memory on the frontend — never persisted to localStorage)
+// ACCESS TOKEN
 // ============================================================
 
 const ACCESS_TOKEN_TTL = "15m";
 
-export const signAccessToken = (user) =>
-  jwt.sign(
+export const signAccessToken = (user) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not configured");
+  }
+
+  return jwt.sign(
     {
       id: user._id ?? user.id,
       role: user.role,
       type: "access",
     },
     process.env.JWT_SECRET,
-    { expiresIn: ACCESS_TOKEN_TTL }
+    {
+      expiresIn: ACCESS_TOKEN_TTL,
+    }
   );
+};
 
 // ============================================================
-// REFRESH TOKEN (long-lived, opaque random value)
-//
-// The raw value is only ever sent to the client once, inside an
-// HttpOnly/Secure/SameSite cookie. The database only ever stores
-// a SHA-256 hash of it, the same pattern already used for the
-// password-reset token in this codebase.
+// REFRESH TOKEN
 // ============================================================
 
-const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-export const REFRESH_COOKIE_NAME = "refreshToken";
+const REFRESH_TOKEN_TTL_MS =
+  7 * 24 * 60 * 60 * 1000;
+
+export const REFRESH_COOKIE_NAME =
+  "refreshToken";
 
 export const generateRefreshToken = () =>
   crypto.randomBytes(48).toString("hex");
 
-export const hashRefreshToken = (rawToken) =>
-  crypto.createHash("sha256").update(rawToken).digest("hex");
+export const hashRefreshToken = (rawToken) => {
+  if (!rawToken) {
+    throw new Error("Refresh token is required");
+  }
+
+  return crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+};
 
 export const refreshTokenExpiry = () =>
-  new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+  new Date(
+    Date.now() + REFRESH_TOKEN_TTL_MS
+  );
+
+// ============================================================
+// REFRESH COOKIE
+// ============================================================
 
 export const refreshCookieOptions = () => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+
+  // HTTPS is required in production.
+  secure:
+    process.env.NODE_ENV === "production",
+
+  // Required when frontend and backend
+  sameSite:
+    process.env.NODE_ENV === "production"
+      ? "none"
+      : "lax",
+
+  // IMPORTANT:
+  // This must match the actual route.
+  // Example:
+  // /api/auth/refresh-token
   path: "/api/auth",
+
   maxAge: REFRESH_TOKEN_TTL_MS,
 });
 
-// Cap the number of concurrent sessions/devices per user so a
-// stolen-but-unused refresh token can't accumulate forever.
+// ============================================================
+// SESSION LIMIT
+// ============================================================
+
 const MAX_ACTIVE_SESSIONS = 5;
 
-/**
- * Issue a new refresh token for a user, store its hash, and prune
- * expired / excess entries. Returns the RAW token (only time it
- * exists outside the cookie).
- */
-export const issueRefreshToken = async (user, userAgent = "") => {
-  const rawToken = generateRefreshToken();
+// ============================================================
+// ISSUE REFRESH TOKEN
+// ============================================================
 
-  const entry = {
-    tokenHash: hashRefreshToken(rawToken),
-    expiresAt: refreshTokenExpiry(),
-    createdAt: new Date(),
-    userAgent: (userAgent || "").slice(0, 200),
-  };
+export const issueRefreshToken = async (
+  user,
+  userAgent = ""
+) => {
+  if (!user) {
+    throw new Error(
+      "Cannot issue refresh token without a user"
+    );
+  }
+
+  const rawToken =
+    generateRefreshToken();
 
   const now = new Date();
 
-  user.refreshTokens = (user.refreshTokens || [])
-    .filter((t) => t.expiresAt > now)
-    .slice(-(MAX_ACTIVE_SESSIONS - 1));
+  const entry = {
+    tokenHash:
+      hashRefreshToken(rawToken),
+
+    expiresAt:
+      refreshTokenExpiry(),
+
+    createdAt: now,
+
+    userAgent:
+      (userAgent || "").slice(0, 200),
+  };
+
+  // Remove expired sessions first.
+  const activeTokens =
+    (user.refreshTokens || []).filter(
+      (token) =>
+        token.expiresAt &&
+        new Date(token.expiresAt) > now
+    );
+
+  // Keep room for the new session.
+  user.refreshTokens =
+    activeTokens.slice(
+      -(MAX_ACTIVE_SESSIONS - 1)
+    );
 
   user.refreshTokens.push(entry);
 
-  await user.save({ validateBeforeSave: false });
+  await user.save({
+    validateBeforeSave: false,
+  });
 
   return rawToken;
 };
 
-/**
- * Validate a presented raw refresh token against the stored hashes
- * for that user, removing it (rotation: single use). Returns true
- * if it was found and valid, false otherwise.
- */
-export const consumeRefreshToken = async (user, rawToken) => {
-  const tokenHash = hashRefreshToken(rawToken);
+// ============================================================
+// CONSUME REFRESH TOKEN
+// ============================================================
+
+export const consumeRefreshToken = (
+  user,
+  rawToken
+) => {
+  if (!user || !rawToken) {
+    return false;
+  }
+
+  const tokenHash =
+    hashRefreshToken(rawToken);
+
   const now = new Date();
 
-  const tokens = user.refreshTokens || [];
+  const tokens =
+    user.refreshTokens || [];
+
   const match = tokens.find(
-    (t) => t.tokenHash === tokenHash && t.expiresAt > now
+    (token) =>
+      token.tokenHash === tokenHash &&
+      token.expiresAt &&
+      new Date(token.expiresAt) > now
   );
 
-  // Always drop expired tokens while we're here.
-  user.refreshTokens = tokens.filter((t) => t.expiresAt > now);
+  // Remove expired tokens.
+  user.refreshTokens =
+    tokens.filter(
+      (token) =>
+        token.expiresAt &&
+        new Date(token.expiresAt) > now
+    );
 
   if (!match) {
     return false;
   }
 
-  // Single-use: remove the token that was just presented.
-  user.refreshTokens = user.refreshTokens.filter(
-    (t) => t.tokenHash !== tokenHash
-  );
+  // Remove the token that was just used.
+  // This implements refresh-token rotation.
+  user.refreshTokens =
+    user.refreshTokens.filter(
+      (token) =>
+        token.tokenHash !== tokenHash
+    );
 
   return true;
 };
 
-/** Revoke every refresh token for a user (logout everywhere, password change, reuse detected). */
-export const revokeAllRefreshTokens = async (user) => {
-  user.refreshTokens = [];
-  await user.save({ validateBeforeSave: false });
-};
+// ============================================================
+// REVOKE ALL REFRESH TOKENS
+// ============================================================
 
-/** Revoke a single refresh token (normal logout on one device). */
-export const revokeRefreshToken = async (user, rawToken) => {
-  if (!rawToken) return;
-  const tokenHash = hashRefreshToken(rawToken);
-  user.refreshTokens = (user.refreshTokens || []).filter(
-    (t) => t.tokenHash !== tokenHash
-  );
-  await user.save({ validateBeforeSave: false });
-};
+export const revokeAllRefreshTokens =
+  async (user) => {
+    if (!user) return;
+
+    user.refreshTokens = [];
+
+    await user.save({
+      validateBeforeSave: false,
+    });
+  };
+
+// ============================================================
+// REVOKE ONE REFRESH TOKEN
+// ============================================================
+
+export const revokeRefreshToken =
+  async (user, rawToken) => {
+    if (!user || !rawToken) {
+      return;
+    }
+
+    const tokenHash =
+      hashRefreshToken(rawToken);
+
+    user.refreshTokens =
+      (user.refreshTokens || []).filter(
+        (token) =>
+          token.tokenHash !== tokenHash
+      );
+
+    await user.save({
+      validateBeforeSave: false,
+    });
+  };
