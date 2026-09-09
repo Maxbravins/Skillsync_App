@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import User from "../models/user.model.js";
 
 // ============================================================
 // ACCESS TOKEN
@@ -65,16 +66,13 @@ export const refreshCookieOptions = () => ({
   secure:
     process.env.NODE_ENV === "production",
 
-  // Required when frontend and backend
+  // Required when frontend and backend are on different origins.
   sameSite:
     process.env.NODE_ENV === "production"
       ? "none"
       : "lax",
 
-  // IMPORTANT:
-  // This must match the actual route.
-  // Example:
-  // /api/auth/refresh-token
+  // Must match the authentication routes.
   path: "/api/auth",
 
   maxAge: REFRESH_TOKEN_TTL_MS,
@@ -118,25 +116,56 @@ export const issueRefreshToken = async (
       (userAgent || "").slice(0, 200),
   };
 
-  // Remove expired sessions first.
-  const activeTokens =
-    (user.refreshTokens || []).filter(
-      (token) =>
-        token.expiresAt &&
-        new Date(token.expiresAt) > now
-    );
+  await User.findByIdAndUpdate(
+    user._id,
+    [
+      {
+        $set: {
+          refreshTokens: {
+            $concatArrays: [
+              {
+                $slice: [
+                  {
+                    $filter: {
+                      input: {
+                        $ifNull: [
+                          "$refreshTokens",
+                          [],
+                        ],
+                      },
 
-  // Keep room for the new session.
-  user.refreshTokens =
-    activeTokens.slice(
-      -(MAX_ACTIVE_SESSIONS - 1)
-    );
+                      as: "token",
 
-  user.refreshTokens.push(entry);
+                      cond: {
+                        $and: [
+                          {
+                            $ne: [
+                              "$$token.expiresAt",
+                              null,
+                            ],
+                          },
+                          {
+                            $gt: [
+                              "$$token.expiresAt",
+                              now,
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                  },
 
-  await user.save({
-    validateBeforeSave: false,
-  });
+                  -(MAX_ACTIVE_SESSIONS - 1),
+                ],
+              },
+
+              [entry],
+            ],
+          },
+        },
+      },
+    ]
+  );
 
   return rawToken;
 };
@@ -145,7 +174,7 @@ export const issueRefreshToken = async (
 // CONSUME REFRESH TOKEN
 // ============================================================
 
-export const consumeRefreshToken = (
+export const consumeRefreshToken = async (
   user,
   rawToken
 ) => {
@@ -158,37 +187,30 @@ export const consumeRefreshToken = (
 
   const now = new Date();
 
-  const tokens =
-    user.refreshTokens || [];
+  const result =
+    await User.updateOne(
+      {
+        _id: user._id,
 
-  const match = tokens.find(
-    (token) =>
-      token.tokenHash === tokenHash &&
-      token.expiresAt &&
-      new Date(token.expiresAt) > now
-  );
-
-  // Remove expired tokens.
-  user.refreshTokens =
-    tokens.filter(
-      (token) =>
-        token.expiresAt &&
-        new Date(token.expiresAt) > now
+        refreshTokens: {
+          $elemMatch: {
+            tokenHash,
+            expiresAt: {
+              $gt: now,
+            },
+          },
+        },
+      },
+      {
+        $pull: {
+          refreshTokens: {
+            tokenHash,
+          },
+        },
+      }
     );
 
-  if (!match) {
-    return false;
-  }
-
-  // Remove the token that was just used.
-  // This implements refresh-token rotation.
-  user.refreshTokens =
-    user.refreshTokens.filter(
-      (token) =>
-        token.tokenHash !== tokenHash
-    );
-
-  return true;
+  return result.matchedCount === 1;
 };
 
 // ============================================================
@@ -199,11 +221,16 @@ export const revokeAllRefreshTokens =
   async (user) => {
     if (!user) return;
 
-    user.refreshTokens = [];
-
-    await user.save({
-      validateBeforeSave: false,
-    });
+    await User.updateOne(
+      {
+        _id: user._id,
+      },
+      {
+        $set: {
+          refreshTokens: [],
+        },
+      }
+    );
   };
 
 // ============================================================
@@ -219,13 +246,16 @@ export const revokeRefreshToken =
     const tokenHash =
       hashRefreshToken(rawToken);
 
-    user.refreshTokens =
-      (user.refreshTokens || []).filter(
-        (token) =>
-          token.tokenHash !== tokenHash
-      );
-
-    await user.save({
-      validateBeforeSave: false,
-    });
+    await User.updateOne(
+      {
+        _id: user._id,
+      },
+      {
+        $pull: {
+          refreshTokens: {
+            tokenHash,
+          },
+        },
+      }
+    );
   };

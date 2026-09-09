@@ -1,13 +1,8 @@
 import Application from "../models/application.model.js";
 import Job from "../models/job.model.js";
-import Notification from "../models/notification.model.js";
 import Contract from "../models/contract.model.js";
 
-import {
-  sendApplicationEmail,
-  sendAcceptanceEmail,
-  sendRejectionEmail,
-} from "../services/email.service.js";
+import { notifyUser } from "../services/notification.dispatcher.js";
 
 import {
   calculateCommission,
@@ -18,45 +13,18 @@ import {
 // HELPERS
 // ============================================================
 
-const createNotification = async (userId, message) => {
+const safeNotifyUser = async (data) => {
   try {
-    const existingNotification =
-      await Notification.findOne({
-        user: userId,
-        message,
-      });
-
-    if (existingNotification) {
-      return existingNotification;
-    }
-
-    return await Notification.create({
-      user: userId,
-      message,
-    });
+    return await notifyUser(data);
   } catch (error) {
     console.error(
-      "Notification creation error:",
+      "Application notification error:",
       error
     );
 
-    // Notification failure should not break
+    // Notification/email failure should not break
     // the main application operation.
     return null;
-  }
-};
-
-const safeSendEmail = async (emailFunction, data) => {
-  try {
-    await emailFunction(data);
-  } catch (error) {
-    console.error(
-      "Application email error:",
-      error
-    );
-
-    // Email failure should not make the
-    // database operation fail.
   }
 };
 
@@ -253,27 +221,24 @@ export const applyForJob = async (req, res) => {
     const notificationMessage =
       `${application.developer.username} applied for your job "${job.title}".`;
 
-    await createNotification(
-      job.client._id,
-      notificationMessage
-    );
-
-    // --------------------------------------------------------
-    // SEND EMAIL TO CLIENT
-    // --------------------------------------------------------
-
-    await safeSendEmail(
-      sendApplicationEmail,
-      {
-        email: job.client.email,
-        clientName:
-          job.client.username,
-        developerName:
-          application.developer
-            .username,
-        jobTitle: job.title,
-      }
-    );
+    await safeNotifyUser({
+      userId: job.client._id,
+      type: "job_application",
+      title: "New Job Application",
+      message: notificationMessage,
+      data: {
+        jobId: job._id,
+        applicationId: application._id,
+      },
+      priority: "normal",
+      email: {
+        subject:
+          `New application for "${job.title}"`,
+        actionUrl:
+          `${process.env.FRONTEND_URL}/job-applicants/${job._id}`,
+        actionText: "Review Application",
+      },
+    });
 
     return res.status(201).json({
       success: true,
@@ -588,27 +553,26 @@ export const updateApplicationStatus =
         const rejectionMessage =
           `Your application for "${application.job.title}" has been rejected.`;
 
-        await createNotification(
-          application.developer._id,
-          rejectionMessage
-        );
-
-        await safeSendEmail(
-          sendRejectionEmail,
-          {
-            email:
-              application
-                .developer.email,
-
-            developerName:
-              application
-                .developer
-                .username,
-
-            jobTitle:
-              application.job.title,
-          }
-        );
+        await safeNotifyUser({
+          userId:
+            application.developer._id,
+          type: "application_rejected",
+          title: "Application Rejected",
+          message: rejectionMessage,
+          data: {
+            jobId: application.job._id,
+            applicationId:
+              application._id,
+          },
+          priority: "normal",
+          email: {
+            subject:
+              `Application update for "${application.job.title}"`,
+            actionUrl:
+              `${process.env.FRONTEND_URL}/my-applications`,
+            actionText: "View My Applications",
+          },
+        });
 
         return res.status(200).json({
           success: true,
@@ -736,30 +700,28 @@ export const updateApplicationStatus =
         const rejectionMessage =
           `Your application for "${application.job.title}" has been rejected because another developer was selected.`;
 
-        await createNotification(
-          otherApplication
-            .developer
-            ._id,
-          rejectionMessage
-        );
-
-        await safeSendEmail(
-          sendRejectionEmail,
-          {
-            email:
-              otherApplication
-                .developer
-                .email,
-
-            developerName:
-              otherApplication
-                .developer
-                .username,
-
-            jobTitle:
-              application.job.title,
-          }
-        );
+        await safeNotifyUser({
+          userId:
+            otherApplication
+              .developer
+              ._id,
+          type: "application_rejected",
+          title: "Application Not Selected",
+          message: rejectionMessage,
+          data: {
+            jobId: application.job._id,
+            applicationId:
+              otherApplication._id,
+          },
+          priority: "normal",
+          email: {
+            subject:
+              `Application update for "${application.job.title}"`,
+            actionUrl:
+              `${process.env.FRONTEND_URL}/my-applications`,
+            actionText: "View My Applications",
+          },
+        });
       }
 
       // ------------------------------------------------------
@@ -823,32 +785,30 @@ export const updateApplicationStatus =
       // ------------------------------------------------------
 
       const acceptanceMessage =
-        "Congratulations! Your application has been accepted.";
+        `Congratulations! Your application for "${application.job.title}" has been accepted.`;
 
-      await createNotification(
-        application.developer._id,
-        acceptanceMessage
-      );
-
-      // ------------------------------------------------------
-      // ACCEPTANCE EMAIL
-      // ------------------------------------------------------
-
-      await safeSendEmail(
-        sendAcceptanceEmail,
-        {
-          email:
-            application.developer
-              .email,
-
-          developerName:
-            application.developer
-              .username,
-
-          jobTitle:
-            application.job.title,
-        }
-      );
+      await safeNotifyUser({
+        userId:
+          application.developer._id,
+        type: "application_accepted",
+        title: "Application Accepted",
+        message: acceptanceMessage,
+        data: {
+          jobId: application.job._id,
+          applicationId:
+            application._id,
+          contractId:
+            contract._id,
+        },
+        priority: "high",
+        email: {
+          subject:
+            `Your application for "${application.job.title}" was accepted`,
+          actionUrl:
+            `${process.env.FRONTEND_URL}/my-applications`,
+          actionText: "View Application",
+        },
+      });
 
       // ------------------------------------------------------
       // RETURN UPDATED DATA
