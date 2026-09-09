@@ -281,7 +281,7 @@ const filteredTransactions = transactions.filter((tx) => {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="text-5xl mb-4 animate-pulse">
-              ⚙️
+              <FaUsers className="mx-auto text-cyan-400" />
             </div>
 
             <p className="text-xl text-[var(--text-secondary)]">

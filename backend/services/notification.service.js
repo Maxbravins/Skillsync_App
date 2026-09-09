@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Notification from "../models/notification.model.js";
+import { notifyUser as dispatchNotification } from "./notification.dispatcher.js";
 
 class NotificationService {
   // ============================================================
@@ -82,15 +83,17 @@ class NotificationService {
     data = {},
     priority = "normal",
     expiresAt = null,
+    email = null,
   }) {
-    return this.createNotification({
-      recipient: userId,
+    return dispatchNotification({
+      userId,
       type,
       title,
       message,
       data,
       priority,
       expiresAt,
+      email,
     });
   }
 
