@@ -32,10 +32,7 @@ router.post("/forgot-password", otpLimiter, validate(forgotPasswordSchema), forg
 router.post("/verify-otp", otpLimiter, validate(verifyOTPSchema), verifyOTP);
 router.post("/reset-password", otpLimiter, validate(resetPasswordSchema), resetPassword);
 
-// Refresh token exchange — deliberately NOT behind `auth`, since its
-// whole purpose is to mint a new access token once the old one has
-// expired. It authenticates itself via the HttpOnly refresh cookie.
-router.post("/refresh-token", authLimiter, refreshAccessToken);
+// Refresh token exchange 
 router.post("/refresh-token", refreshLimiter, refreshAccessToken);
 
 // Protected routes (require authentication)
