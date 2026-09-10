@@ -78,10 +78,7 @@ export const refreshCookieOptions = () => ({
   maxAge: REFRESH_TOKEN_TTL_MS,
 });
 
-// ============================================================
 // SESSION LIMIT
-// ============================================================
-
 const MAX_ACTIVE_SESSIONS = 5;
 
 // ============================================================
@@ -116,56 +113,17 @@ export const issueRefreshToken = async (
       (userAgent || "").slice(0, 200),
   };
 
-  await User.findByIdAndUpdate(
-    user._id,
-    [
-      {
-        $set: {
-          refreshTokens: {
-            $concatArrays: [
-              {
-                $slice: [
-                  {
-                    $filter: {
-                      input: {
-                        $ifNull: [
-                          "$refreshTokens",
-                          [],
-                        ],
-                      },
-
-                      as: "token",
-
-                      cond: {
-                        $and: [
-                          {
-                            $ne: [
-                              "$$token.expiresAt",
-                              null,
-                            ],
-                          },
-                          {
-                            $gt: [
-                              "$$token.expiresAt",
-                              now,
-                            ],
-                          },
-                        ],
-                      },
-                    },
-                  },
-
-                  -(MAX_ACTIVE_SESSIONS - 1),
-                ],
-              },
-
-              [entry],
-            ],
-          },
-        },
+  await User.findByIdAndUpdate(user._id, {
+    $push: {
+      refreshTokens: {
+        $each: [entry],
+        // Keep only the most recent MAX_ACTIVE_SESSIONS entries.
+        // (Expired entries also get cleaned up whenever a token is
+        // consumed or revoked elsewhere in this file.)
+        $slice: -MAX_ACTIVE_SESSIONS,
       },
-    ]
-  );
+    },
+  });
 
   return rawToken;
 };
