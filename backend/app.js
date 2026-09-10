@@ -30,19 +30,27 @@ app.use(helmet());
 
 // CORS CONFIGURATION
 const allowedOrigins = [
-  process.env.CLIENT_URL || "http://localhost:5173",
   "http://localhost:5173",
+  "http://localhost:3000",
   "https://skillsync-app-three.vercel.app",
-  // Add exact production domains here instead of regex
 ];
 
-// Also allow Vercel preview deployments (more restrictive)
-const isVercelPreview = (origin) => {
-  if (!origin) return false;
-  // Match only your specific Vercel subdomain pattern
-  return /^https:\/\/skillsync-app-[a-zA-Z0-9]+\.vercel\.app$/.test(origin) ||
-         /^https:\/\/skillsync-[a-zA-Z0-9]+\.vercel\.app$/.test(origin);
-};
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked: ${origin}`);
+        callback(new Error(`Not allowed by CORS: ${origin}`));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
+
 
 app.use(
   cors({

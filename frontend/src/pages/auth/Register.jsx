@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../../services/api";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { registerUser } from "../../services/auth.service";
@@ -49,10 +49,8 @@ const Register = () => {
 
   const fetchCategories = async () => {
     try {
-      const { data } = await axios.get(
-        "https://skillsync-api.onrender.com/api/categories",
-      );
-
+      const { data } = await api.get("/categories");
+      
       setCategories(data.categories || data || []);
     } catch (error) {
       console.log(error);

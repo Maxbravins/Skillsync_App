@@ -5,8 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
 import { createJob } from "../../services/job.service";
-
-const API_URL = "https://skillsync-api.onrender.com/api"; // Replace with your actual API URL
+import api from "../../services/api";
 
 const CreateJob = () => {
   const navigate = useNavigate();
@@ -24,18 +23,12 @@ const CreateJob = () => {
     skills: "",
   });
 
-  const fetchCategories = useCallback(async () => {
+const fetchCategories = useCallback(async () => {
     try {
       setLoadingCategories(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/categories`);
-
-      if (!response.ok) {
-        throw new Error("Failed to load categories.");
-      }
-
-      const data = await response.json();
+      const { data } = await api.get("/categories");
 
       setCategories(
         Array.isArray(data?.categories)
