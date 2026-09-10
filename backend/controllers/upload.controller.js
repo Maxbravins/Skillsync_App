@@ -150,6 +150,16 @@ export const deleteFromCloudinary = async (req, res) => {
       });
     }
 
+    const isAdmin = req.user.role === "admin";
+    const ownsFile = publicId.includes(`/${req.user.id}/`);
+
+    if (!isAdmin && !ownsFile) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to delete this file",
+      });
+    }
+
     const result = await cloudinary.uploader.destroy(publicId);
 
     if (result.result === "ok") {
