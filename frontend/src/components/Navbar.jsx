@@ -297,9 +297,17 @@ const Navbar = () => {
                   className="hidden sm:flex items-center gap-2"
                   onClick={closeMobileMenu}
                 >
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-500 flex items-center justify-center text-white font-bold">
-                    {user.username?.charAt(0).toUpperCase() || "U"}
-                  </div>
+                  {user.profilePicture ? (
+                    <img
+                      src={user.profilePicture}
+                      alt={user.username || "Profile"}
+                      className="w-9 h-9 rounded-full object-cover ring-2 ring-cyan-500/40"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-500 flex items-center justify-center text-white font-bold">
+                      {user.username?.charAt(0).toUpperCase() || "U"}
+                    </div>
+                  )}
 
                   <div className="hidden md:block">
                     <p className="text-sm font-semibold text-[var(--text-primary)]">
