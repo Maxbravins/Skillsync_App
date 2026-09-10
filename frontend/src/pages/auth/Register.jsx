@@ -50,7 +50,7 @@ const Register = () => {
   const fetchCategories = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/categories",
+        "https://skillsync-api.onrender.com/api/categories",
       );
 
       setCategories(data.categories || data || []);

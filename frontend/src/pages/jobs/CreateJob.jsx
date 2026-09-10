@@ -6,7 +6,7 @@ import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
 import { createJob } from "../../services/job.service";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://skillsync-api.onrender.com/api"; // Replace with your actual API URL
 
 const CreateJob = () => {
   const navigate = useNavigate();
