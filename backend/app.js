@@ -22,6 +22,11 @@ import withdrawalRoutes from "./routes/withdrawal.routes.js";
 import adminWalletRoutes from "./routes/adminWallet.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 
+function isVercelPreview(origin) {
+  if (!origin) return false;
+  return /^https:\/\/skillsync-app-[a-z0-9-]+\.vercel\.app$/.test(origin);
+}
+
 const app = express();
 
 app.set("trust proxy", 1);
@@ -34,23 +39,6 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://skillsync-app-three.vercel.app",
 ];
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`CORS blocked: ${origin}`);
-        callback(new Error(`Not allowed by CORS: ${origin}`));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  })
-);
-
 
 app.use(
   cors({
