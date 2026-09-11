@@ -457,7 +457,7 @@ jobSchema.index({
 // VALIDATION
 // ============================================================
 
-jobSchema.pre("validate", function (next) {
+jobSchema.pre("validate", function () {
   if (
     this.minBudget !== null &&
     this.minBudget !== undefined &&
@@ -465,8 +465,8 @@ jobSchema.pre("validate", function (next) {
     this.maxBudget !== undefined &&
     this.minBudget > this.maxBudget
   ) {
-    return next(
-      new Error("minBudget cannot be greater than maxBudget")
+    throw new Error(
+      "minBudget cannot be greater than maxBudget"
     );
   }
 
@@ -475,8 +475,8 @@ jobSchema.pre("validate", function (next) {
     this.minBudget !== undefined &&
     this.budget < this.minBudget
   ) {
-    return next(
-      new Error("budget cannot be less than minBudget")
+    throw new Error(
+      "budget cannot be less than minBudget"
     );
   }
 
@@ -485,8 +485,8 @@ jobSchema.pre("validate", function (next) {
     this.maxBudget !== undefined &&
     this.budget > this.maxBudget
   ) {
-    return next(
-      new Error("budget cannot be greater than maxBudget")
+    throw new Error(
+      "budget cannot be greater than maxBudget"
     );
   }
 
@@ -498,10 +498,8 @@ jobSchema.pre("validate", function (next) {
     );
 
     if (milestoneTotal > this.budget) {
-      return next(
-        new Error(
-          `Milestone total (${milestoneTotal}) cannot exceed job budget (${this.budget})`
-        )
+      throw new Error(
+        `Milestone total (${milestoneTotal}) cannot exceed job budget (${this.budget})`
       );
     }
   }
@@ -511,14 +509,10 @@ jobSchema.pre("validate", function (next) {
     this.applicationDeadline &&
     this.applicationDeadline <= new Date()
   ) {
-    return next(
-      new Error(
-        "Application deadline must be in the future"
-      )
+    throw new Error(
+      "Application deadline must be in the future"
     );
   }
-
-  next();
 });
 
 // ============================================================
@@ -545,6 +539,7 @@ jobSchema.pre("save", function () {
       ) / 100;
   }
 });
+
 // ============================================================
 // METHODS
 // ============================================================
@@ -613,4 +608,3 @@ jobSchema.methods.getRemainingAmount = function () {
 };
 
 export default mongoose.model("Job", jobSchema);
-
