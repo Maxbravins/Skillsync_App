@@ -15,15 +15,16 @@ import {
 export const createJob = async (req, res) => {
   try {
     const {
-      title,
-      description,
-      budget,
-      skills = [],
-      category,
-      experienceLevel,
-      projectType,
-      workMode,
-    } = req.body;
+  title,
+  description,
+  budget,
+  skills = [],
+  category,
+  experienceLevel,
+  projectType,
+  workMode,
+  applicationDeadline,
+} = req.body;
 
     // ----------------------------------------------------------
     // VALIDATION
@@ -100,6 +101,9 @@ export const createJob = async (req, res) => {
       projectType,
 
       workMode,
+      applicationDeadline: applicationDeadline
+      ? new Date(applicationDeadline)
+      : undefined,
 
       client: req.user.id,
 

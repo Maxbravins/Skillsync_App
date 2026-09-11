@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, Briefcase, CheckCircle2 } from "lucide-react";
+import {
+  AlertCircle,
+  Briefcase,
+  CheckCircle2,
+  CalendarDays,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import Footer from "../../components/Footer";
@@ -21,9 +26,14 @@ const CreateJob = () => {
     budget: "",
     category: "",
     skills: "",
+    applicationDeadline: "",
   });
 
-const fetchCategories = useCallback(async () => {
+  // ============================================================
+  // FETCH CATEGORIES
+  // ============================================================
+
+  const fetchCategories = useCallback(async () => {
     try {
       setLoadingCategories(true);
       setError("");
@@ -39,7 +49,10 @@ const fetchCategories = useCallback(async () => {
       );
     } catch (error) {
       console.error("Failed to fetch categories:", error);
-      setError("Failed to load job categories. Please try again.");
+
+      setError(
+        "Failed to load job categories. Please try again."
+      );
     } finally {
       setLoadingCategories(false);
     }
@@ -49,6 +62,10 @@ const fetchCategories = useCallback(async () => {
     fetchCategories();
   }, [fetchCategories]);
 
+  // ============================================================
+  // HANDLE INPUT CHANGES
+  // ============================================================
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -57,6 +74,10 @@ const fetchCategories = useCallback(async () => {
       [name]: value,
     }));
   };
+
+  // ============================================================
+  // SUBMIT JOB
+  // ============================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -72,6 +93,10 @@ const fetchCategories = useCallback(async () => {
       .map((skill) => skill.trim())
       .filter(Boolean);
 
+    // ----------------------------------------------------------
+    // BASIC VALIDATION
+    // ----------------------------------------------------------
+
     if (!title) {
       setError("Please enter a job title.");
       return;
@@ -83,7 +108,9 @@ const fetchCategories = useCallback(async () => {
     }
 
     if (!Number.isFinite(budget) || budget <= 0) {
-      setError("Please enter a valid budget greater than zero.");
+      setError(
+        "Please enter a valid budget greater than zero."
+      );
       return;
     }
 
@@ -97,6 +124,37 @@ const fetchCategories = useCallback(async () => {
       return;
     }
 
+    // ----------------------------------------------------------
+    // APPLICATION DEADLINE VALIDATION
+    // ----------------------------------------------------------
+
+    if (!formData.applicationDeadline) {
+      setError("Please select an application deadline.");
+      return;
+    }
+
+    const deadline = new Date(
+      formData.applicationDeadline
+    );
+
+    if (Number.isNaN(deadline.getTime())) {
+      setError(
+        "Please provide a valid application deadline."
+      );
+      return;
+    }
+
+    if (deadline <= new Date()) {
+      setError(
+        "Application deadline must be in the future."
+      );
+      return;
+    }
+
+    // ----------------------------------------------------------
+    // CREATE JOB
+    // ----------------------------------------------------------
+
     try {
       setSubmitting(true);
 
@@ -106,12 +164,17 @@ const fetchCategories = useCallback(async () => {
         budget,
         category: formData.category,
         skills,
+        applicationDeadline: deadline.toISOString(),
       });
 
       alert("Job posted successfully.");
+
       navigate("/my-jobs");
     } catch (error) {
-      console.error("Failed to create job:", error);
+      console.error(
+        "Failed to create job:",
+        error
+      );
 
       setError(
         error.response?.data?.message ||
@@ -123,15 +186,25 @@ const fetchCategories = useCallback(async () => {
     }
   };
 
+  // ============================================================
+  // RENDER
+  // ============================================================
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors">
       <Navbar />
 
       <main className="flex-1">
         <div className="max-w-3xl mx-auto px-5 sm:px-6 py-10 lg:py-14">
+
+          {/* ==================================================
+              HEADER
+          ================================================== */}
+
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 mb-4">
               <Briefcase size={16} />
+
               Post an opportunity
             </div>
 
@@ -140,20 +213,40 @@ const fetchCategories = useCallback(async () => {
             </h1>
 
             <p className="mt-2 text-[var(--text-secondary)]">
-              Tell developers what you need and find the right person for
-              your project.
+              Tell developers what you need and find the right
+              person for your project.
             </p>
           </div>
 
+          {/* ==================================================
+              ERROR MESSAGE
+          ================================================== */}
+
           {error && (
             <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4 text-red-300">
-              <AlertCircle size={20} className="shrink-0 mt-0.5" />
+              <AlertCircle
+                size={20}
+                className="shrink-0 mt-0.5"
+              />
+
               <p>{error}</p>
             </div>
           )}
 
+          {/* ==================================================
+              FORM
+          ================================================== */}
+
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl shadow-lg p-6 sm:p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-6"
+            >
+
+              {/* ==================================================
+                  JOB TITLE
+              ================================================== */}
+
               <div>
                 <label
                   htmlFor="title"
@@ -174,6 +267,10 @@ const fetchCategories = useCallback(async () => {
                   className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60 transition"
                 />
               </div>
+
+              {/* ==================================================
+                  DESCRIPTION
+              ================================================== */}
 
               <div>
                 <label
@@ -196,7 +293,14 @@ const fetchCategories = useCallback(async () => {
                 />
               </div>
 
+              {/* ==================================================
+                  BUDGET + CATEGORY
+              ================================================== */}
+
               <div className="grid sm:grid-cols-2 gap-5">
+
+                {/* BUDGET */}
+
                 <div>
                   <label
                     htmlFor="budget"
@@ -220,6 +324,8 @@ const fetchCategories = useCallback(async () => {
                   />
                 </div>
 
+                {/* CATEGORY */}
+
                 <div>
                   <label
                     htmlFor="category"
@@ -234,7 +340,10 @@ const fetchCategories = useCallback(async () => {
                     value={formData.category}
                     onChange={handleChange}
                     required
-                    disabled={loadingCategories || submitting}
+                    disabled={
+                      loadingCategories ||
+                      submitting
+                    }
                     className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)] outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60 transition"
                   >
                     <option value="">
@@ -244,13 +353,63 @@ const fetchCategories = useCallback(async () => {
                     </option>
 
                     {categories.map((category) => (
-                      <option key={category._id} value={category._id}>
+                      <option
+                        key={category._id}
+                        value={category._id}
+                      >
                         {category.name}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
+
+              {/* ==================================================
+                  APPLICATION DEADLINE
+              ================================================== */}
+
+              <div>
+                <label
+                  htmlFor="applicationDeadline"
+                  className="block text-sm font-semibold mb-2"
+                >
+                  Application Deadline
+                </label>
+
+                <div className="relative">
+                  <CalendarDays
+                    size={19}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"
+                  />
+
+                  <input
+                    id="applicationDeadline"
+                    type="datetime-local"
+                    name="applicationDeadline"
+                    value={formData.applicationDeadline}
+                    onChange={handleChange}
+                    required
+                    disabled={submitting}
+                    min={new Date(
+                      Date.now() -
+                        new Date().getTimezoneOffset() *
+                          60000
+                    )
+                      .toISOString()
+                      .slice(0, 16)}
+                    className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] pl-12 pr-4 py-3 text-[var(--text-primary)] outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60 transition"
+                  />
+                </div>
+
+                <p className="mt-2 text-xs text-[var(--text-secondary)]">
+                  Select the date and time when applications
+                  should close.
+                </p>
+              </div>
+
+              {/* ==================================================
+                  REQUIRED SKILLS
+              ================================================== */}
 
               <div>
                 <label
@@ -277,15 +436,25 @@ const fetchCategories = useCallback(async () => {
                 </p>
               </div>
 
+              {/* ==================================================
+                  SUBMIT
+              ================================================== */}
+
               <button
                 type="submit"
-                disabled={submitting || loadingCategories}
+                disabled={
+                  submitting ||
+                  loadingCategories
+                }
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3.5 font-semibold transition"
               >
                 <CheckCircle2 size={19} />
 
-                {submitting ? "Posting Job..." : "Post Job"}
+                {submitting
+                  ? "Posting Job..."
+                  : "Post Job"}
               </button>
+
             </form>
           </div>
         </div>
