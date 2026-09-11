@@ -525,7 +525,7 @@ jobSchema.pre("validate", function (next) {
 // CALCULATE PLATFORM FEES
 // ============================================================
 
-jobSchema.pre("save", function (next) {
+jobSchema.pre("save", function () {
   if (
     this.isNew ||
     this.isModified("budget") ||
@@ -544,10 +544,7 @@ jobSchema.pre("save", function (next) {
         (this.budget + this.platformFeeAmount) * 100
       ) / 100;
   }
-
-  next();
 });
-
 // ============================================================
 // METHODS
 // ============================================================
