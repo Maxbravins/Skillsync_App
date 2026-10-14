@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Footer from "../../components/Footer";
 import { deleteJob, getMyJobs } from "../../services/job.service";
-import { payPlatformFee } from "../../services/platformPayment.service";
 import api from "../../services/api";
 
 const MyJobs = () => {
@@ -12,6 +11,7 @@ const MyJobs = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [deletingId, setDeletingId] = useState(null);
   const [payingJobId, setPayingJobId] = useState(null);
+  const [checkingPaymentJobId, setCheckingPaymentJobId] = useState(null);
   const [phoneNumbers, setPhoneNumbers] = useState({});
 
   //     // Fetch jobs on component mount
@@ -123,6 +123,12 @@ const handlePlatformPayment = async (job) => {
     );
 
     if (data.success) {
+      if (data.reconciled) {
+        await fetchJobs();
+        alert(data.message || "Payment confirmed. Your job is now published.");
+        return;
+      }
+
       alert(
         "M-Pesa payment request sent. Check your phone and enter your M-Pesa PIN."
       );
@@ -132,6 +138,8 @@ const handlePlatformPayment = async (job) => {
         delete updated[job._id];
         return updated;
       });
+
+      void waitForJobPublication(job._id);
     }
   } catch (error) {
     console.error("Platform payment error:", error);
@@ -152,6 +160,63 @@ const handlePlatformPayment = async (job) => {
         [jobId]: value,
       }));
     };
+
+  const handleReconcilePayment = async (jobId) => {
+    setCheckingPaymentJobId(jobId);
+    try {
+      const { data } = await api.post(`/platform-payment/${jobId}/reconcile`);
+      await fetchJobs();
+      alert(data.message || "Payment confirmed. Your job is now published.");
+    } catch (error) {
+      const status = error.response?.status;
+      if (status === 409) {
+        alert(error.response?.data?.message || "Payment confirmation is still pending. Please do not pay again yet.");
+      } else {
+        alert(error.response?.data?.message || "Could not check payment status. Please try again.");
+      }
+    } finally {
+      setCheckingPaymentJobId(null);
+    }
+  };
+
+  const waitForJobPublication = async (jobId) => {
+    setCheckingPaymentJobId(jobId);
+
+    try {
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 5000));
+
+        try {
+          await api.post(`/platform-payment/${jobId}/reconcile`);
+        } catch (error) {
+          // A pending M-Pesa transaction returns 409 until its callback arrives.
+          if (error.response?.status !== 409) {
+            console.error("Failed to reconcile platform payment:", error);
+          }
+        }
+
+        try {
+          const data = await getMyJobs();
+          const updatedJobs = data.jobs || [];
+          setJobs(updatedJobs);
+
+          const updatedJob = updatedJobs.find((item) => item._id === jobId);
+          if (updatedJob?.isPublished && updatedJob?.platformFeePaid) {
+            alert("Payment confirmed. Your job is now published.");
+            return;
+          }
+        } catch (error) {
+          console.error("Failed to refresh payment status:", error);
+        }
+      }
+
+      alert(
+        "M-Pesa confirmation is still pending. Your job will appear as published once the payment callback is received. Please don't submit another payment while this one is pending."
+      );
+    } finally {
+      setCheckingPaymentJobId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
@@ -383,7 +448,10 @@ const handlePlatformPayment = async (job) => {
 
                 <p className="text-sm font-semibold mb-2">
                   Fee: KES{" "}
-                  {Number(job.platformFee || 0).toLocaleString()}
+                  {Number(
+                    job.platformFeeAmount ??
+                      Math.round((Number(job.budget) || 0) * 0.1)
+                  ).toLocaleString()}
                 </p>
 
                 <input
@@ -398,12 +466,24 @@ const handlePlatformPayment = async (job) => {
 
                 <button
                   onClick={() => handlePlatformPayment(job)}
-                  disabled={payingJobId === job._id}
+                  disabled={
+                    payingJobId === job._id ||
+                    checkingPaymentJobId === job._id
+                  }
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {payingJobId === job._id
                     ? "Sending..."
-                    : "Pay & Publish"}
+                    : checkingPaymentJobId === job._id
+                      ? "Waiting for M-Pesa..."
+                      : "Pay & Publish"}
+                </button>
+                <button
+                  onClick={() => handleReconcilePayment(job._id)}
+                  disabled={checkingPaymentJobId === job._id || payingJobId === job._id}
+                  className="w-full mt-2 border border-yellow-400/40 text-yellow-300 px-3 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50"
+                >
+                  {checkingPaymentJobId === job._id ? "Checking payment..." : "I already paid — check status"}
                 </button>
               </div>
             )}

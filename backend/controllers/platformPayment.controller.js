@@ -11,6 +11,72 @@ import {
 import { calculatePlatformFee } from "../services/platformFee.service.js";
 import { sendNewJobAlertEmail } from "../services/email.service.js";
 
+const publishPaidJob = async (transaction) => {
+  if (!transaction?.job || !transaction?.client) return null;
+
+  const existingJob = await Job.findOne({
+    _id: transaction.job,
+    client: transaction.client,
+  }).select("publishedAt");
+  if (!existingJob) return null;
+
+  const now = new Date();
+  return Job.findOneAndUpdate(
+    { _id: transaction.job, client: transaction.client },
+    {
+      $set: {
+        platformFeePaid: true,
+        platformFeeAmount:
+          transaction.platformFee || transaction.amount,
+        isPublished: true,
+        status: "Open",
+        paymentStatus: "paid",
+        publishedAt: existingJob.publishedAt || now,
+      },
+    },
+    { new: true }
+  ).populate("category");
+};
+
+export const reconcilePlatformFee = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const job = await Job.findOne({ _id: jobId, client: req.user.id });
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Job not found." });
+    }
+
+    if (job.platformFeePaid && job.isPublished) {
+      return res.json({ success: true, published: true, message: "Job is already published." });
+    }
+
+    const transaction = await Transaction.findOne({
+      job: job._id,
+      client: req.user.id,
+      status: "completed",
+      $or: [{ type: "platform_fee" }, { paymentType: "platform_fee" }],
+    }).sort({ createdAt: -1 });
+
+    if (!transaction || Number(transaction.mpesa?.resultCode) !== 0) {
+      return res.status(409).json({
+        success: false,
+        message: "No confirmed platform fee payment was found yet. Do not pay again while M-Pesa confirmation is pending.",
+      });
+    }
+
+    const publishedJob = await publishPaidJob(transaction);
+    if (!publishedJob) {
+      return res.status(409).json({ success: false, message: "The paid job could not be found for publishing." });
+    }
+
+    return res.json({ success: true, published: true, job: publishedJob, message: "Payment confirmed and job published." });
+  } catch (error) {
+    console.error("Platform fee reconciliation error:", error);
+    return res.status(500).json({ success: false, message: "Unable to reconcile platform fee payment." });
+  }
+};
+
 // ============================================================
 // PAY PLATFORM FEE
 // ============================================================
@@ -68,6 +134,25 @@ export const payPlatformFee = async (req, res) => {
         message:
           "Platform fee has already been paid.",
       });
+    }
+
+    const completedTransaction = await Transaction.findOne({
+      job: job._id,
+      client: req.user.id,
+      status: "completed",
+      $or: [{ type: "platform_fee" }, { paymentType: "platform_fee" }],
+    }).sort({ createdAt: -1 });
+
+    if (completedTransaction && Number(completedTransaction.mpesa?.resultCode) === 0) {
+      const publishedJob = await publishPaidJob(completedTransaction);
+      if (publishedJob) {
+        return res.json({
+          success: true,
+          reconciled: true,
+          message: "Your existing payment was confirmed and the job is now published.",
+          job: publishedJob,
+        });
+      }
     }
 
     // ----------------------------------------------------------
@@ -312,9 +397,14 @@ export const platformCallback = async (
 
     if (transaction.status === "completed") {
       console.log(
-        "Platform transaction already completed:",
+        "Reconciling previously completed platform transaction:",
         transaction.transactionId
       );
+
+      const publishedJob = await publishPaidJob(transaction);
+      if (!publishedJob) {
+        console.error("Could not reconcile completed payment to job:", transaction.transactionId);
+      }
 
       return res.json({
         ResultCode: 0,
@@ -362,30 +452,15 @@ export const platformCallback = async (
       }
 
       // --------------------------------------------------------
-      // Mark transaction completed
-      // --------------------------------------------------------
-
-      transaction.status = "completed";
-      transaction.completedAt = new Date();
-      transaction.paidAt = new Date();
-
-      await transaction.save();
-
-      console.log(
-        "Platform transaction completed:",
-        transaction.transactionId
-      );
-
-      // --------------------------------------------------------
       // Find job
       // --------------------------------------------------------
 
-      const job =
-        await Job.findById(
-          transaction.job
-        ).populate("category");
+      const previousJob = await Job.findOne({
+        _id: transaction.job,
+        client: transaction.client,
+      });
 
-      if (!job) {
+      if (!previousJob) {
         console.error(
           "Job not found for transaction:",
           transaction.transactionId
@@ -396,6 +471,8 @@ export const platformCallback = async (
           ResultDesc: "Accepted",
         });
       }
+
+      const wasPublished = previousJob.isPublished && previousJob.platformFeePaid;
 
       // --------------------------------------------------------
       // Get client
@@ -408,28 +485,13 @@ export const platformCallback = async (
           "username email"
         );
 
-      // --------------------------------------------------------
-      // Publish job
-      // --------------------------------------------------------
+      const job = await publishPaidJob(transaction);
+      if (!job) throw new Error("Paid job could not be published for this transaction.");
 
-      job.platformFeePaid = true;
-
-      job.platformFeeAmount =
-        transaction.platformFee ||
-        job.platformFeeAmount ||
-        transaction.amount;
-
-      job.isPublished = true;
-
-      // IMPORTANT:
-      // Job schema uses "Open", not "published".
-      job.status = "Open";
-
-      job.paymentStatus = "paid";
-
-      job.publishedAt = new Date();
-
-      await job.save();
+      transaction.status = "completed";
+      transaction.completedAt = transaction.completedAt || new Date();
+      transaction.paidAt = transaction.paidAt || new Date();
+      await transaction.save();
 
       console.log(
         "JOB SUCCESSFULLY PUBLISHED:",
@@ -481,7 +543,7 @@ export const platformCallback = async (
       // Find developers to notify
       // --------------------------------------------------------
 
-      const developers =
+      const developers = wasPublished ? [] :
         await User.find({
           role: "developer",
 
