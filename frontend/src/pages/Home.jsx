@@ -60,8 +60,8 @@ const Home = () => {
       .filter((job) => {
         const title = job.title?.toLowerCase() || "";
         const description = job.description?.toLowerCase() || "";
-        const skills = Array.isArray(job.skills)
-          ? job.skills.join(" ").toLowerCase()
+        const skills = Array.isArray(job.requiredSkills)
+          ? job.requiredSkills.join(" ").toLowerCase()
           : "";
 
         return (
@@ -364,9 +364,9 @@ const Home = () => {
                   {job.description || "No description provided."}
                 </p>
 
-                {Array.isArray(job.skills) && job.skills.length > 0 && (
+                {Array.isArray(job.requiredSkills) && job.requiredSkills.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-5">
-                    {job.skills.slice(0, 4).map((skill) => (
+                    {job.requiredSkills.slice(0, 4).map((skill) => (
                       <span
                         key={skill}
                         className="bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded-full text-xs font-medium"

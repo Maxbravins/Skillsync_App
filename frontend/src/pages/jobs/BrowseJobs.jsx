@@ -48,8 +48,8 @@ const BrowseJobs = () => {
     return jobs.filter((job) => {
       const title = job.title?.toLowerCase() || "";
       const description = job.description?.toLowerCase() || "";
-      const jobSkills = Array.isArray(job.skills)
-        ? job.skills.map((item) => item?.toLowerCase() || "")
+      const jobSkills = Array.isArray(job.requiredSkills)
+        ? job.requiredSkills.map((item) => item?.toLowerCase() || "")
         : [];
 
       const matchesSearch =
@@ -330,7 +330,7 @@ const BrowseJobs = () => {
                   </div>
 
                   {/* Skills */}
-                  {Array.isArray(job.skills) && job.skills.length > 0 && (
+                  {Array.isArray(job.requiredSkills) && job.requiredSkills.length > 0 && (
                     <div className="mt-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Code2
@@ -344,7 +344,7 @@ const BrowseJobs = () => {
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        {job.skills.slice(0, 6).map((item, index) => (
+                        {job.requiredSkills.slice(0, 6).map((item, index) => (
                           <span
                             key={`${item}-${index}`}
                             className="px-3 py-1.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
@@ -353,9 +353,9 @@ const BrowseJobs = () => {
                           </span>
                         ))}
 
-                        {job.skills.length > 6 && (
+                        {job.requiredSkills.length > 6 && (
                           <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-color)]">
-                            +{job.skills.length - 6} more
+                            +{job.requiredSkills.length - 6} more
                           </span>
                         )}
                       </div>

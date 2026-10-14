@@ -42,8 +42,8 @@ const EditJob = () => {
         title: data.job.title || "",
         description: data.job.description || "",
         budget: data.job.budget ?? "",
-        skills: Array.isArray(data.job.skills)
-          ? data.job.skills.join(", ")
+        skills: Array.isArray(data.job.requiredSkills)
+          ? data.job.requiredSkills.join(", ")
           : "",
       });
     } catch (error) {

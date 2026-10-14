@@ -90,7 +90,7 @@ export const createJob = async (req, res) => {
 
       currency: "KES",
 
-      skills: Array.isArray(skills)
+      requiredSkills: Array.isArray(skills)
         ? skills
         : [],
 
@@ -348,7 +348,7 @@ export const updateJob = async (
         req.body[field] !==
         undefined
       ) {
-        updates[field] =
+        updates[field === "skills" ? "requiredSkills" : field] =
           req.body[field];
       }
     }
@@ -954,7 +954,7 @@ export const searchJobs = async (
       if (
         skillsArray.length
       ) {
-        filter.skills = {
+        filter.requiredSkills = {
           $in: skillsArray,
         };
       }

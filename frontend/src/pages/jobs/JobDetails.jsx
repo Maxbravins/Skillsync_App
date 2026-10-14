@@ -248,7 +248,7 @@ const JobDetails = () => {
               </div>
 
               {/* Skills */}
-              {Array.isArray(job.skills) && job.skills.length > 0 && (
+              {Array.isArray(job.requiredSkills) && job.requiredSkills.length > 0 && (
                 <div className="px-6 sm:px-8 pb-8">
                   <div className="border-t border-[var(--border-color)] pt-7">
                     <div className="flex items-center gap-2 mb-4">
@@ -263,7 +263,7 @@ const JobDetails = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2.5">
-                      {job.skills.map((skill, index) => (
+                      {job.requiredSkills.map((skill, index) => (
                         <span
                           key={`${skill}-${index}`}
                           className="px-4 py-2 rounded-full text-sm font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"

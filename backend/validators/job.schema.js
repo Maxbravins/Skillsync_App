@@ -10,7 +10,7 @@ export const createJobSchema = z.object({
   experienceLevel: z.enum(["Entry Level", "Intermediate", "Senior"]).optional(),
   projectType: z.enum(["Fixed Price", "Hourly", "Contract", "Internship"]).optional(),
   workMode: z.enum(["Remote", "Hybrid", "Onsite"]).optional(),
-  deadline: z.string().datetime().optional(),
+  applicationDeadline: z.string().datetime(),
 });
 
 export const updateJobSchema = createJobSchema.partial();

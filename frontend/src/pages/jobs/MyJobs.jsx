@@ -346,9 +346,9 @@ const handlePlatformPayment = async (job) => {
                       </div>
 
                       {/* Skills */}
-                      {Array.isArray(job.skills) && job.skills.length > 0 && (
+                      {Array.isArray(job.requiredSkills) && job.requiredSkills.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-5">
-                          {job.skills.map((skill, index) => (
+                          {job.requiredSkills.map((skill, index) => (
                             <span
                               key={`${skill}-${index}`}
                               className="bg-emerald-500/15 text-emerald-400 px-3 py-1 rounded-full text-xs font-medium"
