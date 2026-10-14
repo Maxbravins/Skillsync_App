@@ -15,6 +15,7 @@ import {
 } from "react-icons/fa";
 
 import api from "../../services/api";
+import { downloadApplicationsPDF } from "../../services/pdf.service";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
@@ -124,15 +125,10 @@ const AdminDashboard = () => {
   // EXPORT APPLICATIONS
   const exportApplicationsPDF = async () => {
     try {
-      const response = await api.get(
-        "/applications/export/pdf",
-        {
-          responseType: "blob",
-        }
-      );
+      const pdf = await downloadApplicationsPDF();
 
       const url = window.URL.createObjectURL(
-        new Blob([response.data])
+        new Blob([pdf], { type: "application/pdf" })
       );
 
       const link = document.createElement("a");

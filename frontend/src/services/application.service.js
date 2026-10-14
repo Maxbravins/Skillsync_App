@@ -3,7 +3,7 @@ import api from "./api";
 /**
  * Apply for a job.
  */
-export const applyForJob = async (jobId, coverLetter) => {
+export const applyForJob = async (jobId, coverLetter, proposedBudget) => {
   if (!jobId) {
     throw new Error("Job ID is required.");
   }
@@ -12,10 +12,15 @@ export const applyForJob = async (jobId, coverLetter) => {
     throw new Error("Cover letter is required.");
   }
 
+  if (!Number.isFinite(Number(proposedBudget)) || Number(proposedBudget) <= 0) {
+    throw new Error("A valid proposed budget greater than zero is required.");
+  }
+
   const response = await api.post(
     `/applications/apply/${jobId}`,
     {
       coverLetter: coverLetter.trim(),
+      proposedBudget: Number(proposedBudget),
     }
   );
 

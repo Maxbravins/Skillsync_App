@@ -32,6 +32,7 @@ const JobDetails = () => {
 
   const [job, setJob] = useState(null);
   const [coverLetter, setCoverLetter] = useState("");
+  const [proposedBudget, setProposedBudget] = useState("");
   const [applying, setApplying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -42,7 +43,9 @@ const JobDetails = () => {
       setError("");
 
       const data = await getJobById(id);
-      setJob(data?.job || null);
+      const loadedJob = data?.job || null;
+      setJob(loadedJob);
+      setProposedBudget((current) => current || String(loadedJob?.budget ?? ""));
     } catch (err) {
       console.error("Failed to fetch job:", err);
 
@@ -72,9 +75,15 @@ const JobDetails = () => {
     }
 
     const trimmedCoverLetter = coverLetter.trim();
+    const budget = Number(proposedBudget);
 
     if (!trimmedCoverLetter) {
       alert("Please write a cover letter before applying.");
+      return;
+    }
+
+    if (!Number.isFinite(budget) || budget <= 0) {
+      alert("Please enter a proposed budget greater than zero.");
       return;
     }
 
@@ -86,7 +95,7 @@ const JobDetails = () => {
     try {
       setApplying(true);
 
-      const data = await applyForJob(job._id, trimmedCoverLetter);
+      const data = await applyForJob(job._id, trimmedCoverLetter, budget);
 
       alert(data.message || "Application submitted successfully.");
 
@@ -318,6 +327,24 @@ const JobDetails = () => {
                     Introduce yourself and explain why you're a good fit
                     for this project.
                   </p>
+
+                  <label
+                    htmlFor="proposed-budget"
+                    className="block text-sm font-medium mb-2"
+                  >
+                    Your proposed budget (KES)
+                  </label>
+                  <input
+                    id="proposed-budget"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={proposedBudget}
+                    onChange={(e) => setProposedBudget(e.target.value)}
+                    placeholder="Enter your proposed budget"
+                    disabled={applying}
+                    className="w-full mb-4 bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-xl p-4 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10 disabled:opacity-60"
+                  />
 
                   <textarea
                     rows={8}

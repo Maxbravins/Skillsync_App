@@ -68,9 +68,8 @@ router.get(
 
 // Get single transaction status
 router.get(
-  "/status/:id",
+  "/status/:transactionId",
   auth,
-  validateObjectId("id"),
   getTransactionStatus
 );
 
