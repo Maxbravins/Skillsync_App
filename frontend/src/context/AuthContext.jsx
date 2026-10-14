@@ -5,7 +5,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import api, { setAccessToken } from "../services/api";
+import api, { refreshAccessToken, setAccessToken } from "../services/api";
 
 export const AuthContext = createContext(null);
 
@@ -34,17 +34,12 @@ export const AuthProvider = ({ children }) => {
   // Restore authentication state when the app starts.
   useEffect(() => {
     let cancelled = false;
-    let started = false;
 
     const restoreSession = async () => {
-      if (started) return;
-      started = true;
-      
       const cachedUser = getStoredUser();
 
       try {
-        const res = await api.post("/auth/refresh-token");
-        const newToken = res.data?.token;
+        const newToken = await refreshAccessToken();
 
         if (!newToken) {
           throw new Error("No token returned from refresh");

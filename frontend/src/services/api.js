@@ -1,12 +1,12 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-if (!API_URL) {
-  console.warn(
-    "VITE_API_URL is not configured. Check your .env file."
-  );
-}
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const apiRoot = import.meta.env.DEV
+  ? configuredApiUrl || "http://localhost:5000"
+  : "";
+const API_URL = apiRoot
+  ? `${apiRoot.replace(/\/+$/, "").replace(/\/api$/i, "")}/api`
+  : "/api";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -70,7 +70,7 @@ api.interceptors.request.use(
 
 let refreshPromise = null;
 
-const refreshAccessToken = () => {
+export const refreshAccessToken = () => {
   if (!refreshPromise) {
     refreshPromise = axios
       .post(
