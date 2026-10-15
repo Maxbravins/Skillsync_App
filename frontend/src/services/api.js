@@ -1,12 +1,8 @@
 import axios from "axios";
 
-const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
-const apiRoot = import.meta.env.DEV
-  ? configuredApiUrl || "http://localhost:5000"
-  : "";
-const API_URL = apiRoot
-  ? `${apiRoot.replace(/\/+$/, "").replace(/\/api$/i, "")}/api`
-  : "/api";
+// Keep API requests same-origin in both development and production.
+// Vite proxies /api locally; Vercel rewrites /api in production.
+const API_URL = "/api";
 
 const api = axios.create({
   baseURL: API_URL,
