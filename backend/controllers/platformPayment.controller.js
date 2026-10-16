@@ -205,43 +205,10 @@ export const payPlatformFee = async (req, res) => {
 
     await job.save();
 
-    // ----------------------------------------------------------
-    // Initiate M-Pesa STK Push
-    // ----------------------------------------------------------
-
-    const callbackUrl =
-      `${process.env.BACKEND_URL}/api/platform-payment/callback`;
-
-    const stkResponse = await initiateSTKPush({
-      phoneNumber: formattedPhone,
-      amount: fee,
-      accountReference: `JOB-${job._id}`,
-      transactionDesc:
-        `Platform Fee for ${job.title}`,
-      callbackUrl,
-    });
-
-    // ----------------------------------------------------------
-    // Validate STK response
-    // ----------------------------------------------------------
-
-    if (
-      !stkResponse ||
-      !stkResponse.CheckoutRequestID
-    ) {
-      return res.status(502).json({
-        success: false,
-        message:
-          "M-Pesa payment could not be initiated. Please try again.",
-      });
-    }
-
-    // ----------------------------------------------------------
-    // Create pending transaction
-    // ----------------------------------------------------------
-
-    const transaction =
-      await Transaction.create({
+    // Save the transaction before sending the STK prompt. If saving it
+    // afterward fails, a real payment can be left without a record for
+    // the callback to reconcile.
+    const transaction = await Transaction.create({
         type: "platform_fee",
         paymentType: "platform_fee",
 
@@ -273,12 +240,6 @@ export const payPlatformFee = async (req, res) => {
         },
 
         mpesa: {
-          merchantRequestID:
-            stkResponse.MerchantRequestID || "",
-
-          checkoutRequestID:
-            stkResponse.CheckoutRequestID,
-
           phoneNumber: formattedPhone,
 
           resultCode: null,
@@ -288,6 +249,43 @@ export const payPlatformFee = async (req, res) => {
 
         status: "pending",
       });
+
+    // ----------------------------------------------------------
+    // Initiate M-Pesa STK Push
+    // ----------------------------------------------------------
+
+    const callbackUrl =
+      `${process.env.BACKEND_URL}/api/platform-payment/callback`;
+
+    let stkResponse;
+    try {
+      stkResponse = await initiateSTKPush({
+        phoneNumber: formattedPhone,
+        amount: fee,
+        accountReference: `JOB-${job._id}`,
+        transactionDesc: `Platform Fee for ${job.title}`,
+        callbackUrl,
+      });
+    } catch (error) {
+      transaction.status = "failed";
+      transaction.mpesa.resultDesc = error.message || "M-Pesa could not initiate the payment.";
+      await transaction.save();
+      throw error;
+    }
+
+    if (!stkResponse?.CheckoutRequestID) {
+      transaction.status = "failed";
+      transaction.mpesa.resultDesc = "M-Pesa did not return a checkout request ID.";
+      await transaction.save();
+      return res.status(502).json({
+        success: false,
+        message: "M-Pesa payment could not be initiated. Please try again.",
+      });
+    }
+
+    transaction.mpesa.merchantRequestID = stkResponse.MerchantRequestID || undefined;
+    transaction.mpesa.checkoutRequestID = stkResponse.CheckoutRequestID;
+    await transaction.save();
 
     // ----------------------------------------------------------
     // Return success

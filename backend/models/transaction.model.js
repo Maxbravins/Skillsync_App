@@ -230,13 +230,14 @@ const transactionSchema = new mongoose.Schema(
       checkoutRequestID: {
         type: String,
         trim: true,
-        default: "",
+        default: undefined,
       },
 
       mpesaReceiptNumber: {
         type: String,
         trim: true,
-        default: "",
+        // Do not index a placeholder as if it were a real receipt.
+        default: undefined,
       },
 
       resultCode: {
