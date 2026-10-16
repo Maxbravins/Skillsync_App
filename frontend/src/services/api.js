@@ -6,9 +6,6 @@ const API_URL = "/api";
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
   timeout: 15000,
   // Required so the HttpOnly refresh-token cookie is sent to /auth/*
   // endpoints and so the backend's CORS `credentials: true` config

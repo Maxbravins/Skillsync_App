@@ -383,7 +383,8 @@ const EditProfile = () => {
 
       const response = await api.put(
         "/users/profile",
-        formData
+        formData,
+        { timeout: 120000 }
       );
 
       const updatedUser = response.data?.user;
