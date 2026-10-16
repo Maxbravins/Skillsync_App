@@ -55,6 +55,16 @@ const redirectToLogin = () => {
 // Attach the in-memory access token to every request.
 api.interceptors.request.use(
   (config) => {
+    // Let the browser add the multipart boundary for file uploads.
+    // Keeping the shared JSON header makes Axios serialize FormData as
+    // JSON, which causes Multer to receive no files.
+    if (
+      typeof FormData !== "undefined" &&
+      config.data instanceof FormData
+    ) {
+      config.headers.delete("Content-Type");
+    }
+
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
