@@ -1,7 +1,6 @@
 import {
   Bell,
   BriefcaseBusiness,
-  Globe,
   LogIn,
   LogOut,
   Menu,
@@ -25,21 +24,6 @@ const Navbar = () => {
   const [notifications, setNotifications] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      setNotifications([]);
-      return;
-    }
-
-    fetchNotifications();
-
-    const interval = setInterval(() => {
-      fetchNotifications();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [user]);
-
   const fetchNotifications = async () => {
     try {
       const data = await getNotifications();
@@ -48,6 +32,21 @@ const Navbar = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+
+    fetchNotifications();
+
+    const interval = setInterval(fetchNotifications, 5000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+
 
   const unreadCount = notifications.filter(
     (notification) => !notification.isRead
@@ -474,7 +473,7 @@ const Navbar = () => {
                     className="mt-2 flex items-center gap-3 rounded-lg bg-red-600 px-3 py-3 text-left text-sm font-medium text-white"
                   >
                     <LogOut size={18} />
-                    {"Logout" || "Logout"}
+                    Logout
                   </button>
                 </>
               )}
@@ -536,7 +535,7 @@ const Navbar = () => {
                     className="mt-2 flex items-center gap-3 rounded-lg bg-red-600 px-3 py-3 text-left text-sm font-medium text-white"
                   >
                     <LogOut size={18} />
-                    {"Logout" || "Logout"}
+                    Logout
                   </button>
                 </>
               )}
@@ -582,7 +581,7 @@ const Navbar = () => {
                     className="mt-2 flex items-center gap-3 rounded-lg bg-red-600 px-3 py-3 text-left text-sm font-medium text-white"
                   >
                     <LogOut size={18} />
-                    {"Logout" || "Logout"}
+                    Logout
                   </button>
                 </>
               )}

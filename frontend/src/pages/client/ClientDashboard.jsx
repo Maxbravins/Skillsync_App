@@ -8,7 +8,6 @@ import {
   Plus,
   RefreshCw,
   AlertCircle,
-  Bell,
   User,
   Users,
   ArrowRight,

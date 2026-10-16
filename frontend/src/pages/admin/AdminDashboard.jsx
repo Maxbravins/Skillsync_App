@@ -198,24 +198,7 @@ const AdminDashboard = () => {
     };
   };
 
-    // TRANSACTION STATUS
-  const getTransactionStatus = (status) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-500/20 text-green-400";
-
-      case "failed":
-        return "bg-red-500/20 text-red-400";
-
-      case "cancelled":
-        return "bg-gray-500/20 text-gray-400";
-
-      default:
-        return "bg-yellow-500/20 text-yellow-400";
-    }
-  };
-
-    // SEARCH USERS
+  // SEARCH USERS
   const filteredUsers = useMemo(() => {
     const search = userSearch.toLowerCase().trim();
 

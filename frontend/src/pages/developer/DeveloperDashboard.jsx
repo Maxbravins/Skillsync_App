@@ -11,7 +11,6 @@ import {
   RefreshCw,
   AlertCircle,
   ArrowRight,
-  Bookmark,
   MessageSquare,
   TrendingUp,
 } from "lucide-react";

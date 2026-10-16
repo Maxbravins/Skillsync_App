@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         setToken(newToken);
-      } catch (error) {
+      } catch {
         if (cancelled) return;
 
         localStorage.removeItem("user");

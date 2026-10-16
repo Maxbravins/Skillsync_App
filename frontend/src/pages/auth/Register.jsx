@@ -38,16 +38,7 @@ const Register = () => {
   // Password visibility
   const [showPassword, setShowPassword] = useState(false);
 
-  /*
-   * Load categories only when needed.
-   */
-  useEffect(() => {
-    if (formData.role === "developer") {
-      fetchCategories();
-    }
-  }, [formData.role]);
-
-  const fetchCategories = async () => {
+  async function fetchCategories() {
     try {
       const { data } = await api.get("/categories");
       
@@ -56,7 +47,16 @@ const Register = () => {
       console.log(error);
       setCategories([]);
     }
-  };
+  }
+
+  /*
+   * Load categories only when needed.
+   */
+  useEffect(() => {
+    if (formData.role === "developer") {
+      fetchCategories();
+    }
+  }, [formData.role]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

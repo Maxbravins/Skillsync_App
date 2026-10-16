@@ -2,6 +2,7 @@ import {
   Briefcase,
   CheckCircle,
   Clock3,
+  FileText,
   XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -18,6 +19,7 @@ import {
 
 const MyApplications = () => {
   const { user } = useAuth();
+  const role = user?.role;
   const [searchParams] = useSearchParams();
 
   const statusFilter = searchParams.get("status") || "all";
@@ -27,14 +29,14 @@ const MyApplications = () => {
   const [error, setError] = useState("");
 
   const fetchApplications = useCallback(async () => {
-    if (!user?.role) return;
+    if (!role) return;
 
     try {
       setLoading(true);
       setError("");
 
       const data =
-        user.role === "client"
+        role === "client"
           ? await getClientApplications()
           : await getMyApplications();
 
@@ -51,7 +53,7 @@ const MyApplications = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.role]);
+  }, [role]);
 
   useEffect(() => {
     fetchApplications();

@@ -41,8 +41,7 @@ const MyJobs = () => {
     // Handle job deletion
   const handleDelete = async (jobId) => {
     const confirmDelete = window.confirm(
-      ("confirmDelete") ||
-        "Are you sure you want to delete this job listing?"
+      "Are you sure you want to delete this job listing?"
     );
 
     if (!confirmDelete) return;
@@ -60,7 +59,6 @@ const MyJobs = () => {
 
       alert(
         error.response?.data?.message ||
-          "Failed to delete job." ||
           "Could not delete job. Please try again."
       );
     } finally {
@@ -225,7 +223,7 @@ const handlePlatformPayment = async (job) => {
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-5 mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              {"My Posted Jobs" || "My Posted Jobs"}
+              My Posted Jobs
             </h1>
 
             <p className="text-[var(--text-secondary)]">
@@ -240,15 +238,15 @@ const handlePlatformPayment = async (job) => {
               className="bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg px-4 py-3 outline-none cursor-pointer"
             >
               <option value="newest">
-                {"Newest" || "Newest"}
+                Newest
               </option>
 
               <option value="highest">
-                {"Highest Budget" || "Highest Budget"}
+                Highest Budget
               </option>
 
               <option value="lowest">
-                {"Lowest Budget" || "Lowest Budget"}
+                Lowest Budget
               </option>
             </select>
 
@@ -256,7 +254,7 @@ const handlePlatformPayment = async (job) => {
               to="/create-job"
               className="bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-400 hover:to-indigo-400 text-white font-semibold py-3 px-5 rounded-lg shadow-md transition text-center"
             >
-              + {"Post New Job" || "Post New Job"}
+              + Post New Job
             </Link>
           </div>
         </div>
@@ -284,7 +282,7 @@ const handlePlatformPayment = async (job) => {
               <div className="w-10 h-10 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
 
               <p className="text-[var(--text-secondary)] font-medium">
-                {"Loading your jobs..." || "Loading your jobs..."}
+                Loading your jobs...
               </p>
             </div>
           </div>
@@ -294,7 +292,7 @@ const handlePlatformPayment = async (job) => {
             <div className="text-5xl mb-4">💼</div>
 
             <h2 className="text-xl font-semibold mb-2">
-              {"You haven't posted any jobs yet." || "You haven't posted any jobs yet."}
+              You haven't posted any jobs yet.
             </h2>
 
             <p className="text-[var(--text-secondary)] mb-6">
@@ -306,7 +304,7 @@ const handlePlatformPayment = async (job) => {
               to="/create-job"
               className="inline-block bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-3 px-6 rounded-lg transition"
             >
-              + {"Post New Job" || "Post New Job"}
+              + Post New Job
             </Link>
           </div>
         ) : (
@@ -492,14 +490,14 @@ const handlePlatformPayment = async (job) => {
                         to={`/job-applicants/${job._id}`}
                         className="w-full text-center text-indigo-400 hover:bg-indigo-500/10 border border-indigo-500/30 px-4 py-2.5 rounded-lg text-sm font-medium transition"
                       >
-                        {"View Applicants" || "View Applicants"}
+                        View Applicants
                       </Link>
 
                       <Link
                         to={`/edit-job/${job._id}`}
                         className="w-full text-center text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-color)] px-4 py-2.5 rounded-lg text-sm font-medium transition"
                       >
-                        {"Edit" || "Edit"}
+                        Edit
                       </Link>
 
                       <button
@@ -509,7 +507,7 @@ const handlePlatformPayment = async (job) => {
                       >
                         {deletingId === job._id
                           ? "Deleting..."
-                          : "Delete" || "Delete"}
+                          : "Delete"}
                       </button>
                     </div>
                   </div>

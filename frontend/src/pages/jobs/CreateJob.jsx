@@ -18,6 +18,11 @@ const CreateJob = () => {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [minimumDeadline] = useState(() =>
+    new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16)
+  );
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -390,13 +395,7 @@ const CreateJob = () => {
                     onChange={handleChange}
                     required
                     disabled={submitting}
-                    min={new Date(
-                      Date.now() -
-                        new Date().getTimezoneOffset() *
-                          60000
-                    )
-                      .toISOString()
-                      .slice(0, 16)}
+                    min={minimumDeadline}
                     className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] pl-12 pr-4 py-3 text-[var(--text-primary)] outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60 transition"
                   />
                 </div>
