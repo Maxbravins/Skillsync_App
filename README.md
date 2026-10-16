@@ -144,8 +144,15 @@ MPESA_CONSUMER_KEY=your_consumer_key
 MPESA_CONSUMER_SECRET=your_consumer_secret
 MPESA_SHORTCODE=174379
 MPESA_PASSKEY=your_lipa_na_mpesa_passkey
-MPESA_CALLBACK_URL=https://your-backend-url.com/api/mpesa/callback
+MPESA_WEBHOOK_SECRET=generate_with_openssl_rand_hex_32
+MPESA_CALLBACK_URL=https://your-backend-url.com/api/mpesa/callback/<MPESA_WEBHOOK_SECRET>
+MPESA_B2C_RESULT_URL=https://your-backend-url.com/api/withdrawals/b2c/result/<MPESA_WEBHOOK_SECRET>
+MPESA_B2C_TIMEOUT_URL=https://your-backend-url.com/api/withdrawals/b2c/timeout/<MPESA_WEBHOOK_SECRET>
 \`\`\`
+
+### M-Pesa webhook security
+
+Safaricom callbacks are authenticated by a secret embedded in the callback URL. Generate one with `openssl rand -hex 32` (at least 24 URL-safe characters), set it as `MPESA_WEBHOOK_SECRET`, and append it to the three callback URLs above. Requests to a callback path with a missing or wrong secret are rejected with 403, and if the secret is not configured the endpoints refuse all callbacks (503) outside `NODE_ENV=development`. Optionally set `MPESA_ALLOWED_IPS` (comma-separated Safaricom IPs from the Daraja docs) to enforce an IP allowlist as well. **Rotate the secret and re-register the URLs if it ever appears in logs.**
 
 ---
 

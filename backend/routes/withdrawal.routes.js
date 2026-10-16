@@ -32,17 +32,17 @@ router.post(
 );
 
 // M-Pesa B2C payout callbacks — same protections as the STK push
-// callback: rate-limited and restricted to Safaricom's IP range
-// (bypassed automatically in development).
+// callback: rate-limited and authenticated by the secret in the URL
+// (MPESA_WEBHOOK_SECRET; see webhook.middleware.js).
 router.post(
-  "/b2c/result",
+  "/b2c/result/:secret",
   webhookLimiter,
   validateMpesaWebhook,
   b2cResultCallback
 );
 
 router.post(
-  "/b2c/timeout",
+  "/b2c/timeout/:secret",
   webhookLimiter,
   validateMpesaWebhook,
   b2cTimeoutCallback
