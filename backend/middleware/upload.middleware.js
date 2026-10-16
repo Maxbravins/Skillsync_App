@@ -1,4 +1,8 @@
 import multer from "multer";
+import crypto from "crypto";
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 import { v2 as cloudinary } from "cloudinary";
 import multerCloudinary from "multer-storage-cloudinary";
 import { MAX_UPLOAD_SIZE_BYTES } from "../config/uploadLimits.js";
@@ -10,17 +14,35 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Storage for profile pictures
-const avatarStorage = new CloudinaryStorage({
+const profileUploadDirectory = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../uploads/profiles"
+);
+
+// Presentation profile photos are stored on the Render service disk.
+// Keep resumes in Cloudinary because they use authenticated delivery.
+const profilePictureStorage = multer.diskStorage({
+  destination: async (_req, _file, callback) => {
+    try {
+      await fs.mkdir(profileUploadDirectory, { recursive: true });
+      callback(null, profileUploadDirectory);
+    } catch (error) {
+      callback(error);
+    }
+  },
+  filename: (_req, file, callback) => {
+    const extension = {
+      "image/jpeg": ".jpg",
+      "image/png": ".png",
+      "image/webp": ".webp",
+    }[file.mimetype];
+    callback(null, `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${extension}`);
+  },
+});
+
+const resumeStorage = new CloudinaryStorage({
   cloudinary,
   params: (req, file) => {
-    if (file.fieldname === "profilePicture") {
-      return {
-        folder: "skillsync/avatars",
-        allowed_formats: ["jpg", "jpeg", "png", "webp"],
-        transformation: [{ width: 400, height: 400, crop: "fill" }],
-      };
-    }
     if (file.fieldname === "resume") {
       return {
         folder: "skillsync/resumes",
@@ -36,10 +58,45 @@ const avatarStorage = new CloudinaryStorage({
   },
 });
 
-// Default export — handles both profilePicture and resume fields
+// Multer storage engine that stores profile photos locally but leaves
+// private resume uploads in Cloudinary.
+const profileAndResumeStorage = {
+  _handleFile(req, file, callback) {
+    const storage = file.fieldname === "profilePicture"
+      ? profilePictureStorage
+      : resumeStorage;
+    storage._handleFile(req, file, callback);
+  },
+  _removeFile(req, file, callback) {
+    const storage = file.fieldname === "profilePicture"
+      ? profilePictureStorage
+      : resumeStorage;
+    storage._removeFile(req, file, callback);
+  },
+};
+
 const upload = multer({
-  storage: avatarStorage,
+  storage: profileAndResumeStorage,
   limits: { fileSize: MAX_UPLOAD_SIZE_BYTES },
+  fileFilter: (_req, file, callback) => {
+    const allowedTypes = file.fieldname === "profilePicture"
+      ? ["image/jpeg", "image/png", "image/webp"]
+      : [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ];
+
+    if (!allowedTypes.includes(file.mimetype)) {
+      return callback(new Error(
+        file.fieldname === "profilePicture"
+          ? "Profile photos must be JPG, PNG, or WEBP images."
+          : "Resumes must be PDF, DOC, or DOCX files."
+      ));
+    }
+
+    callback(null, true);
+  },
 });
 
 // Named exports for individual use elsewhere

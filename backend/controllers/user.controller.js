@@ -227,9 +227,7 @@ export const updateProfile = async (req, res) => {
     if (req.files?.profilePicture?.[0]) {
       const file = req.files.profilePicture[0];
 
-      // Cloudinary gives us the actual hosted URL.
-      updates.profilePicture =
-        file.path || file.secure_url || file.url;
+      updates.profilePicture = `/uploads/profiles/${file.filename}`;
     }
 
     // ----------------------------------------------------------

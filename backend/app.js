@@ -1,4 +1,6 @@
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { apiLimiter, webhookLimiter } from "./middleware/rateLimiter.js";
@@ -66,6 +68,11 @@ app.use(cookieParser());
 
 // BODY PARSER
 app.use(express.json({ limit: "10mb" }));
+const uploadsDirectory = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "uploads"
+);
+app.use("/uploads", express.static(uploadsDirectory, { dotfiles: "deny" }));
 // Webhooks FIRST (must be processed before rate limiting)
 
 app.use("/api/mpesa", mpesaRoutes);

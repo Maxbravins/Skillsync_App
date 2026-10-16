@@ -31,6 +31,8 @@ const ClientProfile = () => {
   const profileImageUrl = user.profilePicture
     ? user.profilePicture.startsWith("http")
       ? user.profilePicture
+      : user.profilePicture.startsWith("/uploads/")
+        ? user.profilePicture
       : `${apiBaseUrl}${user.profilePicture}`
     : null;
 

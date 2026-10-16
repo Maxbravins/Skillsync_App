@@ -4,6 +4,10 @@
       "source": "/api/:path*",
       "destination": "https://skillsync-app-n1on.onrender.com/api/:path*"
     },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://skillsync-app-n1on.onrender.com/uploads/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
