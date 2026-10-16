@@ -347,7 +347,7 @@ const transactionSchema = new mongoose.Schema(
 // paymentType: "platform_fee"
 // ============================================================
 
-transactionSchema.pre("validate", function (next) {
+transactionSchema.pre("validate", function () {
   if (!this.type && this.paymentType) {
     this.type = this.paymentType;
   }
@@ -412,10 +412,8 @@ transactionSchema.pre("validate", function (next) {
     if (
       this.totalAmount !== expectedTotal
     ) {
-      return next(
-        new Error(
-          `Invalid transaction totals. Expected totalAmount ${expectedTotal}, got ${this.totalAmount}`
-        )
+      throw new Error(
+        `Invalid transaction totals. Expected totalAmount ${expectedTotal}, got ${this.totalAmount}`
       );
     }
   }
@@ -426,10 +424,8 @@ transactionSchema.pre("validate", function (next) {
       this.platformFee > 0 &&
       this.totalAmount !== this.platformFee
     ) {
-      return next(
-        new Error(
-          "For platform_fee transactions, totalAmount must equal platformFee"
-        )
+      throw new Error(
+        "For platform_fee transactions, totalAmount must equal platformFee"
       );
     }
   }
@@ -438,14 +434,10 @@ transactionSchema.pre("validate", function (next) {
     this.developerAmount >
     this.amount
   ) {
-    return next(
-      new Error(
-        "developerAmount cannot exceed amount"
-      )
+    throw new Error(
+      "developerAmount cannot exceed amount"
     );
   }
-
-  next();
 });
 
 // ============================================================
