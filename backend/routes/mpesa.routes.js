@@ -25,23 +25,24 @@ const router = express.Router();
 // ============================================
 // WEBHOOKS (PUBLIC - NO AUTH)
 // ============================================
-// Order: Rate limit first, then security check
+// The secret in the URL (MPESA_WEBHOOK_SECRET) is verified by
+// validateMpesaWebhook. Order: rate limit first, then security check.
 router.post(
-  "/callback",
+  "/callback/:secret",
   webhookLimiter,
   validateMpesaWebhook,
   mpesaCallback
 );
 
 router.post(
-  "/b2c-callback",
+  "/b2c-callback/:secret",
   webhookLimiter,
   validateMpesaWebhook,
   b2cResultCallback
 );
 
 router.post(
-  "/b2c-timeout",
+  "/b2c-timeout/:secret",
   webhookLimiter,
   validateMpesaWebhook,
   b2cTimeoutCallback

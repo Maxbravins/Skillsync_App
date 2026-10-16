@@ -10,6 +10,7 @@ import User from "../models/user.model.js";
 
 import { initiateSTKPush } from "../services/mpesa.service.js";
 import { calculateCommission } from "../services/platformFee.service.js";
+import { verifySuccessfulStkPayment } from "../services/mpesaCallback.service.js";
 
 import {
   sendPaymentConfirmationToClient,
@@ -339,41 +340,26 @@ export const mpesaCallback = async (req, res) => {
     // ----------------------------------------------------------
 
     if (Number(ResultCode) === 0) {
-      const metadata =
-        CallbackMetadata?.Item || [];
-
-      const receipt = metadata.find(
-        (item) =>
-          item.Name === "MpesaReceiptNumber"
-      );
-
-      const paidAmountItem = metadata.find(
-        (item) => item.Name === "Amount"
-      );
-
-      const paidAmount = Number(
-        paidAmountItem?.Value
-      );
-
-      const receiptNumber =
-        receipt?.Value || "";
-
       // --------------------------------------------------------
-      // Verify amount
+      // Verify receipt + amount. A success callback that is missing
+      // either, or whose amount differs from what was requested, is
+      // never trusted: it goes to manual review instead of escrow.
       // --------------------------------------------------------
 
-      if (
-        Number.isFinite(paidAmount) &&
-        paidAmount !== transaction.totalAmount
-      ) {
+      const verification = verifySuccessfulStkPayment(
+        transaction,
+        CallbackMetadata
+      );
+
+      if (!verification.valid) {
         await transaction.save();
 
         await transaction.markForReview(
-          `M-Pesa amount mismatch. Expected ${transaction.totalAmount}, received ${paidAmount}.`
+          verification.reason
         );
 
         console.error(
-          `Payment amount mismatch for ${transaction.transactionId}. Expected ${transaction.totalAmount}, received ${paidAmount}.`
+          `Rejected M-Pesa success callback for ${transaction.transactionId}: ${verification.reason}`
         );
 
         return;
@@ -384,7 +370,7 @@ export const mpesaCallback = async (req, res) => {
       // --------------------------------------------------------
 
       await transaction.markCompleted(
-        receiptNumber
+        verification.receiptNumber
       );
 
       // --------------------------------------------------------
