@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
-import { FaMobileAlt, FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
+import { FaMobileAlt, FaExclamationCircle } from "react-icons/fa";
 import { initiatePayment } from "../../services/mpesa.service";
+import MpesaPaymentStatus from "../../components/MpesaPaymentStatus";
 
 const Payment = () => {
   const { applicationId } = useParams();
@@ -12,6 +13,7 @@ const Payment = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [transactionId, setTransactionId] = useState("");
 
   const normalizePhoneNumber = (phone) => {
     let phoneValue = phone.trim().replace(/\s+/g, "");
@@ -58,10 +60,12 @@ const Payment = () => {
         normalizedPhone
       );
 
-      setMessage(
-        res.message ||
-          "STK Push sent. Please check your phone and enter your M-Pesa PIN."
-      );
+      const nextTransactionId = res.transaction?.transactionId;
+      if (!nextTransactionId) {
+        throw new Error("M-Pesa did not return a transaction reference.");
+      }
+      setTransactionId(nextTransactionId);
+      setMessage("M-Pesa prompt sent. Approve it on your phone; payment is not confirmed until M-Pesa reports success.");
 
       setPhoneNumber("");
     } catch (error) {
@@ -101,14 +105,26 @@ const Payment = () => {
           </div>
 
           {message && (
-            <div className="mb-6 p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 flex items-start gap-3">
-              <FaCheckCircle className="mt-1 shrink-0" />
+            <div className="mb-6 p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 flex items-start gap-3">
+              <FaMobileAlt className="mt-1 shrink-0" />
 
               <p className="text-sm">
                 {message}
               </p>
             </div>
           )}
+
+          <MpesaPaymentStatus
+            transactionId={transactionId}
+            onTerminal={(status) => {
+              if (status === "completed") {
+                setMessage("Payment confirmed by M-Pesa.");
+              } else if (status === "failed" || status === "cancelled") {
+                setMessage(status === "failed" ? "M-Pesa did not complete the payment. You can try again." : "The payment was cancelled. You can try again.");
+                setTransactionId("");
+              }
+            }}
+          />
 
           {error && (
             <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex items-start gap-3">
@@ -141,7 +157,7 @@ const Payment = () => {
                   setError("");
                   setMessage("");
                 }}
-                disabled={loading}
+                disabled={loading || Boolean(transactionId)}
                 className="w-full border border-[var(--border-color)] rounded-lg p-3 bg-[var(--bg-primary)] outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                 required
               />
@@ -154,12 +170,14 @@ const Payment = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || Boolean(transactionId)}
               className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg py-3 font-semibold transition"
             >
               <FaMobileAlt />
 
-              {loading
+              {transactionId
+                ? "Payment request sent"
+                : loading
                 ? "Sending STK Push..."
                 : "Pay via M-Pesa"}
             </button>

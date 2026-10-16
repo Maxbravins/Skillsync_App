@@ -32,6 +32,7 @@ const EditProfile = () => {
 
   const [profilePicture, setProfilePicture] = useState(null);
   const [resume, setResume] = useState(null);
+  const [resumeUrl, setResumeUrl] = useState("");
 
   const [preview, setPreview] = useState(
     user?.profilePicture || null
@@ -84,6 +85,45 @@ const EditProfile = () => {
   }, [user?.profilePicture]);
 
   useEffect(() => {
+    let active = true;
+    if (!user?.resume) {
+      setResumeUrl("");
+      return () => { active = false; };
+    }
+
+    api.get("/upload/resume-url")
+      .then(({ data }) => {
+        if (active) setResumeUrl(data?.data?.url || "");
+      })
+      .catch((requestError) => {
+        console.error("Unable to load resume link:", requestError);
+        if (active) setResumeUrl("");
+      });
+
+    return () => { active = false; };
+  }, [user?._id, user?.resume]);
+
+  const openResume = async (event) => {
+    event.preventDefault();
+    const resumeTab = window.open("about:blank", "_blank");
+    if (!resumeTab) return;
+    resumeTab.opener = null;
+
+    try {
+      const { data } = await api.get("/upload/resume-url");
+      const url = data?.data?.url;
+      if (url) {
+        resumeTab.location.href = url;
+      } else {
+        resumeTab.close();
+      }
+    } catch (requestError) {
+      resumeTab.close();
+      console.error("Unable to open resume:", requestError);
+    }
+  };
+
+  useEffect(() => {
     return () => {
       if (preview?.startsWith("blob:")) {
         URL.revokeObjectURL(preview);
@@ -125,7 +165,7 @@ const EditProfile = () => {
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError("Profile picture must be smaller than 5MB.");
+      setError("Profile picture must be 5 MB or smaller.");
       return;
     }
 
@@ -174,7 +214,7 @@ const EditProfile = () => {
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError("Resume must be smaller than 5MB.");
+      setError("Resume must be 5 MB or smaller.");
       return;
     }
 
@@ -807,12 +847,14 @@ const EditProfile = () => {
                     </div>
 
                     <a
-                      href={user.resume}
+                      href={resumeUrl || undefined}
+                      onClick={openResume}
+                      aria-disabled={!resumeUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-cyan-400 hover:underline shrink-0"
+                      className={`text-cyan-400 hover:underline shrink-0 ${!resumeUrl ? "pointer-events-none opacity-50" : ""}`}
                     >
-                      View
+                      {resumeUrl ? "View" : "Loading…"}
                     </a>
                   </div>
                 )}

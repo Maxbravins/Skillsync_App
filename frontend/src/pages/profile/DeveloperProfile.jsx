@@ -1,7 +1,9 @@
 import useAuth from "../../hooks/useAuth";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import api from "../../services/api";
 
 import {
   User,
@@ -24,24 +26,55 @@ import {
 
 const DeveloperProfile = () => {
   const { user } = useAuth();
+  const [resumeUrl, setResumeUrl] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    if (!user?.resume) {
+      setResumeUrl("");
+      return () => { active = false; };
+    }
+
+    api.get("/upload/resume-url")
+      .then(({ data }) => {
+        if (active) setResumeUrl(data?.data?.url || "");
+      })
+      .catch((error) => {
+        console.error("Unable to load resume link:", error);
+        if (active) setResumeUrl("");
+      });
+
+    return () => { active = false; };
+  }, [user?._id, user?.resume]);
+
+  const openResume = async (event) => {
+    event.preventDefault();
+    const resumeTab = window.open("about:blank", "_blank");
+    if (!resumeTab) return;
+    resumeTab.opener = null;
+
+    try {
+      const { data } = await api.get("/upload/resume-url");
+      const url = data?.data?.url;
+      if (url) {
+        resumeTab.location.href = url;
+      } else {
+        resumeTab.close();
+      }
+    } catch (error) {
+      resumeTab.close();
+      console.error("Unable to open resume:", error);
+    }
+  };
 
   if (!user) {
     return null;
   }
 
-  const apiBaseUrl =
-    import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") || "";
-
   const profileImageUrl = user.profilePicture
     ? user.profilePicture.startsWith("http")
       ? user.profilePicture
-      : `${apiBaseUrl}${user.profilePicture}`
-    : null;
-
-  const resumeUrl = user.resume
-    ? user.resume.startsWith("http")
-      ? user.resume
-      : `${apiBaseUrl}${user.resume}`
+      : user.profilePicture
     : null;
 
   const socialLinks = user.socialLinks || {};
@@ -471,6 +504,7 @@ const DeveloperProfile = () => {
             {resumeUrl ? (
               <a
                 href={resumeUrl}
+                onClick={openResume}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg transition"

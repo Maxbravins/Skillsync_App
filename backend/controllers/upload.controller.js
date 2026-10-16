@@ -150,17 +150,33 @@ export const deleteFromCloudinary = async (req, res) => {
       });
     }
 
-    const isAdmin = req.user.role === "admin";
-    const ownsFile = publicId.includes(`/${req.user.id}/`);
+    // A valid Cloudinary public ID is not proof of ownership. Only
+    // allow deleting assets that belong to this account or are
+    // currently referenced by this account's profile.
+    const ownedFolder = `skillsync/${req.user.role === "client" ? "clients" : "developers"}/${req.user.id}/`;
+    const isInOwnedFolder = publicId.startsWith(ownedFolder);
+    const user = await User.findById(req.user.id).select("profilePicture resume");
+    const isCurrentResume = user?.resume === publicId;
+    let isCurrentProfilePicture = user?.profilePicture === publicId;
 
-    if (!isAdmin && !ownsFile) {
+    if (!isCurrentProfilePicture && user?.profilePicture?.includes("res.cloudinary.com/")) {
+      const escapedPublicId = publicId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      isCurrentProfilePicture = new RegExp(`/${escapedPublicId}(?:\\.[^/?]+)?(?:[?#]|$)`).test(user.profilePicture);
+    }
+
+    if (!isInOwnedFolder && !isCurrentResume && !isCurrentProfilePicture) {
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to delete this file",
+        message: "You can only delete files associated with your account.",
       });
     }
 
-    const result = await cloudinary.uploader.destroy(publicId);
+    const result = await cloudinary.uploader.destroy(
+      publicId,
+      isCurrentResume
+        ? { resource_type: "raw", type: "authenticated" }
+        : {}
+    );
 
     if (result.result === "ok") {
       res.status(200).json({

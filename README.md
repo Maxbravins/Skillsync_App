@@ -165,6 +165,12 @@ cd backend
 npm run dev
 \`\`\`
 
+### Presentation data (local or staging only)
+
+Use a non-production database and set NODE_ENV=development, ENABLE_DEMO_SEED=true, MONGO_URI, and DEMO_SEED_PASSWORD (at least 8 characters) in backend/.env. From the backend folder, run npm run seed:demo.
+
+This creates a demo client, a demo developer, two clearly labeled sample listings, and one sample application. Both accounts use the DEMO_SEED_PASSWORD value. The script refuses to run when NODE_ENV=production; do not point it at a production database.
+
 **Frontend:**
 
 \`\`\`bash

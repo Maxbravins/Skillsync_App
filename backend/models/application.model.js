@@ -7,36 +7,30 @@ const applicationSchema = new mongoose.Schema(
       ref: "Job",
       required: true,
     },
-
     developer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-
     coverLetter: {
       type: String,
       required: true,
       trim: true,
     },
-
     proposedBudget: {
       type: Number,
       required: true,
       min: 0,
     },
-
     proposedTimeline: {
       type: String,
       default: "",
       trim: true,
     },
-
     attachments: {
       type: [String],
       default: [],
     },
-
     status: {
       type: String,
       enum: [
@@ -49,30 +43,25 @@ const applicationSchema = new mongoose.Schema(
       ],
       default: "pending",
     },
-
     paymentStatus: {
       type: String,
       enum: ["unpaid", "pending", "escrow", "paid"],
       default: "unpaid",
     },
-
     contract: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Contract",
       default: null,
     },
-
     transaction: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Transaction",
       default: null,
     },
-
     rejectionReason: {
       type: String,
       default: "",
     },
-
     reviewedAt: { type: Date, default: null },
     acceptedAt: { type: Date, default: null },
     rejectedAt: { type: Date, default: null },
@@ -84,11 +73,8 @@ const applicationSchema = new mongoose.Schema(
   }
 );
 
-// A developer can only apply to a given job once -- enforced at the
-applicationSchema.index(
-  { job: 1, developer: 1 },
-  { unique: true }
-);
+// A developer can only apply to a given job once.
+applicationSchema.index({ job: 1, developer: 1 }, { unique: true });
 
 applicationSchema.index({ status: 1 });
 applicationSchema.index({ developer: 1, createdAt: -1 });

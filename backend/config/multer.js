@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import pkg from "multer-storage-cloudinary";
 import multer from "multer";
+import { MAX_UPLOAD_SIZE_BYTES } from "./uploadLimits.js";
 
 const { CloudinaryStorage } = pkg;
 
@@ -44,17 +45,17 @@ const fileStorage = new CloudinaryStorage({
 
 export const uploadAvatar = multer({
   storage: avatarStorage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max
+  limits: { fileSize: MAX_UPLOAD_SIZE_BYTES },
 });
 
 export const uploadResume = multer({
   storage: resumeStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  limits: { fileSize: MAX_UPLOAD_SIZE_BYTES },
 });
 
 export const uploadFile = multer({
   storage: fileStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  limits: { fileSize: MAX_UPLOAD_SIZE_BYTES },
 });
 
 export default cloudinary;

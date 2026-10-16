@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Footer from "../../components/Footer";
 import { deleteJob, getMyJobs } from "../../services/job.service";
 import api from "../../services/api";
+import MpesaPaymentStatus from "../../components/MpesaPaymentStatus";
 
 const MyJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -13,6 +14,8 @@ const MyJobs = () => {
   const [payingJobId, setPayingJobId] = useState(null);
   const [checkingPaymentJobId, setCheckingPaymentJobId] = useState(null);
   const [phoneNumbers, setPhoneNumbers] = useState({});
+  const [paymentTransactionIds, setPaymentTransactionIds] = useState({});
+  const [paymentMessages, setPaymentMessages] = useState({});
 
   //     // Fetch jobs on component mount
   const fetchJobs = useCallback(async () => {
@@ -112,6 +115,7 @@ const handlePlatformPayment = async (job) => {
 
   try {
     setPayingJobId(job._id);
+    setPaymentMessages((previous) => ({ ...previous, [job._id]: "" }));
 
     const { data } = await api.post(
       `/platform-payment/${job._id}/pay`,
@@ -130,6 +134,12 @@ const handlePlatformPayment = async (job) => {
       alert(
         "M-Pesa payment request sent. Check your phone and enter your M-Pesa PIN."
       );
+      if (data.transaction?.transactionId) {
+        setPaymentTransactionIds((previous) => ({
+          ...previous,
+          [job._id]: data.transaction.transactionId,
+        }));
+      }
 
       setPhoneNumbers((previous) => {
         const updated = { ...previous };
@@ -456,21 +466,54 @@ const handlePlatformPayment = async (job) => {
                   type="tel"
                   placeholder="M-Pesa number"
                   value={phoneNumbers[job._id] || ""}
+                  disabled={Boolean(paymentTransactionIds[job._id])}
                   onChange={(e) =>
                     handlePhoneNumberChange(job._id, e.target.value)
                   }
                   className="w-full px-3 py-2 mb-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-sm outline-none"
                 />
 
+                {paymentTransactionIds[job._id] && (
+                  <MpesaPaymentStatus
+                    transactionId={paymentTransactionIds[job._id]}
+                    onTerminal={(status) => {
+                      if (status === "completed") {
+                        fetchJobs();
+                      } else if (status === "failed" || status === "cancelled") {
+                        setPaymentMessages((previous) => ({
+                          ...previous,
+                          [job._id]: status === "failed"
+                            ? "M-Pesa did not complete this payment. You can try again."
+                            : "The payment was cancelled. You can try again.",
+                        }));
+                        setPaymentTransactionIds((previous) => {
+                          const updated = { ...previous };
+                          delete updated[job._id];
+                          return updated;
+                        });
+                      }
+                    }}
+                  />
+                )}
+
+                {paymentMessages[job._id] && (
+                  <p className="mb-2 text-sm text-red-400" role="alert">
+                    {paymentMessages[job._id]}
+                  </p>
+                )}
+
                 <button
                   onClick={() => handlePlatformPayment(job)}
                   disabled={
                     payingJobId === job._id ||
-                    checkingPaymentJobId === job._id
+                    checkingPaymentJobId === job._id ||
+                    Boolean(paymentTransactionIds[job._id])
                   }
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {payingJobId === job._id
+                  {paymentTransactionIds[job._id]
+                    ? "Awaiting M-Pesa confirmation"
+                    : payingJobId === job._id
                     ? "Sending..."
                     : checkingPaymentJobId === job._id
                       ? "Waiting for M-Pesa..."

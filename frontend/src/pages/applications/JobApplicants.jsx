@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import Navbar from "../../components/Navbar";
+import MpesaPaymentStatus from "../../components/MpesaPaymentStatus";
 
 import {
   getJobApplications,
@@ -40,6 +41,8 @@ const JobApplicants = () => {
 
   const [paymentLoading, setPaymentLoading] =
     useState(false);
+  const [paymentTransactionId, setPaymentTransactionId] =
+    useState("");
 
   // ============================================================
   // FETCH APPLICATIONS
@@ -204,6 +207,7 @@ const JobApplicants = () => {
     });
 
     setPaymentPhoneNumber("");
+    setPaymentTransactionId("");
     setError("");
   };
 
@@ -251,12 +255,12 @@ const JobApplicants = () => {
           phoneNumber
         );
 
-      alert(
-        response?.message ||
-          "Payment request initiated successfully."
-      );
-
-      closePaymentModal();
+      const transactionId = response?.transaction?.transactionId;
+      if (!transactionId) {
+        throw new Error("M-Pesa started the request but did not return a transaction reference.");
+      }
+      setPaymentTransactionId(transactionId);
+      setPaymentPhoneNumber("");
 
       await fetchApplications();
     } catch (error) {
@@ -835,6 +839,18 @@ const JobApplicants = () => {
                   number to initiate the payment.
                 </p>
 
+                {paymentTransactionId && (
+                  <>
+                    <p className="mb-3 text-sm text-cyan-300">
+                      Payment request sent. Approve it on the phone; success will appear after M-Pesa confirms.
+                    </p>
+                    <MpesaPaymentStatus
+                      transactionId={paymentTransactionId}
+                      onTerminal={fetchApplications}
+                    />
+                  </>
+                )}
+
                 <form
                   onSubmit={handlePayment}
                   className="space-y-4"
@@ -854,6 +870,7 @@ const JobApplicants = () => {
                     placeholder="0712345678"
                     className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2.5 text-[var(--text-primary)] outline-none focus:border-cyan-500"
                     required
+                    disabled={paymentLoading || Boolean(paymentTransactionId)}
                     disabled={
                       paymentLoading
                     }
@@ -863,12 +880,14 @@ const JobApplicants = () => {
                     <button
                       type="submit"
                       disabled={
-                        paymentLoading ||
+                        paymentLoading || Boolean(paymentTransactionId) ||
                         !paymentPhoneNumber.trim()
                       }
                       className="flex-1 rounded-lg bg-cyan-600 px-4 py-2.5 font-semibold hover:bg-cyan-700 disabled:opacity-60 disabled:cursor-not-allowed text-white"
                     >
-                      {paymentLoading
+                      {paymentTransactionId
+                        ? "Request sent"
+                        : paymentLoading
                         ? "Processing..."
                         : "Send M-Pesa Payment"}
                     </button>

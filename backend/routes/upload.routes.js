@@ -1,6 +1,7 @@
 import express from "express";
 import auth from "../middleware/auth.middleware.js";
 import multer from "multer";
+import { MAX_UPLOAD_SIZE_BYTES } from "../config/uploadLimits.js";
 import {
   generateUploadSignature,
   uploadToCloudinary,
@@ -15,7 +16,7 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: MAX_UPLOAD_SIZE_BYTES,
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = [

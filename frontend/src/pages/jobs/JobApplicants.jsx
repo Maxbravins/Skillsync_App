@@ -12,6 +12,7 @@ import { Link, useParams } from "react-router-dom";
 
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import MpesaPaymentStatus from "../../components/MpesaPaymentStatus";
 import {
   getClientApplications,
   updateApplicationStatus,
@@ -31,6 +32,7 @@ const JobApplicants = () => {
   });
 
   const [paymentPhoneNumber, setPaymentPhoneNumber] = useState("");
+  const [paymentTransactionId, setPaymentTransactionId] = useState("");
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
 
@@ -103,6 +105,7 @@ const JobApplicants = () => {
     });
 
     setPaymentPhoneNumber("");
+    setPaymentTransactionId("");
   };
 
   const closePaymentModal = () => {
@@ -138,9 +141,12 @@ const JobApplicants = () => {
         phoneNumber,
       );
 
-      alert(response?.message || "STK push sent successfully.");
-
-      closePaymentModal();
+      const transactionId = response?.transaction?.transactionId;
+      if (!transactionId) {
+        throw new Error("M-Pesa started the request but did not return a transaction reference.");
+      }
+      setPaymentTransactionId(transactionId);
+      setPaymentPhoneNumber("");
       await fetchApplications();
     } catch (error) {
       console.error("Payment initiation failed:", error);
@@ -379,6 +385,18 @@ const JobApplicants = () => {
               payment request.
             </p>
 
+            {paymentTransactionId && (
+              <>
+                <p className="mt-3 text-sm text-cyan-300">
+                  Payment request sent. Approve it on the phone; the app will show success only after M-Pesa confirms.
+                </p>
+                <MpesaPaymentStatus
+                  transactionId={paymentTransactionId}
+                  onTerminal={fetchApplications}
+                />
+              </>
+            )}
+
             <form
               onSubmit={handlePayment}
               className="mt-5 space-y-4"
@@ -399,17 +417,20 @@ const JobApplicants = () => {
                   }
                   placeholder="0712345678"
                   className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)] outline-none focus:border-cyan-500"
-                  required
+                  required={!paymentTransactionId}
+                  disabled={Boolean(paymentTransactionId) || paymentLoading}
                 />
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   type="submit"
-                  disabled={paymentLoading}
+                  disabled={paymentLoading || Boolean(paymentTransactionId)}
                   className="flex-1 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-3 font-semibold transition disabled:opacity-50"
                 >
-                  {paymentLoading
+                  {paymentTransactionId
+                    ? "Request sent"
+                    : paymentLoading
                     ? "Sending..."
                     : "Send STK Push"}
                 </button>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Footer from "../../components/Footer";
 import { payPremium } from "../../services/premium.service";
+import MpesaPaymentStatus from "../../components/MpesaPaymentStatus";
 
 const Premium = () => {
   const [selectedPlan, setSelectedPlan] = useState("monthly");
@@ -8,6 +9,7 @@ const Premium = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [transactionId, setTransactionId] = useState("");
 
   const plans = {
     monthly: {
@@ -40,10 +42,12 @@ const Premium = () => {
         phoneNumber
       );
 
-      setMessage(
-        data.message ||
-          "STK Push sent. Check your phone and enter your M-Pesa PIN."
-      );
+      const nextTransactionId = data.transaction?.transactionId;
+      if (!nextTransactionId) {
+        throw new Error("M-Pesa did not return a transaction reference.");
+      }
+      setTransactionId(nextTransactionId);
+      setMessage("M-Pesa prompt sent. Approve it on your phone; Premium activates only after payment confirmation.");
 
     } catch (error) {
       console.error("Premium payment error:", error);
@@ -175,6 +179,18 @@ const Premium = () => {
               </div>
             )}
 
+            <MpesaPaymentStatus
+              transactionId={transactionId}
+              onTerminal={(status) => {
+                if (status === "completed") {
+                  setMessage("Payment confirmed. Your Premium subscription is active.");
+                } else if (status === "failed" || status === "cancelled") {
+                  setMessage(status === "failed" ? "M-Pesa did not complete the payment. You can try again." : "The payment was cancelled. You can try again.");
+                  setTransactionId("");
+                }
+              }}
+            />
+
             <label className="block text-sm font-medium mb-2">
               M-Pesa Phone Number
             </label>
@@ -182,6 +198,7 @@ const Premium = () => {
             <input
               type="tel"
               value={phoneNumber}
+              disabled={Boolean(transactionId) || loading}
               onChange={(e) =>
                 setPhoneNumber(e.target.value)
               }
@@ -192,7 +209,7 @@ const Premium = () => {
             <button
               type="button"
               onClick={handlePayment}
-              disabled={loading}
+              disabled={loading || Boolean(transactionId)}
               className="w-full mt-4 py-3 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black font-bold transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading
