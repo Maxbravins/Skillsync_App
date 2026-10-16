@@ -66,14 +66,45 @@ api.interceptors.request.use(
 
 let refreshPromise = null;
 
+const requestRefresh = async () => {
+  try {
+    return await axios.post(
+      `${API_URL}/auth/refresh-token`,
+      {},
+      { withCredentials: true }
+    );
+  } catch (error) {
+    // Another tab may have rotated the single-use cookie just before
+    // this request reached the server. Give the browser time to apply
+    // that response cookie, then retry once with the current cookie.
+    if (error.response?.status !== 409) {
+      throw error;
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, 250));
+    return axios.post(
+      `${API_URL}/auth/refresh-token`,
+      {},
+      { withCredentials: true }
+    );
+  }
+};
+
+const requestRefreshWithBrowserLock = () => {
+  if (typeof navigator !== "undefined" && navigator.locks?.request) {
+    return navigator.locks.request(
+      "skillsync-refresh-token",
+      { mode: "exclusive" },
+      requestRefresh
+    );
+  }
+
+  return requestRefresh();
+};
+
 export const refreshAccessToken = () => {
   if (!refreshPromise) {
-    refreshPromise = axios
-      .post(
-        `${API_URL}/auth/refresh-token`,
-        {},
-        { withCredentials: true }
-      )
+    refreshPromise = requestRefreshWithBrowserLock()
       .then((res) => {
         const newToken = res.data?.token;
         setAccessToken(newToken);

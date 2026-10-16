@@ -668,15 +668,13 @@ export const refreshAccessToken = async (req, res) => {
     }).select("+refreshTokens");
 
     if (!user) {
-      res.clearCookie(
-        REFRESH_COOKIE_NAME,
-        refreshCookieOptions()
-      );
-
-      return res.status(401).json({
+      // A parallel refresh may have already rotated this single-use
+      // token. Let the client retry with the replacement cookie instead
+      // of clearing it while the successful response is in flight.
+      return res.status(409).json({
         success: false,
         message:
-          "Invalid or expired session. Please log in again.",
+          "Session refresh is already in progress. Please retry.",
       });
     }
 
@@ -686,17 +684,12 @@ export const refreshAccessToken = async (req, res) => {
     );
 
     if (!isValid) {
-      await revokeAllRefreshTokens(user);
-
-      res.clearCookie(
-        REFRESH_COOKIE_NAME,
-        refreshCookieOptions()
-      );
-
-      return res.status(401).json({
+      // A competing request may have consumed this token first. Do not
+      // revoke every device session or clear a replacement cookie here.
+      return res.status(409).json({
         success: false,
         message:
-          "Session invalid. Please log in again.",
+          "Session refresh is already in progress. Please retry.",
       });
     }
 
